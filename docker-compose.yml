@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.2-pg18
+    container_name: health-center-postgres
+    environment:
+      POSTGRES_DB: health_center
+      POSTGRES_USER: health
+      POSTGRES_PASSWORD: health1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - health-center-postgres-data:/var/lib/postgresql
+    networks:
+      - health-center-network
+
+volumes:
+  health-center-postgres-data:
+
+networks:
+  health-center-network:
+    driver: bridge

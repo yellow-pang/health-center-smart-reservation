@@ -1,0 +1,277 @@
+﻿# API 명세서
+
+## 1. API 공통 규칙
+
+### Base URL
+
+```text
+/api
+```
+
+### 인증 방식
+
+```text
+Authorization: Bearer {accessToken}
+```
+
+### 공통 응답 형식
+
+```json
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "요청이 성공했습니다.",
+  "data": {}
+}
+```
+
+### 공통 오류 응답 형식
+
+```json
+{
+  "success": false,
+  "code": "RESERVATION_SLOT_FULL",
+  "message": "선택한 시간대의 예약이 마감되었습니다.",
+  "data": null
+}
+```
+
+## 2. API 그룹
+
+| 그룹 | 설명 |
+|---|---|
+| Auth API | 로그인, 토큰 재발급, 로그아웃 |
+| Member API | 회원 정보 |
+| Office API | 보건소, 업무 유형, 창구 |
+| Reservation API | 예약 가능 시간, 예약 신청, 예약 조회, 예약 취소 |
+| Visit API | 체크인, 현장 접수 |
+| Queue API | 대기번호, 대기열, 호출, 처리 |
+| Dashboard API | 관리자 대시보드 |
+| Congestion API | 사용자용 혼잡도 |
+| Admin API | 관리자 기준정보 관리 |
+| Common API | 공통코드 |
+
+## 3. 주요 API 목록
+
+| Method | URL | 설명 | 권한 |
+|---|---|---|---|
+| POST | /api/auth/login | 로그인 | PUBLIC |
+| POST | /api/auth/reissue | 토큰 재발급 | PUBLIC |
+| POST | /api/auth/logout | 로그아웃 | 로그인 사용자 |
+| GET | /api/service-types | 업무 유형 조회 | PUBLIC |
+| GET | /api/reservation-slots | 예약 가능 시간 조회 | 로그인 사용자 |
+| POST | /api/reservations | 예약 신청 | CITIZEN, GUARDIAN, STAFF, ADMIN |
+| GET | /api/reservations/me | 내 예약 조회 | 로그인 사용자 |
+| GET | /api/reservations/{id} | 예약 상세 조회 | 예약자, STAFF, ADMIN |
+| DELETE | /api/reservations/{id} | 예약 취소 | 예약자, ADMIN |
+| POST | /api/visits/check-in | 예약자 체크인 | STAFF, ADMIN |
+| POST | /api/visits/walk-in | 현장 접수 | STAFF, ADMIN |
+| GET | /api/queues | 대기열 조회 | STAFF, ADMIN |
+| POST | /api/queues/{id}/call | 대기자 호출 | STAFF, ADMIN |
+| POST | /api/queues/{id}/start | 처리 시작 | STAFF, ADMIN |
+| POST | /api/queues/{id}/complete | 처리 완료 | STAFF, ADMIN |
+| POST | /api/queues/{id}/hold | 보류 처리 | STAFF, ADMIN |
+| GET | /api/dashboard/summary | 대시보드 요약 | ADMIN |
+| GET | /api/dashboard/hourly-visits | 시간대별 방문자 수 | ADMIN |
+| GET | /api/dashboard/service-wait-times | 업무별 평균 대기시간 | ADMIN |
+| GET | /api/dashboard/visit-type-ratio | 예약/현장 비율 | ADMIN |
+| GET | /api/dashboard/no-show-rate | 노쇼율 | ADMIN |
+| GET | /api/congestion/current | 현재 혼잡도 | PUBLIC |
+| POST | /api/admin/service-types | 업무 유형 생성 | ADMIN |
+| PUT | /api/admin/service-types/{id} | 업무 유형 수정 | ADMIN |
+| POST | /api/admin/reservation-slots | 예약 슬롯 생성 | ADMIN |
+| GET | /api/admin/staff | 직원 목록 조회 | ADMIN |
+
+## 4. 상세 예시
+
+### 4.1 로그인
+
+`POST /api/auth/login`
+
+Request:
+
+```json
+{
+  "email": "staff@example.com",
+  "password": "password1234"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "로그인에 성공했습니다.",
+  "data": {
+    "accessToken": "access-token",
+    "refreshToken": "refresh-token",
+    "member": {
+      "id": 1,
+      "name": "홍길동",
+      "role": "STAFF"
+    }
+  }
+}
+```
+
+### 4.2 예약 가능 시간 조회
+
+`GET /api/reservation-slots?serviceTypeId=1&date=2026-05-10`
+
+Response:
+
+```json
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "예약 가능 시간 조회에 성공했습니다.",
+  "data": [
+    {
+      "slotId": 10,
+      "date": "2026-05-10",
+      "startTime": "09:00",
+      "endTime": "09:30",
+      "capacity": 5,
+      "reservedCount": 2,
+      "availableCount": 3,
+      "available": true
+    }
+  ]
+}
+```
+
+### 4.3 예약 신청
+
+`POST /api/reservations`
+
+Request:
+
+```json
+{
+  "serviceTypeId": 1,
+  "reservationSlotId": 10,
+  "visitorName": "홍길동",
+  "visitorPhone": "010-1234-5678"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "예약이 완료되었습니다.",
+  "data": {
+    "reservationId": 100,
+    "reservationNo": "RSV-20260510-0001",
+    "status": "RESERVED"
+  }
+}
+```
+
+### 4.4 예약자 체크인
+
+`POST /api/visits/check-in`
+
+Request:
+
+```json
+{
+  "reservationNo": "RSV-20260510-0001"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "체크인이 완료되었습니다.",
+  "data": {
+    "visitId": 200,
+    "queueTicketId": 300,
+    "ticketNumber": 15,
+    "status": "WAITING"
+  }
+}
+```
+
+### 4.5 현장 접수
+
+`POST /api/visits/walk-in`
+
+Request:
+
+```json
+{
+  "serviceTypeId": 1,
+  "visitorName": "김철수",
+  "visitorPhone": "010-1111-2222"
+}
+```
+
+### 4.6 대시보드 요약
+
+`GET /api/dashboard/summary?date=2026-05-10`
+
+Response:
+
+```json
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "대시보드 요약 조회에 성공했습니다.",
+  "data": {
+    "todayVisitCount": 120,
+    "currentWaitingCount": 18,
+    "averageWaitMinutes": 24,
+    "noShowRate": 8.5
+  }
+}
+```
+
+### 4.7 현재 혼잡도
+
+`GET /api/congestion/current`
+
+Response:
+
+```json
+{
+  "success": true,
+  "code": "SUCCESS",
+  "message": "현재 혼잡도 조회에 성공했습니다.",
+  "data": [
+    {
+      "serviceTypeId": 1,
+      "serviceTypeName": "예방접종",
+      "waitingCount": 18,
+      "estimatedWaitMinutes": 35,
+      "congestionLevel": "HIGH",
+      "congestionLabel": "혼잡"
+    }
+  ]
+}
+```
+
+## 5. 주요 오류 코드
+
+| 코드 | 설명 |
+|---|---|
+| AUTH_INVALID_CREDENTIALS | 이메일 또는 비밀번호가 올바르지 않음 |
+| AUTH_TOKEN_EXPIRED | Access Token 만료 |
+| AUTH_REFRESH_TOKEN_INVALID | Refresh Token이 유효하지 않음 |
+| FORBIDDEN | 접근 권한 없음 |
+| SERVICE_TYPE_NOT_FOUND | 업무 유형 없음 |
+| RESERVATION_SLOT_NOT_FOUND | 예약 슬롯 없음 |
+| RESERVATION_SLOT_FULL | 예약 슬롯 정원 초과 |
+| RESERVATION_DUPLICATED | 중복 예약 |
+| RESERVATION_NOT_FOUND | 예약 없음 |
+| RESERVATION_CANCEL_TIME_EXPIRED | 취소 가능 시간 초과 |
+| VISIT_NOT_FOUND | 방문 정보 없음 |
+| QUEUE_TICKET_NOT_FOUND | 대기표 없음 |
+| QUEUE_INVALID_STATUS | 현재 상태에서 수행할 수 없는 요청 |
