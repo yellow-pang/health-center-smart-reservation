@@ -216,6 +216,12 @@
 			<artifactId>mysql-connector-j</artifactId>
 		</dependency>
 
+		<!-- postgresql driver -->
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+		</dependency>
+
 		<!-- CVE-2024-7254: mysql-connector-j에서 주입되는 protobuf-java 3.25.1 취약점
 		보완용 직접 주입 -->
 		<dependency>

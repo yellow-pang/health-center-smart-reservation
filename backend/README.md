@@ -39,8 +39,8 @@ postgres:
 PostgreSQL로 전환하려면 다음 작업이 추가로 필요합니다.
 
 1. `pom.xml`에 PostgreSQL JDBC 드라이버 추가
-2. `application.properties` 또는 별도 profile에 `Globals.DbType=postgres` 기준 추가
-3. `Globals.postgres.DriverClassName`, `Globals.postgres.Url`, `Globals.postgres.UserName`, `Globals.postgres.Password` 설정
+2. `application.properties` 또는 별도 profile에 `Globals.DbType=postgresql` 기준 추가
+3. `Globals.postgresql.DriverClassName`, `Globals.postgresql.Url`, `Globals.postgresql.UserName`, `Globals.postgresql.Password` 설정
 4. 신규 보건소 도메인 Mapper XML을 `src/main/resources/egovframework/mapper/healthcenter` 하위에 작성
 5. DB 초기화 방식 결정: `data.sql` 또는 Flyway
 6. pgvector 사용 시점에만 `CREATE EXTENSION IF NOT EXISTS vector;` 실행

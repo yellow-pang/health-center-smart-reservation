@@ -1,6 +1,9 @@
 package egovframework.com.config;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import egovframework.com.cmm.util.EgovBasicLogger;
 import jakarta.annotation.PostConstruct;
@@ -16,6 +19,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.annotation.PropertySources;
 import org.springframework.core.env.Environment;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.support.lob.DefaultLobHandler;
 
@@ -76,9 +80,7 @@ public class EgovConfigAppMapper {
 				.getResource("classpath:/egovframework/mapper/config/mapper-config.xml"));
 
 		try {
-			sqlSessionFactoryBean.setMapperLocations(
-				pathMatchingResourcePatternResolver
-					.getResources("classpath:/egovframework/mapper/let/**/*_" + dbType + ".xml"));
+			sqlSessionFactoryBean.setMapperLocations(mapperLocations(pathMatchingResourcePatternResolver));
 		} catch (IOException e) {
 			// 26.03.04 KISA 보안취약점 조치
 			// 구체적인 Exception 명시
@@ -87,6 +89,13 @@ public class EgovConfigAppMapper {
 		}
 
 		return sqlSessionFactoryBean;
+	}
+
+	private Resource[] mapperLocations(PathMatchingResourcePatternResolver resolver) throws IOException {
+		List<Resource> resources = new ArrayList<>();
+		Collections.addAll(resources, resolver.getResources("classpath:/egovframework/mapper/let/**/*_" + dbType + ".xml"));
+		Collections.addAll(resources, resolver.getResources("classpath:/egovframework/mapper/healthcenter/**/*_" + dbType + ".xml"));
+		return resources.toArray(new Resource[0]);
 	}
 
 	@Bean
