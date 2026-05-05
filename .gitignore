@@ -39,3 +39,9 @@ logs/
 # Temporary
 tmp/
 temp/
+
+# GitNexus
+.gitnexus/
+.claude/skills/gitnexus/
+AGENTS.md
+CLAUDE.md
