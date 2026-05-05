@@ -19,9 +19,8 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "요청이 성공했습니다.",
-  "data": {}
+  "data": {},
+  "error": null
 }
 ```
 
@@ -30,9 +29,11 @@ Authorization: Bearer {accessToken}
 ```json
 {
   "success": false,
-  "code": "RESERVATION_SLOT_FULL",
-  "message": "선택한 시간대의 예약이 마감되었습니다.",
-  "data": null
+  "data": null,
+  "error": {
+    "code": "RESERVATION_SLOT_FULL",
+    "message": "선택한 시간대의 예약이 마감되었습니다."
+  }
 }
 ```
 
@@ -102,8 +103,6 @@ Response:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "로그인에 성공했습니다.",
   "data": {
     "accessToken": "access-token",
     "refreshToken": "refresh-token",
@@ -112,7 +111,8 @@ Response:
       "name": "홍길동",
       "role": "STAFF"
     }
-  }
+  },
+  "error": null
 }
 ```
 
@@ -125,8 +125,6 @@ Response:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "예약 가능 시간 조회에 성공했습니다.",
   "data": [
     {
       "slotId": 10,
@@ -138,7 +136,8 @@ Response:
       "availableCount": 3,
       "available": true
     }
-  ]
+  ],
+  "error": null
 }
 ```
 
@@ -162,13 +161,12 @@ Response:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "예약이 완료되었습니다.",
   "data": {
     "reservationId": 100,
     "reservationNo": "RSV-20260510-0001",
     "status": "RESERVED"
-  }
+  },
+  "error": null
 }
 ```
 
@@ -189,14 +187,13 @@ Response:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "체크인이 완료되었습니다.",
   "data": {
     "visitId": 200,
     "queueTicketId": 300,
     "ticketNumber": 15,
     "status": "WAITING"
-  }
+  },
+  "error": null
 }
 ```
 
@@ -223,14 +220,13 @@ Response:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "대시보드 요약 조회에 성공했습니다.",
   "data": {
     "todayVisitCount": 120,
     "currentWaitingCount": 18,
     "averageWaitMinutes": 24,
     "noShowRate": 8.5
-  }
+  },
+  "error": null
 }
 ```
 
@@ -243,8 +239,6 @@ Response:
 ```json
 {
   "success": true,
-  "code": "SUCCESS",
-  "message": "현재 혼잡도 조회에 성공했습니다.",
   "data": [
     {
       "serviceTypeId": 1,
@@ -254,7 +248,8 @@ Response:
       "congestionLevel": "HIGH",
       "congestionLabel": "혼잡"
     }
-  ]
+  ],
+  "error": null
 }
 ```
 

@@ -112,6 +112,8 @@ flowchart TD
 
 ## 5. 패키지 구조 제안
 
+실제 패키지명은 eGovFrame Simple Backend Template의 기본 패키지를 확인한 뒤 최종 확정한다. 아래 구조는 목표 패키지 예시이며, 템플릿 적용 후 `com.example.healthcenter` 또는 프로젝트에 맞는 패키지명으로 정리한다.
+
 ```text
 com.example.healthcenter
  ├─ member

@@ -28,3 +28,13 @@
 - 실제 구현은 모듈형 단일 애플리케이션으로 진행한다.
 - Bounded Context 기준으로 패키지와 책임을 분리한다.
 - AI 기능은 MVP에서 제외하고 향후 확장으로 둔다.
+
+## 백엔드 기준
+
+- 백엔드는 전자정부프레임워크 공식 GitHub의 Simple Backend Template을 기반으로 구성한다.
+- 빌드 도구는 템플릿 기준인 Maven을 유지한다.
+- Spring Initializr 기반 일반 Spring Boot 프로젝트로 새로 생성하지 않는다.
+- Maven과 Gradle을 혼용하지 않는다.
+- 전자정부프레임워크 관련 핵심 설정은 임의로 제거하지 않는다.
+- 샘플 기능 제거가 필요한 경우, 제거 대상 목록을 먼저 제안한 뒤 진행한다.
+- MVP DB는 PostgreSQL 18 + pgvector Docker 이미지를 사용하되, AI 기능과 vector 컬럼은 향후 확장 기능으로 둔다.

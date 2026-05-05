@@ -6,6 +6,9 @@
 2. 주요 테이블에는 `health_center_id`를 포함하여 다중 보건소 확장을 고려합니다.
 3. 의료정보, 검사결과, 처방정보는 저장하지 않습니다.
 4. 예약, 방문, 대기, 호출, 처리, 통계에 필요한 정보만 저장합니다.
+5. MVP DB는 PostgreSQL 18을 사용합니다.
+6. Docker 이미지는 `pgvector/pgvector:0.8.2-pg18` 사용을 기준으로 합니다.
+7. AI 기능은 MVP에서 제외하지만, 향후 pgvector 확장을 고려합니다.
 
 ## 2. ERD 초안
 
@@ -204,6 +207,8 @@ UNIQUE (service_type_id, slot_date, start_time, end_time)
 | service_processes | service_window_id, started_at | 창구별 처리 이력 |
 
 ## 6. 향후 pgvector 확장 후보
+
+MVP에서는 아래 테이블과 vector 컬럼을 생성하지 않는다. FAQ 검색, 유사 문의 검색, 혼잡 원인 분석 같은 AI 확장이 확정되면 `CREATE EXTENSION IF NOT EXISTS vector;` 실행 후 별도 마이그레이션으로 추가한다.
 
 | 테이블 | 설명 |
 |---|---|
