@@ -18,8 +18,8 @@
 | 신규 도메인 패키지 | `egovframework.healthcenter` |
 | DB 접근 방식 | MyBatis |
 | 기본 실행 포트 | 8080 |
-| 현재 기본 DB 설정 | HSQL |
-| 목표 DB | PostgreSQL 18 + pgvector Docker 이미지 |
+| 현재 기본 DB 설정 | PostgreSQL |
+| DB 이미지 | PostgreSQL 18 + pgvector Docker 이미지 |
 
 ## 현재 Docker 설정과의 관계
 
@@ -34,24 +34,42 @@ postgres:
     - health-center-postgres-data:/var/lib/postgresql
 ```
 
-현재 상태에서는 PostgreSQL 컨테이너와 백엔드 템플릿이 직접 충돌하지 않습니다. 다만 백엔드 설정은 아직 HSQL 기준이므로, 백엔드를 실행해도 Docker PostgreSQL을 사용하지 않습니다.
+현재 백엔드는 `Globals.DbType=postgresql` 기준으로 PostgreSQL을 사용합니다. PostgreSQL 컨테이너가 실행된 상태에서 백엔드를 실행해야 합니다.
 
-PostgreSQL로 전환하려면 다음 작업이 추가로 필요합니다.
+현재 완료된 PostgreSQL 전환 범위:
 
 1. `pom.xml`에 PostgreSQL JDBC 드라이버 추가
-2. `application.properties` 또는 별도 profile에 `Globals.DbType=postgresql` 기준 추가
+2. `application.properties`에 `Globals.DbType=postgresql` 설정
 3. `Globals.postgresql.DriverClassName`, `Globals.postgresql.Url`, `Globals.postgresql.UserName`, `Globals.postgresql.Password` 설정
-4. 신규 보건소 도메인 Mapper XML을 `src/main/resources/egovframework/mapper/healthcenter` 하위에 작성
-5. DB 초기화 방식 결정: `data.sql` 또는 Flyway
-6. pgvector 사용 시점에만 `CREATE EXTENSION IF NOT EXISTS vector;` 실행
+4. 신규 보건소 도메인 Mapper XML 경로 추가
+5. 공통코드 조회용 PostgreSQL schema/data SQL 추가
+6. 공통코드 조회 API 추가
 
 MVP에서는 pgvector 기능을 사용하지 않고, PostgreSQL 이미지만 확장 가능성을 위해 준비합니다.
 
 ## 실행 방법
 
-### 1. 백엔드 단독 실행
+### 1. PostgreSQL 컨테이너 실행
 
-현재 템플릿 기본 설정은 HSQL 기준입니다.
+루트 경로에서 먼저 실행합니다.
+
+```bash
+docker compose up -d postgres
+```
+
+현재 PostgreSQL 접속 정보:
+
+| 항목 | 값 |
+|---|---|
+| Host | localhost |
+| Port | 5432 |
+| Database | health_center |
+| User | health |
+| Password | health1234 |
+
+### 2. 백엔드 실행
+
+PostgreSQL 컨테이너가 실행된 뒤 백엔드를 실행합니다.
 
 ```bash
 cd backend
@@ -70,23 +88,12 @@ Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 ```
 
-### 2. PostgreSQL 컨테이너 실행
+공통코드 조회 API:
 
-루트 경로에서 실행합니다.
-
-```bash
-docker compose up -d postgres
+```text
+GET http://localhost:8080/api/common-codes/RESERVATION_STATUS
+GET http://localhost:8080/api/common-codes?groupCodes=RESERVATION_STATUS,QUEUE_STATUS
 ```
-
-현재 PostgreSQL 접속 정보:
-
-| 항목 | 값 |
-|---|---|
-| Host | localhost |
-| Port | 5432 |
-| Database | health_center |
-| User | health |
-| Password | health1234 |
 
 ## Swagger 인증 확인
 
@@ -145,8 +152,7 @@ backend
 
 ## 다음 확인 사항
 
-1. HSQL 기반 템플릿 실행 확인
-2. 기존 샘플 기능 중 유지/삭제할 항목 목록화
-3. PostgreSQL 전환 설정 추가
-4. `egovframework.healthcenter` 하위 신규 도메인 패키지 생성
-5. 공통 응답 형식 `success + data + error` 구현
+1. Docker Desktop 실행 후 PostgreSQL 컨테이너 기동 확인
+2. 백엔드 실행 및 공통코드 조회 API 확인
+3. 기존 샘플 기능 중 제거 범위 확정
+4. 예약·대기 핵심 도메인 구현 시작

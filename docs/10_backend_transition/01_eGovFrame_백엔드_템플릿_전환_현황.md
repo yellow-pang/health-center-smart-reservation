@@ -17,12 +17,12 @@
 | Spring Boot | 3.5.6 |
 | API 문서 | Springdoc OpenAPI / Swagger UI |
 | DB 접근 방식 | MyBatis |
-| 현재 실행 DB | HSQL |
+| 현재 실행 DB | PostgreSQL |
 | 목표 DB | PostgreSQL 18 + pgvector Docker 이미지 |
 | 신규 도메인 예정 패키지 | `egovframework.healthcenter` |
 | 신규 mapper 예정 위치 | `src/main/resources/egovframework/mapper/healthcenter` |
 
-현재 템플릿은 HSQL 기준으로 정상 빌드 및 실행되는 것을 확인했다. 샘플 코드는 삭제하지 않았다. PostgreSQL 전환은 바로 스위칭하지 않고, `postgresql` 설정과 신규 보건소 mapper 경로만 먼저 준비하는 선택지 C 방향으로 진행 중이다.
+현재 템플릿은 HSQL 기준으로 정상 빌드 및 실행되는 것을 먼저 확인했다. 이후 선택지 C 방향으로 PostgreSQL 설정, 신규 보건소 mapper 경로, 공통코드 조회 API를 추가하고 `Globals.DbType=postgresql`로 전환했다. 샘플 코드는 아직 삭제하지 않았다.
 
 ## 지금까지 진행한 일
 
@@ -32,7 +32,9 @@
 4. HSQL 기준으로 백엔드가 빌드 및 실행되는 것을 확인했다.
 5. `pom.xml`, application 설정, Swagger/JWT, MyBatis, 샘플 Controller/Service/Mapper 구조를 분석했다.
 6. 선택지 C 방향으로 PostgreSQL 드라이버, `Globals.postgresql.*` 설정, `healthcenter` mapper 로딩 경로, 신규 패키지 자리만 추가했다.
-7. 아직 실제 샘플 코드 삭제, `Globals.DbType` PostgreSQL 전환, 보건소 도메인 구현은 하지 않았다.
+7. 공통코드 조회용 PostgreSQL schema/data SQL과 `egovframework.healthcenter.common` API를 추가했다.
+8. `Globals.DbType=postgresql`로 전환했다.
+9. 아직 실제 샘플 코드 삭제와 예약·대기 핵심 도메인 구현은 하지 않았다.
 
 ## pom.xml 의존성 분석
 
@@ -66,14 +68,14 @@ Maven dependency tree 실행 중 중복 의존성 경고가 확인되었다. 현
 
 | 파일 | 역할 |
 |---|---|
-| `backend/src/main/resources/application.properties` | 기본 설정. 현재 `spring.profiles.active=dev`, `Globals.DbType=hsql` |
+| `backend/src/main/resources/application.properties` | 기본 설정. 현재 `spring.profiles.active=dev`, `Globals.DbType=postgresql` |
 | `backend/src/main/resources/application-dev.properties` | 개발 프로필. OS, HSQL, 로그 보관 기간, 파일 경로 일부 override |
 | `backend/src/main/resources/application-prod.properties` | 운영 프로필. 현재도 HSQL 기준 값 포함 |
 
 현재 DB 선택 구조는 `Globals.DbType`에 의존한다.
 
 ```properties
-Globals.DbType=hsql
+Globals.DbType=postgresql
 ```
 
 `EgovConfigAppDatasource`는 `Globals.DbType`이 `hsql`이면 embedded HSQL을 생성하고, `classpath:/db/shtdb.sql`을 로딩한다. 그 외 DB 타입이면 `Globals.{dbType}.DriverClassName`, `Globals.{dbType}.Url`, `Globals.{dbType}.UserName`, `Globals.{dbType}.Password`를 읽어 `BasicDataSource`를 생성한다.
@@ -124,7 +126,7 @@ MyBatis 설정의 핵심 파일은 다음과 같다.
 classpath:/egovframework/mapper/let/**/*_${Globals.DbType}.xml
 ```
 
-현재 `Globals.DbType=hsql`이므로 `*_hsql.xml`만 로딩된다.
+현재 `Globals.DbType=postgresql`이므로 `*_postgresql.xml`만 로딩된다.
 
 현재 템플릿 mapper는 다음 DB별 파일을 포함한다.
 
@@ -135,9 +137,9 @@ classpath:/egovframework/mapper/let/**/*_${Globals.DbType}.xml
 - `*_cubrid.xml`
 - `*_altibase.xml`
 
-PostgreSQL용 mapper 파일은 아직 없다. 신규 보건소 도메인은 기존 `let` 하위가 아니라 `egovframework/mapper/healthcenter` 하위에 둘 예정이므로, mapper 로딩 경로를 다음 중 하나로 결정해야 한다.
+PostgreSQL용 샘플 mapper 파일은 없다. 신규 보건소 도메인은 기존 `let` 하위가 아니라 `egovframework/mapper/healthcenter` 하위에 두며, 공통코드 조회용 `CommonCode_SQL_postgresql.xml`을 먼저 추가했다.
 
-1. 기존 `let` 패턴에 `healthcenter` 패턴을 추가한다. 현재 이 방향으로 1차 반영했다.
+1. 기존 `let` 패턴에 `healthcenter` 패턴을 추가한다. 현재 이 방향으로 반영했다.
 2. 전체 mapper 루트를 `egovframework/mapper/**/*_${dbType}.xml`처럼 넓힌다.
 3. 샘플 정리 후 보건소 mapper 전용 패턴으로 단순화한다.
 
@@ -258,9 +260,8 @@ PostgreSQL 전환 전 확인할 항목은 다음과 같다.
 ## 아직 하지 않은 일
 
 - 샘플 코드 삭제
-- `Globals.DbType` PostgreSQL 전환
-- PostgreSQL용 mapper 작성
-- 보건소 API 구현
+- 샘플 코드 삭제
+- 예약·대기 핵심 도메인 API 구현
 - 실제 커밋 생성
 
 ## 커밋 메시지 초안
