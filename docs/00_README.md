@@ -37,4 +37,8 @@
 - Maven과 Gradle을 혼용하지 않는다.
 - 전자정부프레임워크 관련 핵심 설정은 임의로 제거하지 않는다.
 - 샘플 기능 제거가 필요한 경우, 제거 대상 목록을 먼저 제안한 뒤 진행한다.
+- 템플릿은 먼저 HSQL 기준으로 실행 확인한 뒤 PostgreSQL로 전환한다.
+- MVP에서는 JPA를 사용하지 않고 MyBatis를 기본 DB 접근 방식으로 사용한다.
+- 신규 보건소 도메인은 `egovframework.healthcenter` 하위 패키지에 작성한다.
+- Mapper XML은 `src/main/resources/egovframework/mapper/healthcenter` 하위에 둔다.
 - MVP DB는 PostgreSQL 18 + pgvector Docker 이미지를 사용하되, AI 기능과 vector 컬럼은 향후 확장 기능으로 둔다.

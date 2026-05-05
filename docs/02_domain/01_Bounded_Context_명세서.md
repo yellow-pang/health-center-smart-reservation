@@ -112,15 +112,15 @@ flowchart TD
 
 ## 5. 패키지 구조 제안
 
-실제 패키지명은 eGovFrame Simple Backend Template의 기본 패키지를 확인한 뒤 최종 확정한다. 아래 구조는 목표 패키지 예시이며, 템플릿 적용 후 `com.example.healthcenter` 또는 프로젝트에 맞는 패키지명으로 정리한다.
+신규 보건소 도메인은 eGovFrame Simple Backend Template의 기본 패키지 아래에 둔다. 기존 템플릿 패키지는 유지하고, 신규 기능은 `egovframework.healthcenter` 하위 패키지에 작성한다.
 
 ```text
-com.example.healthcenter
+egovframework.healthcenter
  ├─ member
  │   ├─ api
  │   ├─ application
- │   ├─ domain
- │   ├─ repository
+ │   ├─ mapper
+ │   ├─ policy
  │   └─ dto
  ├─ office
  ├─ reservation
@@ -135,6 +135,14 @@ com.example.healthcenter
      ├─ security
      └─ audit
 ```
+
+Mapper XML은 다음 경로 아래에 둔다.
+
+```text
+src/main/resources/egovframework/mapper/healthcenter
+```
+
+MVP에서는 JPA를 사용하지 않고 MyBatis를 기본 DB 접근 방식으로 사용한다. Request/Response/Command DTO는 `record`를 우선 사용하고, Mapper 조회 결과용 VO는 MyBatis 매핑 편의를 위해 Setter를 제한적으로 허용한다. 단, VO의 Setter를 비즈니스 상태 변경에 사용하지 않는다.
 
 ## 6. 향후 MSA 분리 기준
 
