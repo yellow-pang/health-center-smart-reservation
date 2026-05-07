@@ -6,19 +6,33 @@
 
 1. `01_planning/01_프로젝트_기획서.md`
 2. `01_planning/02_요구사항_정의서.md`
-3. `02_domain/01_Bounded_Context_명세서.md`
-4. `02_domain/02_업무_흐름도.md`
-5. `02_domain/04_공통코드_관리_설계서.md`
-6. `03_database/01_ERD_및_테이블_명세서.md`
-7. `04_api/01_API_명세서.md`
-8. `09_agent/01_코드_에이전트_작업_가이드.md`
-9. `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
+3. `01_planning/04_개발_일정_및_우선순위.md`
+4. `01_planning/05_MVP_개발_로드맵_및_기능_고도화.md`
+5. `01_planning/06_기능_목록_및_고도화_포인트.md`
+6. `02_domain/01_Bounded_Context_명세서.md`
+7. `02_domain/02_업무_흐름도.md`
+8. `02_domain/04_공통코드_관리_설계서.md`
+9. `03_database/01_ERD_및_테이블_명세서.md`
+10. `04_api/01_API_명세서.md`
+11. `05_frontend/01_화면_설계서_v0_프롬프트.md`
+12. `05_frontend/02_UX_API_계약_우선순위.md`
+13. `10_backend_transition/01_eGovFrame_백엔드_템플릿_전환_현황.md`
+14. `10_backend_transition/02_PostgreSQL_전환_준비_완료_및_다음_작업.md`
+15. `10_backend_transition/03_샘플_코드_정리_범위_및_안전_절차.md`
+16. `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
+17. `09_agent/01_코드_에이전트_작업_가이드.md`
+18. `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
+19. `09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`
+20. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
 
 ## 코드 작성 전 반드시 확인할 문서
 
 - `09_agent/01_코드_에이전트_작업_가이드.md`
 - `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
+- `09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`
 - `02_domain/04_공통코드_관리_설계서.md`
+- `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
+- `05_frontend/02_UX_API_계약_우선순위.md`
 
 ## 개발 기준
 
