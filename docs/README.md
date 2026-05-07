@@ -23,13 +23,15 @@
 17. `09_agent/01_코드_에이전트_작업_가이드.md`
 18. `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
 19. `09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`
-20. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
+20. `09_agent/04_다음_작업_프롬프트.md`
+21. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
 
 ## 코드 작성 전 반드시 확인할 문서
 
 - `09_agent/01_코드_에이전트_작업_가이드.md`
 - `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
 - `09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`
+- `09_agent/04_다음_작업_프롬프트.md`
 - `02_domain/04_공통코드_관리_설계서.md`
 - `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
 - `05_frontend/02_UX_API_계약_우선순위.md`
