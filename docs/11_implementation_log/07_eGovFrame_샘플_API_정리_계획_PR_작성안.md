@@ -7,10 +7,11 @@
 | 현재 브랜치 | `refactor/egov-sample-api-cleanup` |
 | base 브랜치 | `main` |
 | 작업 성격 | 관련 없는 eGovFrame 샘플 기능 제거 기준 확정 및 단계별 제거 |
-| 작업 트리 | PR 문서 작성 전 코드/문서 변경 있음 |
+| 작업 트리 | PR 전 최종 확인 결과를 PR 문서에 반영 중 |
 | 코드 삭제 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플, 게시판/게시판 이용정보/회원관리 샘플, 파일/이미지 DB 기반 샘플 API 제거 |
 | 빌드 확인 | `mvn -q -DskipTests compile`, `mvn -q test-compile` 성공 |
-| API 확인 | 이전 단계에서 `GET /api/common-codes/RESERVATION_STATUS` 성공, 파일/이미지 API 제거 후 런타임 재확인은 PR 전 필요 |
+| API 확인 | 이전 단계에서 `GET /api/common-codes/RESERVATION_STATUS` 성공, PR 전 재확인은 `localhost:8080` 연결 거부로 미확인 |
+| Swagger 확인 | `springdoc` 설정과 남은 Controller/Mapping 정적 확인 완료, Swagger UI 런타임 확인은 서버 미기동으로 미확인 |
 
 ## PR 제목
 
@@ -102,10 +103,14 @@ refactor: eGovFrame 샘플 API 제거
 - [x] JSP 파일 부재와 JSP 태그 핸들러 미참조 확인
 - [x] 파일/이미지 DB 기반 샘플 API 참조 제거 확인
 - [x] 남은 Controller 목록 확인
+- [x] Swagger/OpenAPI 설정 확인
+- [x] Swagger 노출 후보 Controller/Mapping 정적 확인
 - [x] `tomcat-embed-jasper` 제거 후 `mvn -q -DskipTests compile`
 - [x] `mvn -q -DskipTests compile`
 - [x] `mvn -q test-compile`
-- [x] `GET /api/common-codes/RESERVATION_STATUS`
+- [x] 이전 단계 `GET /api/common-codes/RESERVATION_STATUS`
+- [ ] PR 전 최종 `GET /api/common-codes/RESERVATION_STATUS`
+- [ ] Swagger UI 런타임 확인
 
 ## 미검증 사유
 
@@ -113,13 +118,17 @@ refactor: eGovFrame 샘플 API 제거
 - GitNexus impact 분석은 수행하지 못했고, Selenium, JPA/QueryDSL, 개인 일정, 게시판, 회원관리, HSQL/미사용 DB 드라이버, 벤더별 Mapper, JSP 태그 핸들러 제거는 `rg` 참조 확인으로 대체했습니다.
 - GitNexus `detect_changes`는 CLI에서 `unknown command 'detect_changes'`로 실패해 수행하지 못했습니다.
 - JSP/Jasper 정리 후 백엔드 자동 실행은 Windows 권한 문제로 `Start-Process`가 거부되어 공통코드 API 재호출까지 확인하지 못했습니다.
-- 파일/이미지 DB 기반 샘플 API 제거 후에는 Maven compile과 test-compile까지 확인했고, 런타임 API 호출은 PR 전 재확인 대상으로 남겼습니다.
+- 파일/이미지 DB 기반 샘플 API 제거 후에는 Maven compile과 test-compile까지 확인했습니다.
+- PR 전 최종 런타임 확인 시 `http://localhost:8080/actuator/health`는 연결 거부로 실패했습니다.
+- Docker 상태 확인은 Docker API 권한 문제로 실패했습니다.
+- `http://localhost:8080/api/common-codes/RESERVATION_STATUS`는 연결 거부로 실패했습니다.
+- Swagger UI 런타임 확인은 서버 미기동 상태라 수행하지 못했고, `springdoc` 설정과 남은 Controller/Mapping 정적 확인으로 대체했습니다.
 
 ## 후속 작업
 
-- Swagger 노출 API 목록과 남은 샘플 Controller 재점검
 - 보안/token 골격으로 남긴 로그인, 관리자, SNS 샘플의 유지 범위 재확인
-- PR 전 공통코드 API 런타임 호출 재확인
+- PR 생성 전 또는 PR 리뷰 중 Docker 권한 확보 후 공통코드 API와 Swagger UI 런타임 재확인
+- 다음 브랜치에서 Auth/Member Context 구현 범위 확정
 ````
 
 ## 변경 파일 요약
