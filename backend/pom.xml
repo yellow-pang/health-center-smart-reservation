@@ -28,10 +28,8 @@
 		<java.version>17</java.version>
 		<springdoc.openapi.ui.version>2.6.0</springdoc.openapi.ui.version>
 		<commons-validator.version>1.9.0</commons-validator.version>
-		<protobuf.java.version>3.25.5</protobuf.java.version>
 		<log4j2.version>2.25.3</log4j2.version>
 		<slf4j.version>2.0.17</slf4j.version>
-		<log4jdbc.version>1.2</log4jdbc.version>
 		<jjwt.version>0.12.6</jjwt.version>
 		<icu4j.version>77.1</icu4j.version>
 		<!-- CVE-2026-29145(CRITICAL), CVE-2026-29129, CVE-2026-34487, CVE-2026-34483: Tomcat 10.1.54로 업그레이드 -->
@@ -87,27 +85,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.querydsl</groupId>
-			<artifactId>querydsl-jpa</artifactId>
-			<classifier>jakarta</classifier>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.querydsl</groupId>
-			<artifactId>querydsl-apt</artifactId>
-			<classifier>jakarta</classifier>
-			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.tomcat.embed</groupId>
-			<artifactId>tomcat-embed-jasper</artifactId>
 		</dependency>
 		<!-- CVE-2026-40972(HIGH): DevTools remote secret 타이밍 공격 취약점
 		     수정 버전: Spring Boot 3.5.14+ (미출시) - 릴리스 후 버전 명시 업데이트 필요
@@ -212,36 +189,12 @@
 			<version>${commons-validator.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.hsqldb</groupId>
-			<artifactId>hsqldb</artifactId>
-		</dependency>
-
-		<!-- mysql driver -->
-		<dependency>
-			<groupId>com.mysql</groupId>
-			<artifactId>mysql-connector-j</artifactId>
-		</dependency>
-
 		<!-- postgresql driver -->
 		<!-- CVE-2026-42198: SCRAM PBKDF2 iterations DoS 취약점 보완 -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 			<version>${postgresql.version}</version>
-		</dependency>
-
-		<!-- CVE-2024-7254: mysql-connector-j에서 주입되는 protobuf-java 3.25.1 취약점
-		보완용 직접 주입 -->
-		<dependency>
-			<groupId>com.google.protobuf</groupId>
-			<artifactId>protobuf-java</artifactId>
-			<version>${protobuf.java.version}</version>
 		</dependency>
 
 		<!-- validator -->
@@ -271,19 +224,6 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>log4j-over-slf4j</artifactId>
 			<version>${slf4j.version}</version>
-		</dependency>
-
-		<!-- log4jdbc driver -->
-		<dependency>
-			<groupId>com.googlecode.log4jdbc</groupId>
-			<artifactId>log4jdbc</artifactId>
-			<version>${log4jdbc.version}</version>
-			<exclusions>
-				<exclusion>
-					<artifactId>slf4j-api</artifactId>
-					<groupId>org.slf4j</groupId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 
 		<!-- JWT 2022.07.27 -->
@@ -317,19 +257,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tomcat.embed</groupId>
-			<artifactId>tomcat-embed-jasper</artifactId>
-			<version>${tomcat-embed.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.tomcat.embed</groupId>
 			<artifactId>tomcat-embed-websocket</artifactId>
-			<version>${tomcat-embed.version}</version>
-		</dependency>
-
-		<!-- CVE-2025-48924: 보안취약점 보완용 직접 주입 -->
-		<dependency>
-			<groupId>org.apache.tomcat</groupId>
-			<artifactId>tomcat-annotations-api</artifactId>
 			<version>${tomcat-embed.version}</version>
 		</dependency>
 
@@ -347,11 +275,6 @@
 			<version>${commons-lang3.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.seleniumhq.selenium</groupId>
-			<artifactId>selenium-java</artifactId>
-			<scope>test</scope>
-		</dependency>
 	</dependencies>
 
 	<build>
@@ -378,20 +301,9 @@
 					<encoding>UTF-8</encoding>
 					<annotationProcessors>
 						<annotationProcessor>
-							com.querydsl.apt.jpa.JPAAnnotationProcessor</annotationProcessor>
-						<annotationProcessor>
 							lombok.launch.AnnotationProcessorHider$AnnotationProcessor</annotationProcessor>
 					</annotationProcessors>
 					<annotationProcessorPaths>
-						<path>
-							<groupId>com.querydsl</groupId>
-							<artifactId>querydsl-apt</artifactId>
-							<classifier>jakarta</classifier>
-						</path>
-						<path>
-							<groupId>jakarta.persistence</groupId>
-							<artifactId>jakarta.persistence-api</artifactId>
-						</path>
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>

@@ -19,7 +19,7 @@ fix: 공통코드 seed SQL 런타임 오류 수정
 
 ## PR 본문
 
-```markdown
+````markdown
 ## 개요
 
 PostgreSQL 공통코드 API를 Docker PostgreSQL 환경에서 실제 실행 검증하고, 백엔드 기동 중 발견된 seed SQL 오류를 수정했습니다.
@@ -75,7 +75,7 @@ ERROR: column reference "description" is ambiguous
 - SNS 로그인 샘플 제거 가능 여부 영향 분석
 - 안전하면 SNS 로그인 샘플부터 기능 묶음 단위로 정리
 - Office Context `GET /api/service-types` 구현 착수
-```
+````
 
 ## 변경 파일 요약
 
@@ -94,13 +94,13 @@ ERROR: column reference "description" is ambiguous
 - [ ] PR merge 완료
 - [ ] `main` 최신화 확인
 - [ ] `main`에서 필요 시 `mvn -q -DskipTests compile` 재확인
-- [ ] 후속 브랜치 생성 여부 결정
+- [ ] 후속 브랜치는 `type/topic-kebab-case` 형식으로 생성
 - [ ] `fix-postgres-common-code-runtime-verification` 브랜치 삭제
 
 ## 후속 브랜치 이름 추천
 
 ```text
-refactor-remove-sns-login-sample
-refactor-egov-sample-api-cleanup
-feat-office-service-type-api
+refactor/remove-sns-login-sample
+refactor/egov-sample-api-cleanup
+feat/office-service-type-api
 ```

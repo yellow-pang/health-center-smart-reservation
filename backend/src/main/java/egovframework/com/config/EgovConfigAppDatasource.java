@@ -7,8 +7,6 @@ import org.apache.commons.dbcp2.BasicDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseBuilder;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
 /**
  * @ClassName : EgovConfigAppDatasource.java
@@ -57,18 +55,6 @@ public class EgovConfigAppDatasource {
 	}
 
 	/**
-	 * @return [dataSource 설정] HSQL 설정
-	 */
-	private DataSource dataSourceHSQL() {
-		return new EmbeddedDatabaseBuilder()
-			.setType(EmbeddedDatabaseType.HSQL)
-			.setScriptEncoding("UTF8")
-			.addScript("classpath:/db/shtdb.sql")
-			//			.addScript("classpath:/otherpath/other.sql")
-			.build();
-	}
-
-	/**
 	 * @return [dataSource 설정] basicDataSource 설정
 	 */
 	private DataSource basicDataSource() {
@@ -85,10 +71,6 @@ public class EgovConfigAppDatasource {
 	 */
 	@Bean(name = {"dataSource", "egov.dataSource", "egovDataSource"})
 	public DataSource dataSource() {
-		if ("hsql".equals(dbType)) {
-			return dataSourceHSQL();
-		} else {
-			return basicDataSource();
-		}
+		return basicDataSource();
 	}
 }
