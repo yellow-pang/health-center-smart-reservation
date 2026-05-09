@@ -34,9 +34,12 @@
 		<log4jdbc.version>1.2</log4jdbc.version>
 		<jjwt.version>0.12.6</jjwt.version>
 		<icu4j.version>77.1</icu4j.version>
-		<tomcat-embed.version>10.1.52</tomcat-embed.version>
+		<!-- CVE-2026-29145(CRITICAL), CVE-2026-29129, CVE-2026-34487, CVE-2026-34483: Tomcat 10.1.54로 업그레이드 -->
+		<tomcat-embed.version>10.1.54</tomcat-embed.version>
 		<commons-beanutils.version>1.11.0</commons-beanutils.version>
 		<commons-lang3.version>3.18.0</commons-lang3.version>
+		<!-- CVE-2026-42198: PostgreSQL SCRAM PBKDF2 DoS 취약점 보완 -->
+		<postgresql.version>42.7.7</postgresql.version>
 	</properties>
 
 	<repositories>
@@ -100,6 +103,9 @@
 			<groupId>org.apache.tomcat.embed</groupId>
 			<artifactId>tomcat-embed-jasper</artifactId>
 		</dependency>
+		<!-- CVE-2026-40972(HIGH): DevTools remote secret 타이밍 공격 취약점
+		     수정 버전: Spring Boot 3.5.14+ (미출시) - 릴리스 후 버전 명시 업데이트 필요
+		     참고: DevTools는 개발 환경 전용(optional)이며 프로덕션 배포 시 포함되지 않음 -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-devtools</artifactId>
@@ -217,9 +223,11 @@
 		</dependency>
 
 		<!-- postgresql driver -->
+		<!-- CVE-2026-42198: SCRAM PBKDF2 iterations DoS 취약점 보완 -->
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
+			<version>${postgresql.version}</version>
 		</dependency>
 
 		<!-- CVE-2024-7254: mysql-connector-j에서 주입되는 protobuf-java 3.25.1 취약점
