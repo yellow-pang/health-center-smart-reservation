@@ -14,7 +14,13 @@ SET group_name = EXCLUDED.group_name,
     updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO common_codes (group_id, code, code_name, description, sort_order, system_code, active)
-SELECT id, code, code_name, description, sort_order, true, true
+SELECT common_code_groups.id,
+       seed.code,
+       seed.code_name,
+       seed.description,
+       seed.sort_order,
+       true,
+       true
 FROM common_code_groups
 CROSS JOIN (
     VALUES
