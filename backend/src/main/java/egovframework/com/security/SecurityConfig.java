@@ -5,7 +5,6 @@ import java.util.Arrays;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -41,11 +40,6 @@ import jakarta.servlet.MultipartConfigElement;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // Http Methpd : Get 인증예외 List
-    private String[] AUTH_GET_WHITELIST = {
-            "/image", // 갤러리 이미지보기
-    };
-
     // 인증 예외 List
     private String[] AUTH_WHITELIST = {
             "/",
@@ -55,7 +49,6 @@ public class SecurityConfig {
             "/auth/logout", // 로그아웃
             "/api/common-codes", // 보건소 공통코드 일괄 조회
             "/api/common-codes/**", // 보건소 공통코드 조회
-            "/file", // 파일 다운로드
 
             /* 정적 리소스 */
             "/css/**",
@@ -134,7 +127,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 페이지는 ADMIN만 접근
                         .requestMatchers(AUTH_WHITELIST).permitAll()
-                        .requestMatchers(HttpMethod.GET, AUTH_GET_WHITELIST).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

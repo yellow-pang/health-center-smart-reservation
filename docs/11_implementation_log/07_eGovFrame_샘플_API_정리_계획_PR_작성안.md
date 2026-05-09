@@ -8,9 +8,9 @@
 | base 브랜치 | `main` |
 | 작업 성격 | 관련 없는 eGovFrame 샘플 기능 제거 기준 확정 및 단계별 제거 |
 | 작업 트리 | PR 문서 작성 전 코드/문서 변경 있음 |
-| 코드 삭제 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플, 게시판/게시판 이용정보/회원관리 샘플 제거 |
+| 코드 삭제 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플, 게시판/게시판 이용정보/회원관리 샘플, 파일/이미지 DB 기반 샘플 API 제거 |
 | 빌드 확인 | `mvn -q -DskipTests compile`, `mvn -q test-compile` 성공 |
-| API 확인 | `GET /api/common-codes/RESERVATION_STATUS` 성공 |
+| API 확인 | 이전 단계에서 `GET /api/common-codes/RESERVATION_STATUS` 성공, 파일/이미지 API 제거 후 런타임 재확인은 PR 전 필요 |
 
 ## PR 제목
 
@@ -53,6 +53,10 @@ refactor: eGovFrame 샘플 API 제거
 - JSP 파일 부재와 미참조 상태를 확인하고 JSP 태그 핸들러 제거
 - REST API 서버 기준 `tomcat-embed-jasper` 의존성 제거
 - 중복 선언된 `tomcat-annotations-api`, `commons-lang3` 정리
+- 파일/이미지 DB 기반 샘플 API, Service, DAO, VO 제거
+- 제거된 파일 관리 MyBatis typeAlias 정리
+- `/file`, `/image` 보안 예외 제거
+- 파일 저장 경로와 첨부 크기 샘플 설정 제거
 - 실제 삭제 요청을 받았을 때의 안전 절차 작성
 
 ## 제거 후보
@@ -64,6 +68,7 @@ refactor: eGovFrame 샘플 API 제거
 - JPA/QueryDSL 테스트 샘플
 - Selenium 테스트 샘플
 - HSQL 및 벤더별 샘플 DB 자원
+- 파일/이미지 DB 기반 샘플 API
 
 ## 유지 대상
 
@@ -77,6 +82,8 @@ refactor: eGovFrame 샘플 API 제거
 - `egovframework.healthcenter` 신규 도메인
 - `egovframework/mapper/healthcenter` 신규 Mapper
 - PostgreSQL 공통코드 SQL
+- MultipartResolver와 허용 확장자 설정
+- 정적 `/images/**` 리소스 경로
 
 ## 검증
 
@@ -93,6 +100,8 @@ refactor: eGovFrame 샘플 API 제거
 - [x] HSQL/MySQL/log4jdbc/protobuf 참조 확인
 - [x] 잔여 벤더별 Mapper 제거 확인
 - [x] JSP 파일 부재와 JSP 태그 핸들러 미참조 확인
+- [x] 파일/이미지 DB 기반 샘플 API 참조 제거 확인
+- [x] 남은 Controller 목록 확인
 - [x] `tomcat-embed-jasper` 제거 후 `mvn -q -DskipTests compile`
 - [x] `mvn -q -DskipTests compile`
 - [x] `mvn -q test-compile`
@@ -104,12 +113,13 @@ refactor: eGovFrame 샘플 API 제거
 - GitNexus impact 분석은 수행하지 못했고, Selenium, JPA/QueryDSL, 개인 일정, 게시판, 회원관리, HSQL/미사용 DB 드라이버, 벤더별 Mapper, JSP 태그 핸들러 제거는 `rg` 참조 확인으로 대체했습니다.
 - GitNexus `detect_changes`는 CLI에서 `unknown command 'detect_changes'`로 실패해 수행하지 못했습니다.
 - JSP/Jasper 정리 후 백엔드 자동 실행은 Windows 권한 문제로 `Start-Process`가 거부되어 공통코드 API 재호출까지 확인하지 못했습니다.
+- 파일/이미지 DB 기반 샘플 API 제거 후에는 Maven compile과 test-compile까지 확인했고, 런타임 API 호출은 PR 전 재확인 대상으로 남겼습니다.
 
 ## 후속 작업
 
 - Swagger 노출 API 목록과 남은 샘플 Controller 재점검
 - 보안/token 골격으로 남긴 로그인, 관리자, SNS 샘플의 유지 범위 재확인
-- 필요 시 Swagger 노출 API 목록 재확인
+- PR 전 공통코드 API 런타임 호출 재확인
 ````
 
 ## 변경 파일 요약
@@ -146,6 +156,19 @@ refactor: eGovFrame 샘플 API 제거
 | `backend/src/main/resources/egovframework/mapper/let/uat/uia/*` | 로그인 샘플 벤더별 Mapper XML 제거 |
 | `backend/src/main/java/egovframework/com/cmm/EgovComCrossSiteHndlr.java` | JSP 태그 핸들러 제거 |
 | `backend/pom.xml` | Jasper, 중복 Tomcat/commons 의존성 선언 정리 |
+| `backend/src/main/java/egovframework/com/cmm/service/EgovFileMngService.java` | 파일 관리 샘플 Service 제거 |
+| `backend/src/main/java/egovframework/com/cmm/service/EgovFileMngUtil.java` | 파일 관리 샘플 Util 제거 |
+| `backend/src/main/java/egovframework/com/cmm/service/FileVO.java` | 파일 관리 샘플 VO 제거 |
+| `backend/src/main/java/egovframework/com/cmm/service/impl/EgovFileMngServiceImpl.java` | 파일 관리 샘플 Service 구현 제거 |
+| `backend/src/main/java/egovframework/com/cmm/service/impl/FileManageDAO.java` | 파일 관리 샘플 DAO 제거 |
+| `backend/src/main/java/egovframework/com/cmm/web/EgovFileDownloadController.java` | 파일 다운로드 샘플 API 제거 |
+| `backend/src/main/java/egovframework/com/cmm/web/EgovFileMngApiController.java` | 파일 업로드 샘플 API 제거 |
+| `backend/src/main/java/egovframework/com/cmm/web/EgovImageProcessController.java` | 이미지 처리 샘플 API 제거 |
+| `backend/src/main/java/egovframework/com/security/SecurityConfig.java` | 제거된 `/file`, `/image` 인증 예외 정리 |
+| `backend/src/main/java/egovframework/com/config/EgovConfigAppProperties.java` | 제거된 파일 저장 경로 샘플 속성 정리 |
+| `backend/src/main/resources/application.properties` | 제거된 파일 저장 경로와 첨부 크기 샘플 설정 정리 |
+| `backend/src/main/resources/application-dev.properties` | 제거된 파일 저장 경로 샘플 설정 정리 |
+| `backend/src/main/resources/application-prod.properties` | 제거된 파일 저장 경로 샘플 설정 정리 |
 | `docs/11_implementation_log/06_eGovFrame_샘플_API_정리_계획_및_후보_목록.md` | 제거 기준, 유지 후보, 제거 순서, Selenium 제거 상태 문서화 |
 | `docs/13_schedule/02_전체_작업_체크리스트.md` | 샘플 API 제거 후보 선정 작업 기록 추가 |
 | `docs/11_implementation_log/07_eGovFrame_샘플_API_정리_계획_PR_작성안.md` | 이번 PR 작성안 추가 |

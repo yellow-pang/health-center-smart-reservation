@@ -242,9 +242,9 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 
 | 대상 | 판단 | 이유 |
 |---|---|---|
-| `egovframework.com.cmm` 전체 | 보류 | 파일, 메시지, 공통 유틸이 여러 샘플과 설정에 걸쳐 사용됨 |
-| 파일 업로드/다운로드 API | 보류 | 게시판/일정 샘플과 연결되어 있지만 향후 민원 첨부 기능에 재사용 가능 |
-| 이미지 처리 Controller | 보류 | 파일 기능과 함께 판단 필요 |
+| `egovframework.com.cmm` 공통 유틸 일부 | 유지 | 메시지, 공통 응답, MultipartResolver 등 기반 설정은 다른 기능에서 재사용 가능 |
+| 파일 업로드/다운로드 API | 제거 완료 | 게시판/일정 샘플과 연결된 DB 기반 FileManage Mapper가 제거되어 런타임 실패 가능성이 높음 |
+| 이미지 처리 Controller | 제거 완료 | 파일 관리 API와 같은 DB 기반 샘플 흐름에 묶여 있어 함께 제거 |
 | SNS 로그인 샘플 `egovframework.com.sns` | 유지 | 향후 소셜 로그인/간편 인증 UX 확장 후보 |
 | 로그인 샘플 `egovframework.let.uat.uia` | 보안 관련 보류 | token 방식과 Spring Security 유지 예정이므로 Auth/Member 전환 전 삭제하지 않음 |
 | 관리자 샘플 `egovframework.let.uat.esm` | 보안 관련 보류 | 관리자 권한, 비밀번호 변경, JWT 권한 흐름 확인용으로 남김 |
@@ -264,6 +264,7 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 | 6 | 회원관리 샘플 제거 | 큼 | 높음 | 완료, 보안/token 골격은 유지 |
 | 7 | HSQL 및 벤더별 샘플 DB 자원 정리 | 중간 | 중간 | 완료, HSQL 내장 DB/미사용 DB 드라이버/잔여 벤더별 Mapper 제거 |
 | 8 | JSP 태그 핸들러와 Jasper 의존성 정리 | 작음 | 낮음 | 완료, REST API 서버 기준 JSP 미사용 확인 |
+| 9 | 파일/이미지 DB 기반 샘플 API 제거 | 중간 | 중간 | 완료, MultipartResolver와 정적 `/images/**` 경로는 유지 |
 
 첫 실제 삭제 작업은 영향이 가장 작은 `Selenium 테스트 샘플 제거`를 추천한다.
 
@@ -304,6 +305,7 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 - [x] HSQL 내장 DB 및 미사용 DB 드라이버 제거
 - [x] 잔여 벤더별 Mapper 정리
 - [x] JSP 태그 핸들러와 Jasper 의존성 제거
+- [x] 파일/이미지 DB 기반 샘플 API 제거
 
 ### 검증 체크리스트
 
@@ -317,17 +319,19 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 - [x] `egovframework/mapper/let` 잔여 Mapper 제거 후 `rg --files` 확인
 - [x] JSP 파일 부재와 `EgovComCrossSiteHndlr` 미참조 확인
 - [x] `tomcat-embed-jasper` 제거 후 참조 확인
+- [x] 파일/이미지 DB 기반 샘플 API 참조 제거 후 `rg` 확인
+- [x] 남은 Controller 목록 확인
 - [x] `mvn -q -DskipTests compile`
 - [x] `mvn -q test-compile`
 - [x] `GET /api/common-codes/RESERVATION_STATUS`
 
-Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 후 Maven compile과 test-compile을 확인했다. 게시판/게시판 이용정보/회원관리 샘플 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다. HSQL 내장 DB, 미사용 DB 드라이버, 잔여 벤더별 Mapper 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다. JSP 태그 핸들러와 Jasper 의존성 제거 후 Maven compile과 test-compile을 확인했다.
+Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 후 Maven compile과 test-compile을 확인했다. 게시판/게시판 이용정보/회원관리 샘플 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다. HSQL 내장 DB, 미사용 DB 드라이버, 잔여 벤더별 Mapper 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다. JSP 태그 핸들러와 Jasper 의존성 제거 후 Maven compile과 test-compile을 확인했다. 파일/이미지 DB 기반 샘플 API 제거 후 Maven compile과 test-compile을 확인했고, 남은 Controller는 공통코드, 로그인, SNS 로그인, 관리자 보안 확인 흐름으로 축소했다.
 
 ## 12. 다음 작업 추천
 
 1. 다음 작업은 Swagger 노출 API 목록과 남은 샘플 Controller를 재점검한다.
 2. 보안/token 골격으로 남긴 로그인, 관리자, SNS 샘플을 Auth/Member 설계 전까지 보류할지 다시 확인한다.
-3. 삭제 단계마다 Maven compile과 공통코드 API를 확인한다.
+3. 이번 브랜치 PR 전 공통코드 API 런타임 호출을 다시 확인한다.
 
 ## 13. 커밋 메시지 초안
 
@@ -345,4 +349,6 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 - PostgreSQL 기준 datasource 설정으로 정리
 - `egovframework/mapper/let` 하위 벤더별 샘플 Mapper XML 제거
 - JSP 태그 핸들러와 `tomcat-embed-jasper` 의존성 제거
+- 파일/이미지 DB 기반 샘플 API, FileVO, 파일 관리 Service/DAO 제거
+- `/file`, `/image` 보안 예외와 파일 저장 경로 샘플 설정 제거
 ```

@@ -30,9 +30,6 @@ import org.egovframe.rte.fdl.property.impl.EgovPropertyServiceImpl;
 @Configuration
 public class EgovConfigAppProperties {
 	
-	@Value("${Globals.fileStorePath}")
-	private String fileStorePath;
-
 	@Value("${Globals.addedOptions}")
 	private String addedOptions;
 
@@ -40,8 +37,6 @@ public class EgovConfigAppProperties {
 	private String pageUnit;
 	@Value("${Globals.pageSize}")
 	private String pageSize;
-	@Value("${Globals.posblAtchFileSize}")
-	private String posblAtchFileSize;
 	
 	
 	@Bean(destroyMethod = "destroy")
@@ -51,8 +46,6 @@ public class EgovConfigAppProperties {
 		Map<String, String> properties = new HashMap<String, String>();
 		properties.put("Globals.pageUnit", pageUnit);
 		properties.put("Globals.pageSize", pageSize);
-		properties.put("Globals.posblAtchFileSize", posblAtchFileSize);
-		properties.put("Globals.fileStorePath", fileStorePath);
 		properties.put("Globals.addedOptions", addedOptions);
 
 		egovPropertyServiceImpl.setProperties(properties);
