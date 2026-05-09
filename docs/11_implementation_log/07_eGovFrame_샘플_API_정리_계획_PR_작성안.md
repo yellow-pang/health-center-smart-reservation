@@ -6,16 +6,16 @@
 |---|---|
 | 현재 브랜치 | `refactor/egov-sample-api-cleanup` |
 | base 브랜치 | `main` |
-| 작업 성격 | 관련 없는 eGovFrame 샘플 기능 제거 기준 확정 및 단계별 제거 계획 |
-| 작업 트리 | PR 문서 작성 전 문서 변경 있음 |
-| 코드 삭제 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 |
+| 작업 성격 | 관련 없는 eGovFrame 샘플 기능 제거 기준 확정 및 단계별 제거 |
+| 작업 트리 | PR 문서 작성 전 코드/문서 변경 있음 |
+| 코드 삭제 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플, 게시판/게시판 이용정보/회원관리 샘플 제거 |
 | 빌드 확인 | `mvn -q -DskipTests compile`, `mvn -q test-compile` 성공 |
 | API 확인 | `GET /api/common-codes/RESERVATION_STATUS` 성공 |
 
 ## PR 제목
 
 ```text
-docs: eGovFrame 샘플 API 제거 기준 확정
+refactor: eGovFrame 샘플 API 제거
 ```
 
 ## PR 본문
@@ -23,9 +23,9 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 ````markdown
 ## 개요
 
-전자정부프레임워크 Simple Backend Template에 포함된 샘플 기능 중 보건소 예약·대기 시스템과 관련 없는 기능을 제거하기 위한 기준과 순서를 확정했습니다.
+전자정부프레임워크 Simple Backend Template에 포함된 샘플 기능 중 보건소 예약·대기 시스템과 관련 없는 기능을 제거했습니다.
 
-이번 문서 기준에 따라 실제 삭제는 한 번에 전부 진행하지 않고, 기능 묶음 하나씩 영향 확인 후 진행합니다. Spring Security, JWT, token 로그인 골격처럼 보안과 관련된 기반은 유지합니다.
+삭제는 기능 묶음 단위로 진행했고, Spring Security, JWT, token 로그인 골격처럼 보안과 관련된 기반은 유지했습니다.
 
 ## 변경 내용
 
@@ -40,6 +40,11 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 - JPA/QueryDSL 테스트 샘플과 관련 의존성, annotation processor 설정 제거
 - 개인 일정 샘플 API, Service, DAO, VO, Mapper XML, Validator XML 제거
 - 개인 일정 샘플의 Security GET 인증 예외 경로 제거
+- 게시판 샘플 API, Service, DAO, Domain, DTO, Mapper XML, Validator XML, Test 제거
+- 게시판 이용정보/사용자 정보 샘플 API, Service, DAO, Mapper XML, Validator XML 제거
+- 회원관리 샘플 API, Service, DAO, VO, Mapper XML 제거
+- 제거된 `/mainPage`, `/board`, `/inform`, `/members`, `/mypage`, `/etc/member` 계열 인증 규칙 정리
+- 제거된 회원관리 MyBatis typeAlias 정리
 - 실제 삭제 요청을 받았을 때의 안전 절차 작성
 
 ## 제거 후보
@@ -76,6 +81,7 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 - [x] Selenium 참조 확인
 - [x] JPA/QueryDSL 참조 확인
 - [x] 개인 일정 샘플 참조 확인
+- [x] 게시판/게시판 이용정보/회원관리 샘플 참조 확인
 - [x] `mvn -q -DskipTests compile`
 - [x] `mvn -q test-compile`
 - [x] `GET /api/common-codes/RESERVATION_STATUS`
@@ -83,15 +89,14 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 ## 미검증 사유
 
 - GitNexus 인덱스가 stale 상태였고, `npm.cmd exec -- gitnexus analyze`는 `Not inside a git repository`로 실패했습니다.
-- GitNexus impact 분석은 수행하지 못했고, Selenium, JPA/QueryDSL, 개인 일정 샘플 제거는 `rg` 참조 확인으로 대체했습니다.
+- GitNexus impact 분석은 수행하지 못했고, Selenium, JPA/QueryDSL, 개인 일정, 게시판, 회원관리 샘플 제거는 `rg` 참조 확인으로 대체했습니다.
+- GitNexus `detect_changes`는 CLI에서 `unknown command 'detect_changes'`로 실패해 수행하지 못했습니다.
 
 ## 후속 작업
 
-- Selenium 테스트 샘플부터 기능 묶음 단위로 제거
-- 선택한 기능 묶음의 영향 범위 재확인
-- 한 번에 하나의 기능 묶음만 삭제
-- 삭제 후 `mvn -q -DskipTests compile` 실행
-- 가능하면 백엔드 실행과 공통코드 API 확인
+- HSQL 및 벤더별 샘플 DB 자원 정리
+- PostgreSQL 기준으로 남길 SQL과 제거할 SQL 분리
+- 필요 시 Swagger 노출 API 목록 재확인
 ````
 
 ## 변경 파일 요약
@@ -105,6 +110,18 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 | `backend/src/main/resources/egovframework/mapper/let/cop/smt/sim/*` | 개인 일정 샘플 Mapper XML 제거 |
 | `backend/src/main/resources/egovframework/validator/let/cop/smt/sim/*` | 개인 일정 샘플 Validator XML 제거 |
 | `backend/src/main/java/egovframework/com/security/SecurityConfig.java` | 제거된 `/schedule/*` 인증 예외 경로 정리 |
+| `backend/src/main/java/egovframework/let/cop/bbs/*` | 게시판 샘플 Java 코드 제거 |
+| `backend/src/main/java/egovframework/let/cop/com/*` | 게시판 이용정보/사용자 정보 샘플 Java 코드 제거 |
+| `backend/src/main/java/egovframework/let/main/*` | 게시판 기반 메인 샘플 API 제거 |
+| `backend/src/main/java/egovframework/let/uss/umt/*` | 회원관리 샘플 Java 코드 제거 |
+| `backend/src/main/resources/egovframework/mapper/let/cop/bbs/*` | 게시판 샘플 Mapper XML 제거 |
+| `backend/src/main/resources/egovframework/mapper/let/cop/com/*` | 게시판 이용정보/사용자 정보 샘플 Mapper XML 제거 |
+| `backend/src/main/resources/egovframework/mapper/let/uss/umt/*` | 회원관리 샘플 Mapper XML 제거 |
+| `backend/src/main/resources/egovframework/validator/let/cop/bbs/*` | 게시판 샘플 Validator XML 제거 |
+| `backend/src/main/resources/egovframework/validator/let/cop/com/*` | 게시판 이용정보 샘플 Validator XML 제거 |
+| `backend/src/test/java/egovframework/let/cop/bbs/*` | 게시판 샘플 테스트 제거 |
+| `backend/src/main/resources/application.properties` | 제거된 메인 페이지 샘플 설정 제거 |
+| `backend/src/main/resources/egovframework/mapper/config/mapper-config.xml` | 제거된 회원관리 typeAlias 정리 |
 | `docs/11_implementation_log/06_eGovFrame_샘플_API_정리_계획_및_후보_목록.md` | 제거 기준, 유지 후보, 제거 순서, Selenium 제거 상태 문서화 |
 | `docs/13_schedule/02_전체_작업_체크리스트.md` | 샘플 API 제거 후보 선정 작업 기록 추가 |
 | `docs/11_implementation_log/07_eGovFrame_샘플_API_정리_계획_PR_작성안.md` | 이번 PR 작성안 추가 |
@@ -119,7 +136,7 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 ## 후속 브랜치 이름 추천
 
 ```text
-refactor/remove-sns-login-sample
-refactor/remove-selenium-test-sample
-refactor/remove-jpa-querydsl-test-sample
+refactor/remove-vendor-db-samples
+refactor/auth-member-domain
+refactor/healthcenter-reservation-api
 ```

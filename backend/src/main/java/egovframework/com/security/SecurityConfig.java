@@ -43,10 +43,6 @@ public class SecurityConfig {
 
     // Http Methpd : Get 인증예외 List
     private String[] AUTH_GET_WHITELIST = {
-            "/mainPage", // 메인 화면 리스트 조회
-            "/board", // 게시판 목록조회
-            "/board/{bbsId}/{nttId}", // 게시물 상세조회
-            "/boardFileAtch/{bbsId}", // 게시판 파일 첨부가능 여부 조회
             "/image", // 갤러리 이미지보기
     };
 
@@ -60,7 +56,6 @@ public class SecurityConfig {
             "/api/common-codes", // 보건소 공통코드 일괄 조회
             "/api/common-codes/**", // 보건소 공통코드 조회
             "/file", // 파일 다운로드
-            "/etc/**", // 사용자단의 회원약관,회원가입,사용자아이디 중복여부체크 URL허용
 
             /* 정적 리소스 */
             "/css/**",
@@ -138,9 +133,6 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 페이지는 ADMIN만 접근
-                        .requestMatchers("/members/**").hasRole("ADMIN") // 회원 관리는 ADMIN만 접근
-                        .requestMatchers("/mypage/**").hasAnyRole("ADMIN", "USER") // 마이페이지는 ADMIN, USER 모두 접근
-                        .requestMatchers("/inform/**").hasAnyRole("ADMIN", "USER") // 게시판은 ADMIN, USER 모두 접근
                         .requestMatchers(AUTH_WHITELIST).permitAll()
                         .requestMatchers(HttpMethod.GET, AUTH_GET_WHITELIST).permitAll()
                         .anyRequest().authenticated())
