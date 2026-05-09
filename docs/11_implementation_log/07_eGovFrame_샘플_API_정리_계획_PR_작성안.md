@@ -49,6 +49,7 @@ refactor: eGovFrame 샘플 API 제거
 - HSQL 내장 DB 분기 제거 및 PostgreSQL 설정 기반 DataSource로 정리
 - HSQL/MySQL 드라이버, log4jdbc, mysql 보완용 protobuf 의존성 제거
 - HSQL/MySQL/Oracle/Altibase/Tibero/Cubrid 접속 설정 제거
+- `egovframework/mapper/let` 하위 잔여 벤더별 샘플 Mapper XML 제거
 - 실제 삭제 요청을 받았을 때의 안전 절차 작성
 
 ## 제거 후보
@@ -87,6 +88,7 @@ refactor: eGovFrame 샘플 API 제거
 - [x] 개인 일정 샘플 참조 확인
 - [x] 게시판/게시판 이용정보/회원관리 샘플 참조 확인
 - [x] HSQL/MySQL/log4jdbc/protobuf 참조 확인
+- [x] 잔여 벤더별 Mapper 제거 확인
 - [x] `mvn -q -DskipTests compile`
 - [x] `mvn -q test-compile`
 - [x] `GET /api/common-codes/RESERVATION_STATUS`
@@ -94,13 +96,13 @@ refactor: eGovFrame 샘플 API 제거
 ## 미검증 사유
 
 - GitNexus 인덱스가 stale 상태였고, `npm.cmd exec -- gitnexus analyze`는 `Not inside a git repository`로 실패했습니다.
-- GitNexus impact 분석은 수행하지 못했고, Selenium, JPA/QueryDSL, 개인 일정, 게시판, 회원관리, HSQL/미사용 DB 드라이버 제거는 `rg` 참조 확인으로 대체했습니다.
+- GitNexus impact 분석은 수행하지 못했고, Selenium, JPA/QueryDSL, 개인 일정, 게시판, 회원관리, HSQL/미사용 DB 드라이버, 벤더별 Mapper 제거는 `rg` 참조 확인으로 대체했습니다.
 - GitNexus `detect_changes`는 CLI에서 `unknown command 'detect_changes'`로 실패해 수행하지 못했습니다.
 
 ## 후속 작업
 
-- 잔여 벤더별 Mapper 정리 여부 판단
-- 파일, 로그인, 관리자 보안 골격 유지/제거 결정 후 Mapper 정리
+- REST API 서버 기준 남은 중복/미사용 의존성 정리 검토
+- `tomcat-embed-jasper` 중복 선언과 JSP 관련 필요 여부 확인
 - 필요 시 Swagger 노출 API 목록 재확인
 ````
 
@@ -132,6 +134,10 @@ refactor: eGovFrame 샘플 API 제거
 | `backend/src/main/resources/application-dev.properties` | HSQL 샘플 접속 설정 제거 |
 | `backend/src/main/resources/application-prod.properties` | HSQL 샘플 접속 설정 제거 |
 | `backend/pom.xml` | HSQL/MySQL/log4jdbc/protobuf 관련 미사용 의존성 제거 |
+| `backend/src/main/resources/egovframework/mapper/let/cmm/fms/*` | 파일 샘플 벤더별 Mapper XML 제거 |
+| `backend/src/main/resources/egovframework/mapper/let/cmm/use/*` | 공통코드 샘플 벤더별 Mapper XML 제거 |
+| `backend/src/main/resources/egovframework/mapper/let/uat/esm/*` | 관리자 샘플 벤더별 Mapper XML 제거 |
+| `backend/src/main/resources/egovframework/mapper/let/uat/uia/*` | 로그인 샘플 벤더별 Mapper XML 제거 |
 | `docs/11_implementation_log/06_eGovFrame_샘플_API_정리_계획_및_후보_목록.md` | 제거 기준, 유지 후보, 제거 순서, Selenium 제거 상태 문서화 |
 | `docs/13_schedule/02_전체_작업_체크리스트.md` | 샘플 API 제거 후보 선정 작업 기록 추가 |
 | `docs/11_implementation_log/07_eGovFrame_샘플_API_정리_계획_PR_작성안.md` | 이번 PR 작성안 추가 |
