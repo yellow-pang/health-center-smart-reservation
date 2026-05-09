@@ -63,6 +63,40 @@ npm.cmd exec -- gitnexus analyze
 - GitNexus 결과만 믿지 않고 `rg`, 파일 직접 확인, 테스트를 함께 사용한다.
 - 문서만 수정하는 작업에서는 GitNexus가 필수는 아니다.
 
+## 런타임 실행 작업 기준
+
+이 프로젝트에서는 권한, 방화벽, 포트 점유, Docker Desktop 권한 문제로 에이전트가 직접 런타임 검증을 수행하면 불필요한 오류가 생길 수 있다.
+
+따라서 에이전트는 아래 작업을 직접 실행하지 않는다.
+
+| 직접 실행하지 않는 작업 | 대신 할 일 |
+|---|---|
+| `mvn spring-boot:run` 등 서버 기동 | 사용자가 실행할 명령과 기대 로그/URL 안내 |
+| `docker compose up/down` | 사용자가 실행할 명령과 확인 방법 안내 |
+| 실제 API 런타임 호출 | PowerShell/curl 호출 예시와 기대 JSON 안내 |
+| Swagger UI 브라우저 확인 | 접속 URL과 확인할 Controller/Mapping 안내 |
+| 포트 점유 프로세스 종료 | 포트 확인 명령과 종료 방법 안내 |
+| 방화벽/관리자 권한이 필요한 작업 | 사용자가 직접 수행하도록 안내 |
+
+에이전트가 직접 실행해도 되는 검증은 서버 기동이 필요 없는 명령으로 제한한다.
+
+```powershell
+git status --short
+rg -n "검색어" backend/src docs
+git diff --check
+cd backend
+mvn -q -DskipTests compile
+mvn -q test-compile
+```
+
+런타임 확인이 필요한 경우 완료 보고에는 다음처럼 구분한다.
+
+```text
+빌드: 에이전트가 직접 확인
+테스트 컴파일: 에이전트가 직접 확인
+실행/API: 사용자 직접 확인 필요, 명령과 기대 결과 제공
+```
+
 ## 샘플 코드 정리 전 확인
 
 샘플 코드 삭제 전에는 아래 순서로 확인한다.
@@ -71,7 +105,8 @@ npm.cmd exec -- gitnexus analyze
 2. `rg`로 Controller, Service, DAO, Mapper, Test 참조 확인
 3. 삭제 대상과 유지 대상을 문서에 먼저 기록
 4. 한 기능 묶음씩 제거
-5. 빌드와 신규 보건소 API 동작 확인
+5. 빌드 확인
+6. 신규 보건소 API 동작은 사용자가 직접 확인할 수 있게 명령과 기대 결과 안내
 
 참고 문서:
 
