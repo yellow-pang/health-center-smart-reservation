@@ -2,7 +2,9 @@
 
 ## 1. 작업 목표
 
-이번 브랜치의 목표는 Auth/Member API를 바로 구현하기 전에 보건소 MVP 기준 인증, 회원, 권한 범위를 확정하는 것이다.
+이번 브랜치의 초기 목표는 Auth/Member API를 바로 구현하기 전에 보건소 MVP 기준 인증, 회원, 권한 범위를 확정하는 것이었다.
+
+이후 사용자 요청에 따라 같은 브랜치에서 범위 확정 결과를 기반으로 로그인, 현재 사용자 조회, 토큰 재발급, 로그아웃, URL 기반 역할별 접근 규칙, 레거시 인증 샘플 비노출까지 작은 단위로 이어서 구현했다.
 
 기존 eGovFrame 로그인, SNS 로그인, 관리자 샘플 코드는 즉시 삭제하거나 그대로 채택하지 않고, 신규 `egovframework.healthcenter.member` 구현을 위한 참고/보류/전환 대상으로 구분한다.
 
@@ -37,8 +39,8 @@
 |---|---|
 | 브랜치 | `refactor/auth-member-domain` |
 | 작업 방향 | Auth/Member Context 구현 범위 확정 |
-| 이번 단위 | 구현 전 정책, 전환 대상, 브랜치 체크리스트 정리 |
-| 다음 단위 | 확정 범위 기준으로 Auth/Member API 구현 착수 |
+| 이번 단위 | Auth/Member 기반 구현과 브랜치 통합 PR 정리 |
+| 다음 단위 | 사용자 직접 런타임 확인 후 Reservation Context 구현 착수 |
 
 ## 4. 확인한 기준 문서
 
@@ -145,7 +147,7 @@ MVP에서는 모든 예약/운영 기능을 로그인 기반으로 둔다. 단, 
 
 ## 9. 이번 브랜치에서 구현할 것과 구현하지 않을 것
 
-### 이번 브랜치에서 구현할 것
+### 초기 범위에서 구현할 것
 
 - Auth/Member 구현 범위 확정 문서 작성
 - eGovFrame 로그인/SNS/관리자 샘플 유지 여부 판단
@@ -155,7 +157,7 @@ MVP에서는 모든 예약/운영 기능을 로그인 기반으로 둔다. 단, 
 - 전체 체크리스트 갱신
 - PR 문서 초안 작성
 
-### 이번 브랜치에서 구현하지 않을 것
+### 초기 범위에서 구현하지 않을 것
 
 - `/api/auth/login`, `/api/auth/reissue`, `/api/auth/logout` 실제 Controller/Service/Mapper 구현
 - `members`, `refresh_tokens` 실제 schema/seed SQL 작성
@@ -164,6 +166,26 @@ MVP에서는 모든 예약/운영 기능을 로그인 기반으로 둔다. 단, 
 - 기존 `/auth/login-jwt`, `/jwtAuthAPI`, `/admin/password`, SNS API 삭제
 - 프론트엔드 로그인 화면 구현
 - Docker/Swagger 런타임 검증
+
+### 후속 요청으로 같은 브랜치에서 구현한 것
+
+- `POST /api/auth/login` 구현
+- `GET /api/members/me` 구현
+- `POST /api/auth/reissue` 구현
+- `POST /api/auth/logout` 구현
+- `members`, `refresh_tokens`, `health_centers` schema와 seed 작성
+- Healthcenter Member 기준 JWT 발급과 `MemberPrincipal` 인증 연결
+- API 명세의 권한 표 기준 URL 기반 역할별 접근 규칙 1차 반영
+- eGovFrame 레거시 로그인/SNS/관리자 샘플 공개 경로와 Swagger 노출 정리
+
+### 계속 구현하지 않을 것
+
+- Reservation Context 객체 권한 정책
+- Office/Reservation/Visit/Queue/Dashboard Controller 구현
+- Refresh Token 해시 저장 또는 식별자 기반 저장 방식
+- SNS/레거시 로그인 샘플 완전 삭제
+- 프론트엔드 로그인 화면 구현
+- Docker/Swagger/API 런타임 검증
 
 ## 10. 다음 구현 브랜치 초안
 
@@ -283,6 +305,19 @@ refactor: 보건소 역할 기준으로 JWT 권한 검증 전환
 - [x] 남은 위험 기록
 - [x] 후속 작업 기록
 - [x] 커밋 메시지 정리
+- [x] 후속 구현 단위 기록 작성
+- [x] 통합 PR 작성안 작성
+
+## 14.1 후속 구현 단위 기록
+
+| 단위 | 기록 문서 | PR 작성안 |
+|---|---|---|
+| Auth/Member 범위 확정 | `docs/11_implementation_log/08_Auth_Member_Context_범위_확정_및_브랜치_체크리스트.md` | `docs/11_implementation_log/09_Auth_Member_Context_범위_확정_PR_작성안.md` |
+| 로그인 기반 구현 | `docs/11_implementation_log/10_Auth_Member_로그인_기반_구현_기록.md` | `docs/11_implementation_log/11_Auth_Member_로그인_기반_PR_작성안.md` |
+| 토큰 재발급/로그아웃 구현 | `docs/11_implementation_log/12_Auth_Member_토큰_재발급_로그아웃_구현_기록.md` | `docs/11_implementation_log/13_Auth_Member_토큰_재발급_로그아웃_PR_작성안.md` |
+| 역할별 접근 규칙 구현 | `docs/11_implementation_log/14_Auth_Member_역할별_접근_규칙_구현_기록.md` | `docs/11_implementation_log/15_Auth_Member_역할별_접근_규칙_PR_작성안.md` |
+| 레거시 인증 샘플 비노출 | `docs/11_implementation_log/16_eGovFrame_레거시_인증_샘플_비노출_기록.md` | `docs/11_implementation_log/17_eGovFrame_레거시_인증_샘플_비노출_PR_작성안.md` |
+| 브랜치 통합 PR | - | `docs/11_implementation_log/18_Auth_Member_Context_통합_PR_작성안.md` |
 
 ## 15. 이번 브랜치 커밋 메시지 초안
 
