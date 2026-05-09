@@ -5,6 +5,7 @@ import java.util.Arrays;
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -44,11 +45,12 @@ public class SecurityConfig {
     private String[] AUTH_WHITELIST = {
             "/",
             "/error", // 에러 페이지
-            "/login/**",
-            "/auth/login-jwt", // JWT 로그인
-            "/auth/logout", // 로그아웃
+            "/api/auth/login", // 보건소 로그인
+            "/api/auth/reissue", // 보건소 토큰 재발급
             "/api/common-codes", // 보건소 공통코드 일괄 조회
             "/api/common-codes/**", // 보건소 공통코드 조회
+            "/api/service-types", // 보건소 업무 유형 조회
+            "/api/congestion/current", // 보건소 현재 혼잡도 조회
 
             /* 정적 리소스 */
             "/css/**",
@@ -125,8 +127,19 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 페이지는 ADMIN만 접근
                         .requestMatchers(AUTH_WHITELIST).permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 페이지는 ADMIN만 접근
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers("/api/visits/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers("/api/queues/**").hasAnyRole("STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/reservations").hasAnyRole("CITIZEN", "GUARDIAN", "STAFF", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/reservations/me").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/reservations/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/*").hasAnyRole("CITIZEN", "GUARDIAN", "ADMIN")
+                        .requestMatchers("/api/reservation-slots/**").authenticated()
+                        .requestMatchers("/api/members/me").authenticated()
+                        .requestMatchers("/api/auth/logout").authenticated()
                         .anyRequest().authenticated())
                 .sessionManagement(sessionManagement ->
                         sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

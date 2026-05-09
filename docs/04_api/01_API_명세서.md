@@ -59,6 +59,7 @@ Authorization: Bearer {accessToken}
 | POST | /api/auth/login | 로그인 | PUBLIC |
 | POST | /api/auth/reissue | 토큰 재발급 | PUBLIC |
 | POST | /api/auth/logout | 로그아웃 | 로그인 사용자 |
+| GET | /api/members/me | 내 회원 정보 조회 | 로그인 사용자 |
 | GET | /api/service-types | 업무 유형 조회 | PUBLIC |
 | GET | /api/reservation-slots | 예약 가능 시간 조회 | 로그인 사용자 |
 | POST | /api/reservations | 예약 신청 | CITIZEN, GUARDIAN, STAFF, ADMIN |
@@ -108,7 +109,9 @@ Response:
     "refreshToken": "refresh-token",
     "member": {
       "id": 1,
-      "name": "홍길동",
+      "healthCenterId": 1,
+      "email": "staff@test.com",
+      "name": "보건소 직원",
       "role": "STAFF"
     }
   },
@@ -116,7 +119,81 @@ Response:
 }
 ```
 
-### 4.2 예약 가능 시간 조회
+### 4.2 토큰 재발급
+
+`POST /api/auth/reissue`
+
+Request:
+
+```json
+{
+  "refreshToken": "refresh-token"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "new-access-token",
+    "refreshToken": "new-refresh-token",
+    "member": {
+      "id": 1,
+      "healthCenterId": 1,
+      "email": "staff@test.com",
+      "name": "보건소 직원",
+      "role": "STAFF"
+    }
+  },
+  "error": null
+}
+```
+
+### 4.3 로그아웃
+
+`POST /api/auth/logout`
+
+Request:
+
+```json
+{
+  "refreshToken": "refresh-token"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": null,
+  "error": null
+}
+```
+
+### 4.4 내 회원 정보 조회
+
+`GET /api/members/me`
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 2,
+    "healthCenterId": 1,
+    "email": "staff@test.com",
+    "name": "보건소 직원",
+    "role": "STAFF"
+  },
+  "error": null
+}
+```
+
+### 4.5 예약 가능 시간 조회
 
 `GET /api/reservation-slots?serviceTypeId=1&date=2026-05-10`
 
@@ -141,7 +218,7 @@ Response:
 }
 ```
 
-### 4.3 예약 신청
+### 4.6 예약 신청
 
 `POST /api/reservations`
 
@@ -170,7 +247,7 @@ Response:
 }
 ```
 
-### 4.4 예약자 체크인
+### 4.7 예약자 체크인
 
 `POST /api/visits/check-in`
 
@@ -197,7 +274,7 @@ Response:
 }
 ```
 
-### 4.5 현장 접수
+### 4.8 현장 접수
 
 `POST /api/visits/walk-in`
 
@@ -211,7 +288,7 @@ Request:
 }
 ```
 
-### 4.6 대시보드 요약
+### 4.9 대시보드 요약
 
 `GET /api/dashboard/summary?date=2026-05-10`
 
@@ -230,7 +307,7 @@ Response:
 }
 ```
 
-### 4.7 현재 혼잡도
+### 4.10 현재 혼잡도
 
 `GET /api/congestion/current`
 
@@ -257,6 +334,7 @@ Response:
 
 | 코드 | 설명 |
 |---|---|
+| AUTH_REQUIRED | 로그인이 필요함 |
 | AUTH_INVALID_CREDENTIALS | 이메일 또는 비밀번호가 올바르지 않음 |
 | AUTH_TOKEN_EXPIRED | Access Token 만료 |
 | AUTH_REFRESH_TOKEN_INVALID | Refresh Token이 유효하지 않음 |
