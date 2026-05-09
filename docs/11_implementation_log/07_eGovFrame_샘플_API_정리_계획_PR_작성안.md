@@ -109,8 +109,8 @@ refactor: eGovFrame 샘플 API 제거
 - [x] `mvn -q -DskipTests compile`
 - [x] `mvn -q test-compile`
 - [x] 이전 단계 `GET /api/common-codes/RESERVATION_STATUS`
-- [ ] PR 전 최종 `GET /api/common-codes/RESERVATION_STATUS`
-- [ ] Swagger UI 런타임 확인
+- [x] PR 전 최종 `GET /api/common-codes/RESERVATION_STATUS`
+- [x] Swagger UI 런타임 확인
 
 ## 미검증 사유
 
