@@ -6,16 +6,16 @@
 |---|---|
 | 현재 브랜치 | `refactor/egov-sample-api-cleanup` |
 | base 브랜치 | `main` |
-| 작업 성격 | 샘플 API 제거 전 후보 목록과 안전 절차 문서화 |
+| 작업 성격 | 관련 없는 eGovFrame 샘플 기능 제거 기준 확정 및 단계별 제거 계획 |
 | 작업 트리 | PR 문서 작성 전 문서 변경 있음 |
-| 코드 삭제 | 없음 |
-| 빌드 확인 | 문서 변경만 있어 미실행 |
-| API 확인 | 문서 변경만 있어 미실행 |
+| 코드 삭제 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 |
+| 빌드 확인 | `mvn -q -DskipTests compile`, `mvn -q test-compile` 성공 |
+| API 확인 | `GET /api/common-codes/RESERVATION_STATUS` 성공 |
 
 ## PR 제목
 
 ```text
-docs: eGovFrame 샘플 API 정리 후보 문서화
+docs: eGovFrame 샘플 API 제거 기준 확정
 ```
 
 ## PR 본문
@@ -23,23 +23,27 @@ docs: eGovFrame 샘플 API 정리 후보 문서화
 ````markdown
 ## 개요
 
-전자정부프레임워크 Simple Backend Template에 포함된 샘플 API를 바로 삭제하지 않고, 먼저 유지 대상과 제거 후보를 구분하는 정리 계획 문서를 추가했습니다.
+전자정부프레임워크 Simple Backend Template에 포함된 샘플 기능 중 보건소 예약·대기 시스템과 관련 없는 기능을 제거하기 위한 기준과 순서를 확정했습니다.
 
-이번 PR은 실제 코드 삭제가 아니라, 다음 브랜치에서 사용자가 선택한 기능 묶음 하나만 안전하게 제거하기 위한 사전 문서화 작업입니다.
+이번 문서 기준에 따라 실제 삭제는 한 번에 전부 진행하지 않고, 기능 묶음 하나씩 영향 확인 후 진행합니다. Spring Security, JWT, token 로그인 골격처럼 보안과 관련된 기반은 유지합니다.
 
 ## 변경 내용
 
 - 브랜치 이름 규칙 문서 확인 기준 반영
 - 전체 체크리스트의 `샘플 코드 정리 1차` 관련 진행 상황 보강
-- eGovFrame 샘플 API 제거 후보 목록 작성
+- eGovFrame 샘플 API 제거 기준 확정
 - 반드시 유지할 eGovFrame 기반 설정과 신규 도메인 코드 목록 작성
-- 삭제 보류 또는 신중 검토 대상 정리
-- 사용자가 선택할 수 있는 다음 삭제 작업 후보 정리
+- 소셜 로그인, Spring Security, JWT/token 관련 기능은 유지 대상으로 분류
+- 게시판, 일정, 회원관리, JPA/QueryDSL, Selenium, HSQL/벤더별 DB 샘플은 제거 대상으로 분류
+- 기능 묶음별 제거 순서 작성
+- Selenium 테스트 샘플과 `selenium-java` 테스트 의존성 제거
+- JPA/QueryDSL 테스트 샘플과 관련 의존성, annotation processor 설정 제거
+- 개인 일정 샘플 API, Service, DAO, VO, Mapper XML, Validator XML 제거
+- 개인 일정 샘플의 Security GET 인증 예외 경로 제거
 - 실제 삭제 요청을 받았을 때의 안전 절차 작성
 
 ## 제거 후보
 
-- SNS 로그인 샘플
 - 게시판 샘플
 - 게시판 이용정보/사용자 정보 샘플
 - 개인 일정 샘플
@@ -54,6 +58,8 @@ docs: eGovFrame 샘플 API 정리 후보 문서화
 - `egovframework.com.config`
 - MyBatis mapper 설정
 - Security/JWT 골격
+- token 로그인 관련 보안 골격
+- SNS 로그인/간편 인증 확장 후보
 - Swagger/OpenAPI 설정
 - `egovframework.healthcenter` 신규 도메인
 - `egovframework/mapper/healthcenter` 신규 Mapper
@@ -67,16 +73,21 @@ docs: eGovFrame 샘플 API 정리 후보 문서화
 - [x] `docs/13_schedule/02_전체_작업_체크리스트.md` 관련 항목 확인
 - [x] `docs/10_backend_transition/03_샘플_코드_정리_범위_및_안전_절차.md` 확인
 - [x] `rg` 기반 샘플 코드 구조 확인
+- [x] Selenium 참조 확인
+- [x] JPA/QueryDSL 참조 확인
+- [x] 개인 일정 샘플 참조 확인
+- [x] `mvn -q -DskipTests compile`
+- [x] `mvn -q test-compile`
+- [x] `GET /api/common-codes/RESERVATION_STATUS`
 
 ## 미검증 사유
 
-- 실제 코드 삭제가 없으므로 Maven 빌드와 API 호출은 수행하지 않았습니다.
 - GitNexus 인덱스가 stale 상태였고, `npm.cmd exec -- gitnexus analyze`는 `Not inside a git repository`로 실패했습니다.
-- 삭제 대상별 상세 impact 분석은 사용자가 실제 삭제 대상을 선택한 뒤 수행합니다.
+- GitNexus impact 분석은 수행하지 못했고, Selenium, JPA/QueryDSL, 개인 일정 샘플 제거는 `rg` 참조 확인으로 대체했습니다.
 
 ## 후속 작업
 
-- 사용자가 제거 후보 중 하나를 선택
+- Selenium 테스트 샘플부터 기능 묶음 단위로 제거
 - 선택한 기능 묶음의 영향 범위 재확인
 - 한 번에 하나의 기능 묶음만 삭제
 - 삭제 후 `mvn -q -DskipTests compile` 실행
@@ -87,7 +98,14 @@ docs: eGovFrame 샘플 API 정리 후보 문서화
 
 | 파일 | 내용 |
 |---|---|
-| `docs/11_implementation_log/06_eGovFrame_샘플_API_정리_계획_및_후보_목록.md` | 제거 후보, 유지 후보, 보류 후보, 안전 절차 문서화 |
+| `backend/pom.xml` | `selenium-java` 테스트 의존성 제거 |
+| `backend/src/test/java/egovframework/let/uat/uia/web/TestEgovLoginApiControllerSelenium.java` | 사용하지 않는 Selenium 테스트 샘플 제거 |
+| `backend/src/test/java/egovframework/study/jpa/*` | MyBatis 기준과 맞지 않는 JPA/QueryDSL 테스트 샘플 제거 |
+| `backend/src/main/java/egovframework/let/cop/smt/sim/*` | 개인 일정 샘플 Java 코드 제거 |
+| `backend/src/main/resources/egovframework/mapper/let/cop/smt/sim/*` | 개인 일정 샘플 Mapper XML 제거 |
+| `backend/src/main/resources/egovframework/validator/let/cop/smt/sim/*` | 개인 일정 샘플 Validator XML 제거 |
+| `backend/src/main/java/egovframework/com/security/SecurityConfig.java` | 제거된 `/schedule/*` 인증 예외 경로 정리 |
+| `docs/11_implementation_log/06_eGovFrame_샘플_API_정리_계획_및_후보_목록.md` | 제거 기준, 유지 후보, 제거 순서, Selenium 제거 상태 문서화 |
 | `docs/13_schedule/02_전체_작업_체크리스트.md` | 샘플 API 제거 후보 선정 작업 기록 추가 |
 | `docs/11_implementation_log/07_eGovFrame_샘플_API_정리_계획_PR_작성안.md` | 이번 PR 작성안 추가 |
 
@@ -95,7 +113,7 @@ docs: eGovFrame 샘플 API 정리 후보 문서화
 
 - [ ] PR merge 완료
 - [ ] `main` 최신화 확인
-- [ ] 사용자가 다음 삭제 대상 선택
+- [ ] 다음 삭제 단계 진행
 - [ ] 후속 브랜치를 `type/topic-kebab-case` 형식으로 생성
 
 ## 후속 브랜치 이름 추천

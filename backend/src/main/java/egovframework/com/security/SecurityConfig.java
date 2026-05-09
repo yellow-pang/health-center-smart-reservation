@@ -47,9 +47,6 @@ public class SecurityConfig {
             "/board", // 게시판 목록조회
             "/board/{bbsId}/{nttId}", // 게시물 상세조회
             "/boardFileAtch/{bbsId}", // 게시판 파일 첨부가능 여부 조회
-            "/schedule/daily", // 일별 일정 조회
-            "/schedule/week", // 주간 일정 조회
-            "/schedule/{schdulId}", // 일정 상세조회
             "/image", // 갤러리 이미지보기
     };
 

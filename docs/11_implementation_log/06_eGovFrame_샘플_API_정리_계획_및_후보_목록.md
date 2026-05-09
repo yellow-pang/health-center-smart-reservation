@@ -2,9 +2,9 @@
 
 ## 1. 작업 목표
 
-이번 브랜치의 목표는 전자정부프레임워크 Simple Backend Template에 포함된 샘플 기능을 바로 삭제하지 않고, 먼저 제거 후보와 유지 후보를 분류하는 것이다.
+이번 브랜치의 목표는 전자정부프레임워크 Simple Backend Template에 포함된 샘플 기능 중 보건소 스마트 예약·대기 시스템과 관련 없는 기능을 제거하는 것이다.
 
-사용자가 이 문서에서 제거 대상을 직접 선택하면, 다음 요청에서 선택한 기능 묶음 하나만 삭제한다.
+단, Spring Security, JWT, 전자정부프레임워크 핵심 설정처럼 보안과 실행 기반에 해당하는 기능은 유지한다. 삭제는 한 번에 전부 진행하지 않고, 이 문서의 순서에 따라 작은 기능 묶음 단위로 진행한다.
 
 ## 2. 작업 범위
 
@@ -17,13 +17,12 @@
 - [x] 샘플 정리 관련 문서 확인
 - [x] 현재 코드 구조와 샘플 기능 후보 탐색
 - [x] 제거 후보와 유지 후보 목록 작성
-- [x] 다음 삭제 작업의 작은 단위 추천
+- [x] 사용자가 확정한 제거/유지 기준 반영
+- [x] 실제 삭제 작업 순서 작성
 
 ### 제외
 
-- [x] 실제 Java 코드 삭제 제외
-- [x] 실제 Mapper XML 삭제 제외
-- [x] 실제 의존성 제거 제외
+- [x] 한 번에 전체 샘플 코드 일괄 삭제 제외
 - [x] eGovFrame 핵심 설정 변경 제외
 - [x] `egovframework.healthcenter` 신규 도메인 변경 제외
 - [x] 실제 커밋, push, 배포 제외
@@ -33,9 +32,9 @@
 | 항목 | 내용 |
 |---|---|
 | 브랜치 | `refactor/egov-sample-api-cleanup` |
-| 작업 방향 | 사용하지 않는 eGovFrame 샘플 기능 정리 준비 |
-| 이번 단위 | 삭제 전 후보 목록과 안전 절차 문서화 |
-| 다음 단위 | 사용자가 고른 기능 묶음 1개 삭제 |
+| 작업 방향 | 보건소 기능과 무관한 eGovFrame 샘플 기능 제거 |
+| 이번 단위 | 제거/유지 기준 확정과 단계별 삭제 계획 수립 |
+| 다음 단위 | 확정된 순서에 따라 기능 묶음 1개씩 삭제 |
 
 ## 4. 확인한 기준 문서
 
@@ -57,9 +56,24 @@
 | GitNexus 상태 | stale |
 | GitNexus analyze | `Not inside a git repository`로 실패 |
 | 대체 탐색 | `rg`, 파일 구조 확인 사용 |
-| 삭제 실행 | 하지 않음 |
+| 삭제 실행 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 완료 |
 
-GitNexus 인덱스 갱신이 실패했으므로 이번 문서는 `rg` 결과와 파일 구조 기준으로 작성했다. 실제 삭제 요청을 받을 때는 선택한 대상별로 GitNexus 또는 `rg` 기반 영향 확인을 다시 수행한다.
+GitNexus 인덱스 갱신이 실패했으므로 이번 문서는 `rg` 결과와 파일 구조 기준으로 작성했다. 실제 삭제를 수행할 때는 선택한 대상별로 GitNexus 또는 `rg` 기반 영향 확인을 다시 수행한다.
+
+## 5.1 사용자가 확정한 정리 기준
+
+| 항목 | 결정 |
+|---|---|
+| 브랜치 목적 | 관련 없는 예시 코드를 제거하는 것까지 포함 |
+| 소셜 로그인 | 향후 UX에서 소셜 로그인과 간편 인증을 엮을 수 있으므로 유지 |
+| 게시판 | 제거 |
+| 게시판 이용정보/사용자 정보 | 제거 |
+| 개인 일정 | 새로 만들 예정이므로 제거 |
+| 회원관리 샘플 | 제거 |
+| JPA/QueryDSL | MyBatis 기준으로 갈 것이므로 제거 |
+| Selenium | 사용하지 않으므로 제거 |
+| DB 샘플 | PostgreSQL을 사용할 것이므로 HSQL/벤더별 샘플 DB 정리 |
+| 보안 관련 기능 | Spring Security, JWT, token 방식은 유지 |
 
 ## 6. 반드시 유지할 것
 
@@ -72,33 +86,36 @@ GitNexus 인덱스 갱신이 실패했으므로 이번 문서는 `rg` 결과와 
 | 핵심 설정 | `egovframework.com.config` | DataSource, Mapper, Transaction, Properties, Swagger 등 기반 설정 |
 | MyBatis 설정 | `EgovConfigAppMapper`, `egovframework/mapper/config/mapper-config.xml` | MyBatis mapper 로딩 기반 |
 | Security 골격 | `egovframework.com.security`, `egovframework.com.jwt` | Auth/Member 구현 전 재사용 가능 |
+| 기존 token 로그인 골격 | `egovframework.let.uat.uia` 일부 | Spring Security와 token 방식 유지 예정이므로 Auth 전환 전 보류 |
+| 관리자/보안 확인 샘플 | `egovframework.let.uat.esm` 일부 | 관리자 비밀번호 변경, JWT 권한 흐름과 연결되어 있어 보안 구조 정리 전 보류 |
 | Swagger | `OpenApiConfig`, springdoc 의존성 | API 확인과 포트폴리오 시연에 필요 |
 | 신규 도메인 | `egovframework.healthcenter` | 보건소 MVP 신규 코드 |
 | 신규 Mapper | `egovframework/mapper/healthcenter` | PostgreSQL 공통코드 API mapper |
 | PostgreSQL SQL | `db/postgresql/schema.sql`, `db/postgresql/data.sql` | 현재 검증된 공통코드 DB 기반 |
 | 공통 파일 기능 | `egovframework.com.cmm.service`, `egovframework.com.cmm.web` 일부 | 게시판/일정과 연결되어 있지만 향후 첨부 기능 재사용 가능성 있음 |
 | 비밀번호 암호화 | `egovframework.let.utl.sim.service.EgovFileScrty` | 기존 로그인/관리자 샘플과 연결, Auth 전환 전 영향 확인 필요 |
+| SNS 로그인 샘플 | `egovframework.com.sns` | 향후 소셜 로그인/간편 인증 UX 확장 가능성이 있어 유지 |
 
 ## 7. 제거 후보 목록
 
-### 7.1 1순위: SNS 로그인 샘플
+### 7.1 유지: SNS 로그인 샘플
 
 | 항목 | 내용 |
 |---|---|
 | 후보 경로 | `backend/src/main/java/egovframework/com/sns` |
 | 대표 파일 | `SnsLoginApiController.java`, `SnsUtils.java`, `SnsVO.java` |
-| 제거 이유 | MVP에서 실제 Kakao/Naver 로그인 연동은 제외 |
+| 유지 이유 | 향후 UX에서 소셜 로그인과 간편 인증을 연계할 수 있음 |
 | 예상 위험 | 기존 로그인 샘플 `EgovLoginService`를 호출하므로 Auth 구현 전 참조 확인 필요 |
-| 추천 판단 | 가장 먼저 삭제 후보로 적합 |
-| 삭제 전 확인 | `rg -n "egovframework.com.sns|SnsLoginApiController|SnsUtils|SnsVO" backend/src` |
+| 추천 판단 | 지금 삭제하지 않고 Auth/Member 설계 때 재검토 |
+| 확인 명령 | `rg -n "egovframework.com.sns|SnsLoginApiController|SnsUtils|SnsVO" backend/src` |
 
-선택 가능 작업명:
+보류 작업명:
 
 ```text
-SNS 로그인 샘플 제거
+SNS 로그인 샘플 유지 후 Auth 단계에서 재검토
 ```
 
-### 7.2 2순위: 게시판 샘플
+### 7.2 1순위 제거: 게시판 샘플
 
 | 항목 | 내용 |
 |---|---|
@@ -108,7 +125,7 @@ SNS 로그인 샘플 제거
 | 관련 테스트 | `backend/src/test/java/egovframework/let/cop/bbs` |
 | 제거 이유 | 보건소 예약, 대기, 혼잡도 MVP와 무관 |
 | 예상 위험 | 메인 API, 게시판 이용정보, 파일 공통 기능과 연결됨 |
-| 추천 판단 | SNS 제거 후 별도 브랜치에서 진행 |
+| 추천 판단 | 제거 대상 |
 | 삭제 전 확인 | `EgovMainApiController`, `EgovBBSUseInfoManageApiController`, 파일 첨부 참조 |
 
 선택 가능 작업명:
@@ -117,7 +134,7 @@ SNS 로그인 샘플 제거
 게시판 샘플 제거
 ```
 
-### 7.3 3순위: 게시판 이용정보/사용자 정보 샘플
+### 7.3 2순위 제거: 게시판 이용정보/사용자 정보 샘플
 
 | 항목 | 내용 |
 |---|---|
@@ -126,7 +143,7 @@ SNS 로그인 샘플 제거
 | 관련 Validator | `backend/src/main/resources/egovframework/validator/let/cop/com` |
 | 제거 이유 | 게시판 사용 권한, 커뮤니티/동호회 사용자 샘플 성격 |
 | 예상 위험 | 게시판 샘플과 강하게 연결되어 단독 삭제 시 빌드 오류 가능 |
-| 추천 판단 | 게시판 샘플과 같은 묶음 또는 직후 단계에서 정리 |
+| 추천 판단 | 게시판 샘플과 함께 제거 또는 직후 제거 |
 
 선택 가능 작업명:
 
@@ -134,7 +151,7 @@ SNS 로그인 샘플 제거
 게시판 이용정보 샘플 제거
 ```
 
-### 7.4 4순위: 개인 일정 샘플
+### 7.4 3순위 제거: 개인 일정 샘플
 
 | 항목 | 내용 |
 |---|---|
@@ -143,7 +160,8 @@ SNS 로그인 샘플 제거
 | 관련 Validator | `backend/src/main/resources/egovframework/validator/let/cop/smt/sim` |
 | 제거 이유 | 보건소 예약 슬롯 모델과 다른 일정관리 샘플 |
 | 예상 위험 | 파일 첨부 서비스와 연결되어 있음 |
-| 추천 판단 | 게시판보다 작지만 파일 기능 참조 확인 필요 |
+| 추천 판단 | 새 예약/일정 모델을 만들 예정이므로 제거 |
+| 처리 상태 | 제거 완료 |
 
 선택 가능 작업명:
 
@@ -151,7 +169,7 @@ SNS 로그인 샘플 제거
 개인 일정 샘플 제거
 ```
 
-### 7.5 5순위: 회원관리 샘플
+### 7.5 4순위 제거: 회원관리 샘플
 
 | 항목 | 내용 |
 |---|---|
@@ -159,7 +177,7 @@ SNS 로그인 샘플 제거
 | 관련 Mapper | `backend/src/main/resources/egovframework/mapper/let/uss/umt` |
 | 제거 이유 | 보건소 Member/Auth 모델과 다름 |
 | 예상 위험 | 기존 로그인/관리자 샘플과 인증 흐름이 연결될 수 있음 |
-| 추천 판단 | Auth/Member Context 구현 계획이 확정된 뒤 삭제 |
+| 추천 판단 | 보건소 Member/Auth 모델과 다르므로 제거하되, 보안/token 골격과 분리 확인 필요 |
 
 선택 가능 작업명:
 
@@ -167,7 +185,7 @@ SNS 로그인 샘플 제거
 회원관리 샘플 제거
 ```
 
-### 7.6 6순위: JPA/QueryDSL 테스트 샘플
+### 7.6 5순위 제거: JPA/QueryDSL 테스트 샘플
 
 | 항목 | 내용 |
 |---|---|
@@ -176,7 +194,8 @@ SNS 로그인 샘플 제거
 | 관련 Maven 설정 | QueryDSL annotation processor |
 | 제거 이유 | MVP 신규 도메인은 MyBatis 기준 |
 | 예상 위험 | 의존성과 annotation processor를 함께 정리해야 Maven 설정 영향 발생 |
-| 추천 판단 | 테스트 샘플 삭제와 의존성 정리를 같은 작은 단위로 검토 |
+| 추천 판단 | MyBatis 기준과 맞지 않으므로 제거 |
+| 처리 상태 | 제거 완료 |
 
 선택 가능 작업명:
 
@@ -184,7 +203,7 @@ SNS 로그인 샘플 제거
 JPA QueryDSL 테스트 샘플 제거
 ```
 
-### 7.7 7순위: Selenium 테스트 샘플
+### 7.7 6순위 제거: Selenium 테스트 샘플
 
 | 항목 | 내용 |
 |---|---|
@@ -192,7 +211,8 @@ JPA QueryDSL 테스트 샘플 제거
 | 관련 의존성 | `selenium-java` |
 | 제거 이유 | 백엔드 REST API 검증 우선순위가 더 높음 |
 | 예상 위험 | 테스트 의존성 제거 시 다른 테스트 import 여부 확인 필요 |
-| 추천 판단 | JPA/QueryDSL 테스트 정리와 별도 작은 단위로 가능 |
+| 추천 판단 | 사용하지 않으므로 제거 |
+| 처리 상태 | 제거 완료 |
 
 선택 가능 작업명:
 
@@ -200,14 +220,14 @@ JPA QueryDSL 테스트 샘플 제거
 Selenium 테스트 샘플 제거
 ```
 
-### 7.8 8순위: HSQL/벤더별 샘플 DB 자원
+### 7.8 7순위 제거: HSQL/벤더별 샘플 DB 자원
 
 | 항목 | 내용 |
 |---|---|
 | 후보 파일 | `backend/src/main/resources/db/shtdb.sql`, `egovframework/mapper/let/**/*_hsql.xml` 등 |
 | 제거 이유 | 현재 실행 DB는 PostgreSQL |
 | 예상 위험 | eGovFrame 템플릿 회귀 확인이나 HSQL 프로필 실행에 필요할 수 있음 |
-| 추천 판단 | PostgreSQL 기반 신규 도메인이 더 안정화된 뒤 진행 |
+| 추천 판단 | PostgreSQL 기준으로 정리하되, eGovFrame DB 타입 설정과 Maven 의존성 영향 확인 필요 |
 
 선택 가능 작업명:
 
@@ -222,33 +242,35 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 | `egovframework.com.cmm` 전체 | 보류 | 파일, 메시지, 공통 유틸이 여러 샘플과 설정에 걸쳐 사용됨 |
 | 파일 업로드/다운로드 API | 보류 | 게시판/일정 샘플과 연결되어 있지만 향후 민원 첨부 기능에 재사용 가능 |
 | 이미지 처리 Controller | 보류 | 파일 기능과 함께 판단 필요 |
-| 로그인 샘플 `egovframework.let.uat.uia` | 보류 | Auth/Member 신규 구현 전까지 JWT 골격 검증에 필요할 수 있음 |
-| 관리자 샘플 `egovframework.let.uat.esm` | 보류 | Security/JWT 권한 흐름 확인용으로 남길 수 있음 |
+| SNS 로그인 샘플 `egovframework.com.sns` | 유지 | 향후 소셜 로그인/간편 인증 UX 확장 후보 |
+| 로그인 샘플 `egovframework.let.uat.uia` | 보안 관련 보류 | token 방식과 Spring Security 유지 예정이므로 Auth/Member 전환 전 삭제하지 않음 |
+| 관리자 샘플 `egovframework.let.uat.esm` | 보안 관련 보류 | 관리자 권한, 비밀번호 변경, JWT 권한 흐름 확인용으로 남김 |
 | `mysql-connector-j` | 보류 | 현재 PostgreSQL 기준에서는 제거 후보지만 Maven/CVE 주석과 샘플 DB 정리와 함께 판단 |
 | `hsqldb` | 보류 | HSQL 실행 회귀 확인을 버릴지 결정 필요 |
 | `tomcat-embed-jasper` | 보류 | REST API 서버 기준 제거 후보지만 중복 선언 정리와 함께 판단 |
 
-## 9. 사용자 선택지
+## 9. 제거 진행 순서
 
-다음 요청에서 아래 중 하나를 골라 주면 그 기능 묶음만 정리한다.
+사용자가 제거 기준을 확정했으므로 아래 순서로 하나씩 제거한다.
 
-| 추천 순서 | 선택 문구 | 작업 크기 | 위험 |
-|---:|---|---|---|
-| 1 | SNS 로그인 샘플 제거 | 작음 | 낮음 |
-| 2 | Selenium 테스트 샘플 제거 | 작음 | 낮음 |
-| 3 | JPA QueryDSL 테스트 샘플 제거 | 중간 | 중간 |
-| 4 | 개인 일정 샘플 제거 | 중간 | 중간 |
-| 5 | 게시판 샘플 제거 | 큼 | 높음 |
-| 6 | 회원관리 샘플 제거 | 큼 | 높음 |
+| 순서 | 작업 | 작업 크기 | 위험 | 비고 |
+|---:|---|---|---|---|
+| 1 | Selenium 테스트 샘플 제거 | 작음 | 낮음 | 완료 |
+| 2 | JPA QueryDSL 테스트 샘플 제거 | 중간 | 중간 | 완료 |
+| 3 | 개인 일정 샘플 제거 | 중간 | 중간 | 완료 |
+| 4 | 게시판 샘플 제거 | 큼 | 높음 | 게시판 이용정보, 메인 API, 파일 기능 참조 확인 |
+| 5 | 게시판 이용정보/사용자 정보 샘플 제거 | 큼 | 높음 | 게시판 제거와 묶어서 처리 가능 |
+| 6 | 회원관리 샘플 제거 | 큼 | 높음 | 보안/token 골격과 분리 확인 |
+| 7 | HSQL 및 벤더별 샘플 DB 자원 정리 | 중간 | 중간 | PostgreSQL 설정 안정화 후 진행 |
 
-현재 기준으로는 `SNS 로그인 샘플 제거`를 첫 실제 삭제 작업으로 추천한다.
+첫 실제 삭제 작업은 영향이 가장 작은 `Selenium 테스트 샘플 제거`를 추천한다.
 
 ## 10. 실제 삭제 요청을 받으면 진행할 절차
 
-1. 선택된 기능 묶음의 Controller/Service/DAO/Mapper/Test 참조를 `rg`로 확인한다.
+1. 진행 순서의 다음 기능 묶음에 대해 Controller/Service/DAO/Mapper/Test 참조를 `rg`로 확인한다.
 2. 가능하면 GitNexus impact/context를 다시 시도한다.
 3. 삭제 대상 파일과 유지 대상 파일을 작업 전 보고한다.
-4. 사용자가 고른 기능 묶음 하나만 삭제한다.
+4. 기능 묶음 하나만 삭제한다.
 5. `mvn -q -DskipTests compile`을 실행한다.
 6. 가능하면 백엔드 실행과 공통코드 API를 확인한다.
 7. 브랜치 기록과 전체 체크리스트를 갱신한다.
@@ -271,30 +293,42 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 - [x] 유지 후보 목록 작성
 - [x] 보류 후보 목록 작성
 - [x] 다음 삭제 작업 선택지 작성
-- [x] 실제 코드 삭제는 하지 않음
+- [x] 사용자 제거/유지 기준 반영
+- [x] Selenium 테스트 샘플 제거
+- [x] JPA QueryDSL 테스트 샘플 제거
+- [x] 개인 일정 샘플 제거
+- [ ] 게시판/게시판 이용정보 샘플 제거
+- [ ] 회원관리 샘플 제거
+- [ ] HSQL 및 벤더별 샘플 DB 자원 정리
 
 ### 검증 체크리스트
 
 - [x] 문서 작성 완료
 - [x] `rg` 기반 코드 구조 확인
-- [ ] 빌드 확인
-- [ ] API 수동 호출 확인
+- [x] Selenium 참조 제거 후 `rg` 확인
+- [x] JPA/QueryDSL 참조 제거 후 `rg` 확인
+- [x] 개인 일정 샘플 참조 제거 후 `rg` 확인
+- [x] `mvn -q -DskipTests compile`
+- [x] `mvn -q test-compile`
+- [x] `GET /api/common-codes/RESERVATION_STATUS`
 
-이번 브랜치에서는 코드 삭제가 없으므로 빌드와 API 수동 호출은 필수 검증으로 보지 않는다. 실제 삭제 작업에서 다시 확인한다.
+Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 후 Maven compile과 test-compile을 확인했다. 공통코드 API도 정상 응답을 확인했다.
 
 ## 12. 다음 작업 추천
 
-1. 사용자가 이 문서에서 삭제 대상을 선택한다.
-2. 첫 삭제 작업은 `SNS 로그인 샘플 제거`로 진행한다.
-3. 삭제 전 `SnsLoginApiController`, `SnsUtils`, `SnsVO` 영향 범위를 다시 확인한다.
-4. 삭제 후 Maven compile과 공통코드 API를 확인한다.
+1. 다음 삭제 작업은 `게시판/게시판 이용정보 샘플 제거`로 진행한다.
+2. 이후 회원관리, HSQL/벤더별 DB 자원을 순서대로 정리한다.
+3. 각 삭제 단계마다 Maven compile과 공통코드 API를 확인한다.
 
 ## 13. 커밋 메시지 초안
 
 ```text
-docs: eGovFrame 샘플 API 정리 후보 문서화
+docs: eGovFrame 샘플 API 제거 기준 확정
 
-- 샘플 API 제거 전 유지 대상과 삭제 후보 분류
-- SNS, 게시판, 일정, 회원, JPA, Selenium 정리 우선순위 작성
-- 실제 삭제 전 안전 절차와 사용자 선택지 정리
+- 샘플 API 제거 브랜치 목적을 실제 제거까지로 확정
+- 소셜 로그인과 보안/token 관련 기능은 유지 대상으로 분류
+- Selenium 테스트 샘플과 의존성 제거
+- JPA/QueryDSL 테스트 샘플과 의존성 제거
+- 개인 일정 샘플과 Security 인증 예외 경로 제거
+- 게시판, 회원, DB 샘플 제거 순서 정리
 ```
