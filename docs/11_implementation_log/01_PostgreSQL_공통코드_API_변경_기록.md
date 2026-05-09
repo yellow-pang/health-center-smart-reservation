@@ -346,6 +346,11 @@ http://localhost:8080/api/common-codes?groupCodes=RESERVATION_STATUS,QUEUE_STATU
 
 ```text
 mvn -q -DskipTests compile
+docker compose up -d postgres
+mvn spring-boot:run
+GET /api/common-codes/RESERVATION_STATUS
+GET /api/common-codes?groupCodes=RESERVATION_STATUS,QUEUE_STATUS
+GET /swagger-ui/index.html
 ```
 
 결과:
@@ -354,9 +359,10 @@ mvn -q -DskipTests compile
 성공
 ```
 
-런타임 검증은 아직 완료하지 못했다. 현재 작업 환경에서 Docker Desktop 엔진이 실행되어 있지 않아 `docker compose up -d postgres`가 실패했기 때문이다.
+런타임 검증 중 `data.sql`의 공통코드 seed INSERT에서 `description` 컬럼 참조가 모호해 애플리케이션 기동이 1차 실패했다.
+`common_code_groups.id`, `seed.code`, `seed.code_name`, `seed.description`, `seed.sort_order`처럼 컬럼 출처를 명시하도록 수정한 뒤 재검증했다.
 
-실행 검증을 완료하려면 Docker Desktop을 실행한 뒤 PostgreSQL 컨테이너를 기동하고 백엔드를 실행해야 한다.
+재검증 결과 PostgreSQL 컨테이너가 정상 실행되었고, 백엔드가 기동된 상태에서 공통코드 API가 `success + data + error` 형식으로 DB 데이터를 반환했다. Swagger UI도 HTTP 200으로 확인했다.
 
 ## 의도적으로 하지 않은 일
 
@@ -377,8 +383,8 @@ mvn -q -DskipTests compile
 | 리스크 | 설명 | 대응 |
 |---|---|---|
 | 샘플 API 깨짐 | `Globals.DbType=postgresql` 전환 후 기존 샘플의 PostgreSQL mapper가 없어 샘플 API는 실패할 수 있음 | 샘플 API 정상 동작을 목표로 삼지 않고, 샘플 제거 범위를 확정 |
-| Docker 미검증 | Docker Desktop 미실행으로 런타임 검증이 보류됨 | Docker 실행 후 공통코드 API 호출 검증 |
 | SQL init 반복 실행 | `spring.sql.init.mode=always`는 실행 때마다 SQL을 수행함 | SQL은 `IF NOT EXISTS`, `ON CONFLICT`로 반복 실행 가능하게 작성 |
+| Actuator 인증 | `spring-boot-starter-actuator` 추가 후 `/actuator/health`는 현재 HTTP 401로 보안 필터에 걸림 | 공개 상태 확인 API로 쓸지, 인증 보호 endpoint로 둘지 결정 |
 | 보안 설정 | 공통코드 조회를 공개 API로 열어둠 | 수정 API 구현 시 STAFF/ADMIN 권한 적용 |
 | 비밀값 노출 | DB 비밀번호가 properties에 있음 | 운영 전 환경변수 또는 별도 secret 관리로 전환 |
 
@@ -386,13 +392,10 @@ mvn -q -DskipTests compile
 
 다음 순서로 진행하는 것이 좋다.
 
-1. Docker Desktop 실행
-2. `docker compose up -d postgres`
-3. `cd backend && mvn spring-boot:run`
-4. Swagger 또는 브라우저에서 공통코드 API 확인
-5. 샘플 API 실패 범위 확인
-6. 게시판, 일정, 회원, SNS 샘플 제거 계획 확정
-7. 보건소 기본 정보 또는 예약 가능 슬롯 API 구현
+1. 샘플 API 실패 범위 확인
+2. 게시판, 일정, 회원, SNS 샘플 제거 계획 확정
+3. 안전한 경우 SNS 로그인 샘플부터 기능 묶음 단위로 제거
+4. Office Context `GET /api/service-types` 구현 착수
 
 ## 커밋 메시지
 

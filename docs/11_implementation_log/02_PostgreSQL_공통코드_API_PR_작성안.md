@@ -6,15 +6,14 @@
 |---|---|
 | 현재 브랜치 | `feat/postgres-common-code-api` |
 | 원격 브랜치 | `origin/feat/postgres-common-code-api` |
-| 작업 트리 | clean |
+| 작업 트리 | `backend/pom.xml`, `backend/src/main/resources/db/postgresql/data.sql`, 문서 갱신 파일 수정 |
 | base 브랜치 | `origin/main` |
 | 브랜치 최신 커밋 | `0ad9788 docs: PostgreSQL 공통코드 API 변경 기록 추가` |
 | 빌드 확인 | `mvn -q -DskipTests compile` 성공 |
+| 런타임 확인 | Docker PostgreSQL, 백엔드 실행, 공통코드 API, Swagger 확인 |
 
-현재 브랜치는 원격에 push되어 있고 작업 트리가 깨끗하므로 Pull Request를 열어도 된다.  
-PR이 merge된 뒤에는 이 브랜치를 닫아도 된다.
-
-단, Docker Desktop 엔진이 실행되지 않아 PostgreSQL 컨테이너 기반 런타임 검증은 아직 완료하지 못했다. 이 내용은 PR 본문에 명시한다.
+현재 작업 트리에는 Actuator 의존성 추가와 PostgreSQL seed SQL 수정, 런타임 검증 결과 문서 갱신이 남아 있다.
+PR을 열기 전 이 변경을 함께 커밋하거나 PR 본문에 추가 반영한다.
 
 ## PR 제목
 
@@ -41,6 +40,8 @@ eGovFrame Simple Backend Template 기반 백엔드를 PostgreSQL 기준으로 �
 - 공통코드 조회 Controller/Service/Mapper/DTO/VO 추가
 - PostgreSQL용 MyBatis mapper XML 추가
 - 공통코드 조회 API 인증 예외 경로 추가
+- Spring Boot Actuator 의존성 추가
+- PostgreSQL seed SQL의 모호한 컬럼 참조 수정
 - README와 전환/구현 기록 문서 갱신
 
 ## 추가된 API
@@ -72,19 +73,15 @@ GET /api/common-codes/RESERVATION_STATUS
 ## 검증
 
 - [x] `mvn -q -DskipTests compile`
-- [ ] Docker PostgreSQL 컨테이너 실행 검증
-- [ ] `mvn spring-boot:run` 런타임 검증
-- [ ] Swagger에서 공통코드 API 호출 검증
+- [x] Docker PostgreSQL 컨테이너 실행 검증
+- [x] `mvn spring-boot:run` 런타임 검증
+- [x] Swagger에서 공통코드 API 호출 검증
+- [x] `GET /api/common-codes/RESERVATION_STATUS`
+- [x] `GET /api/common-codes?groupCodes=RESERVATION_STATUS,QUEUE_STATUS`
 
 ## 미검증 사유
 
-현재 작업 환경에서 Docker Desktop 엔진이 실행되지 않아 아래 명령이 실패했습니다.
-
-```bash
-docker compose up -d postgres
-```
-
-따라서 PostgreSQL 컨테이너 기반 런타임 검증은 Docker Desktop 실행 후 별도로 진행해야 합니다.
+- Actuator `/actuator/health`는 HTTP 401로 확인되며, 공개 health endpoint로 사용할지 여부는 아직 결정하지 않았습니다.
 
 ## 주의사항
 
@@ -96,8 +93,6 @@ docker compose up -d postgres
 
 ## 다음 작업
 
-- Docker Desktop 실행 후 PostgreSQL 컨테이너 기동 확인
-- 백엔드 런타임 실행 및 공통코드 API 호출 확인
 - 샘플 API 실패 범위 확인
 - 게시판, 일정, 회원, SNS 샘플 제거 범위 확정
 - 보건소 기본 정보 또는 예약 가능 슬롯 API 구현 착수
