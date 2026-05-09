@@ -44,6 +44,25 @@
 		  AND active = true
 	</select>
 
+	<select id="selectActiveMemberByRefreshToken" parameterType="string" resultMap="Member">
+		SELECT
+			m.id,
+			m.health_center_id,
+			m.email,
+			m.password,
+			m.name,
+			m.phone,
+			m.role,
+			m.active
+		FROM refresh_tokens rt
+		INNER JOIN members m
+			ON m.id = rt.member_id
+		WHERE rt.refresh_token = #{refreshToken}
+		  AND rt.revoked = false
+		  AND rt.expires_at > CURRENT_TIMESTAMP
+		  AND m.active = true
+	</select>
+
 	<insert id="insertRefreshToken" parameterType="map">
 		INSERT INTO refresh_tokens (
 			member_id,
@@ -59,5 +78,22 @@
 			CURRENT_TIMESTAMP
 		)
 	</insert>
+
+	<update id="revokeRefreshTokenByToken" parameterType="string">
+		UPDATE refresh_tokens
+		SET revoked = true,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE refresh_token = #{refreshToken}
+		  AND revoked = false
+	</update>
+
+	<update id="revokeMemberRefreshToken" parameterType="map">
+		UPDATE refresh_tokens
+		SET revoked = true,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE member_id = #{memberId}
+		  AND refresh_token = #{refreshToken}
+		  AND revoked = false
+	</update>
 
 </mapper>

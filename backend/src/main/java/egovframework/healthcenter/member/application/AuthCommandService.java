@@ -8,9 +8,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import egovframework.healthcenter.member.dto.LoginRequest;
 import egovframework.healthcenter.member.dto.LoginResponse;
+import egovframework.healthcenter.member.dto.LogoutRequest;
 import egovframework.healthcenter.member.dto.MemberResponse;
+import egovframework.healthcenter.member.dto.ReissueTokenRequest;
 import egovframework.healthcenter.member.mapper.MemberMapper;
 import egovframework.healthcenter.member.mapper.MemberVO;
+import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.member.security.HealthcenterJwtTokenProvider;
 import egovframework.let.utl.sim.service.EgovFileScrty;
 
@@ -47,6 +50,45 @@ public class AuthCommandService {
 		);
 
 		return new LoginResponse(accessToken, refreshToken, MemberResponse.from(member));
+	}
+
+	@Transactional
+	public LoginResponse reissue(ReissueTokenRequest request) {
+		if (request == null || isBlank(request.refreshToken())) {
+			throw new IllegalArgumentException("Refresh Token을 입력하세요.");
+		}
+
+		MemberVO member = memberMapper.selectActiveMemberByRefreshToken(request.refreshToken());
+		if (member == null) {
+			throw new IllegalArgumentException("Refresh Token이 유효하지 않습니다.");
+		}
+
+		memberMapper.revokeRefreshTokenByToken(request.refreshToken());
+
+		String accessToken = jwtTokenProvider.generateAccessToken(member);
+		String refreshToken = UUID.randomUUID().toString();
+		memberMapper.insertRefreshToken(
+			member.getId(),
+			refreshToken,
+			LocalDateTime.now().plusDays(REFRESH_TOKEN_VALIDITY_DAYS)
+		);
+
+		return new LoginResponse(accessToken, refreshToken, MemberResponse.from(member));
+	}
+
+	@Transactional
+	public void logout(MemberPrincipal principal, LogoutRequest request) {
+		if (principal == null) {
+			throw new IllegalArgumentException("로그인이 필요합니다.");
+		}
+		if (request == null || isBlank(request.refreshToken())) {
+			throw new IllegalArgumentException("Refresh Token을 입력하세요.");
+		}
+
+		int updated = memberMapper.revokeMemberRefreshToken(principal.memberId(), request.refreshToken());
+		if (updated == 0) {
+			throw new IllegalArgumentException("Refresh Token이 유효하지 않습니다.");
+		}
 	}
 
 	private boolean matchesPassword(String rawPassword, MemberVO member) {
