@@ -60,3 +60,32 @@ SET code_name = EXCLUDED.code_name,
     system_code = EXCLUDED.system_code,
     active = EXCLUDED.active,
     updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO health_centers (id, name, address, phone, active)
+VALUES (1, '기본 보건소', '서울특별시 중구 세종대로 110', '02-120', true)
+ON CONFLICT (id) DO UPDATE
+SET name = EXCLUDED.name,
+    address = EXCLUDED.address,
+    phone = EXCLUDED.phone,
+    active = EXCLUDED.active,
+    updated_at = CURRENT_TIMESTAMP;
+
+SELECT setval(
+    pg_get_serial_sequence('health_centers', 'id'),
+    GREATEST((SELECT MAX(id) FROM health_centers), 1)
+);
+
+INSERT INTO members (health_center_id, email, password, name, phone, role, active)
+VALUES
+    (1, 'admin@test.com', '82czkZUHGnH2zTnhrlm5AX7SL+FhUf2zdsXi7fqSC3E=', '보건소 관리자', '010-0000-0001', 'ADMIN', true),
+    (1, 'staff@test.com', 'R/JdIngCdK3yEw4hXqIMVzaaQlsvQfvZgQFKcv4qX9w=', '보건소 직원', '010-0000-0002', 'STAFF', true),
+    (NULL, 'citizen@test.com', 'wJT8jOG2GleMvpVinUOb9UOy2yQyXwPtExZBcjXo3s0=', '일반 시민', '010-0000-0003', 'CITIZEN', true),
+    (NULL, 'guardian@test.com', 'nf3TOXMkBnH5xCqH5ZwomKoQrSzNYZDrZNOlMUFcBZo=', '보호자', '010-0000-0004', 'GUARDIAN', true)
+ON CONFLICT (email) DO UPDATE
+SET health_center_id = EXCLUDED.health_center_id,
+    password = EXCLUDED.password,
+    name = EXCLUDED.name,
+    phone = EXCLUDED.phone,
+    role = EXCLUDED.role,
+    active = EXCLUDED.active,
+    updated_at = CURRENT_TIMESTAMP;

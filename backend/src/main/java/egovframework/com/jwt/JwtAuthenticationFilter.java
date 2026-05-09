@@ -1,6 +1,8 @@
 package egovframework.com.jwt;
 
 import egovframework.com.cmm.LoginVO;
+import egovframework.healthcenter.member.security.HealthcenterJwtTokenProvider;
+import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.let.utl.fcc.service.EgovStringUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,19 +32,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private EgovJwtTokenUtil jwtTokenUtil;
+    @Autowired
+    private HealthcenterJwtTokenProvider healthcenterJwtTokenProvider;
     public static final String HEADER_STRING = "Authorization";
+    private static final String BEARER_PREFIX = "Bearer ";
 
     @Override //로그인 이후 HttpServletRequest 요청할 때마다 실행(스프링의 AOP기능)
     protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
             throws IOException, ServletException {
 
         // step 1. request header에서 토큰을 가져온다.
-        String jwtToken = EgovStringUtil.isNullToString(req.getHeader(HEADER_STRING));
+        String jwtToken = resolveToken(req.getHeader(HEADER_STRING));
+        if (jwtToken.isBlank()) {
+            chain.doFilter(req, res);
+            return;
+        }
 
 
         // step 2. 토큰에 내용이 있는지 확인해서 id값을 가져옴
         // Exception 핸들링 추가처리 (토큰 유효성, 토큰 변조 여부, 토큰 만료여부)
         // 내부적으로 parse하는 과정에서 해당 여부들이 검증됨
+        try {
+            MemberPrincipal principal = healthcenterJwtTokenProvider.getPrincipalFromToken(jwtToken);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    principal, null, Arrays.asList(new SimpleGrantedAuthority(principal.authority()))
+            );
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            logger.debug("healthcenter authentication ===>>> " + authentication);
+        } catch (InvalidJwtException e) {
+            setLegacyAuthentication(req, jwtToken);
+        }
+
+        chain.doFilter(req, res);
+    }
+
+    private void setLegacyAuthentication(HttpServletRequest req, String jwtToken) {
         try {
             LoginVO loginVO = jwtTokenUtil.getLoginVOFromToken(jwtToken);
             logger.debug("===>>> id = " + loginVO.getId());
@@ -62,11 +87,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (InvalidJwtException e) {
             logger.debug(e.getMessage());
         }
-
-        chain.doFilter(req, res);
     }
 
     private boolean isAdmin(LoginVO loginVO) {
         return "ROLE_ADMIN".equals(loginVO.getGroupNm());
+    }
+
+    private String resolveToken(String authorizationHeader) {
+        String token = EgovStringUtil.isNullToString(authorizationHeader);
+        if (token.startsWith(BEARER_PREFIX)) {
+            return token.substring(BEARER_PREFIX.length()).trim();
+        }
+        return token;
     }
 }

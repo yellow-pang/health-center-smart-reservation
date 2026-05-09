@@ -93,9 +93,18 @@ public class EgovConfigAppMapper {
 
 	private Resource[] mapperLocations(PathMatchingResourcePatternResolver resolver) throws IOException {
 		List<Resource> resources = new ArrayList<>();
-		Collections.addAll(resources, resolver.getResources("classpath:/egovframework/mapper/let/**/*_" + dbType + ".xml"));
-		Collections.addAll(resources, resolver.getResources("classpath:/egovframework/mapper/healthcenter/**/*_" + dbType + ".xml"));
+		Collections.addAll(resources, mapperResources(resolver, "classpath:/egovframework/mapper/let/**/*_" + dbType + ".xml"));
+		Collections.addAll(resources, mapperResources(resolver, "classpath:/egovframework/mapper/healthcenter/**/*_" + dbType + ".xml"));
 		return resources.toArray(new Resource[0]);
+	}
+
+	private Resource[] mapperResources(PathMatchingResourcePatternResolver resolver, String locationPattern) throws IOException {
+		try {
+			return resolver.getResources(locationPattern);
+		} catch (IOException e) {
+			EgovBasicLogger.debug("Mapper 경로를 찾을 수 없어 건너뜁니다: " + locationPattern, e);
+			return new Resource[0];
+		}
 	}
 
 	@Bean
