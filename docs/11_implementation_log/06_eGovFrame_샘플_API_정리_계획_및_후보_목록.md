@@ -56,7 +56,7 @@
 | GitNexus 상태 | stale |
 | GitNexus analyze | `Not inside a git repository`로 실패 |
 | 대체 탐색 | `rg`, 파일 구조 확인 사용 |
-| 삭제 실행 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플, 게시판/게시판 이용정보/회원관리 샘플 제거 완료 |
+| 삭제 실행 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플, 게시판/게시판 이용정보/회원관리 샘플, HSQL 내장 DB 및 미사용 DB 드라이버 제거 완료 |
 
 GitNexus 인덱스 갱신이 실패했으므로 이번 문서는 `rg` 결과와 파일 구조 기준으로 작성했다. 실제 삭제를 수행할 때는 선택한 대상별로 GitNexus 또는 `rg` 기반 영향 확인을 다시 수행한다.
 
@@ -248,8 +248,7 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 | SNS 로그인 샘플 `egovframework.com.sns` | 유지 | 향후 소셜 로그인/간편 인증 UX 확장 후보 |
 | 로그인 샘플 `egovframework.let.uat.uia` | 보안 관련 보류 | token 방식과 Spring Security 유지 예정이므로 Auth/Member 전환 전 삭제하지 않음 |
 | 관리자 샘플 `egovframework.let.uat.esm` | 보안 관련 보류 | 관리자 권한, 비밀번호 변경, JWT 권한 흐름 확인용으로 남김 |
-| `mysql-connector-j` | 보류 | 현재 PostgreSQL 기준에서는 제거 후보지만 Maven/CVE 주석과 샘플 DB 정리와 함께 판단 |
-| `hsqldb` | 보류 | HSQL 실행 회귀 확인을 버릴지 결정 필요 |
+| `egovframework/mapper/let/**/*_{hsql,mysql,oracle,tibero,cubrid,altibase}.xml` 일부 | 보류 | 파일, 로그인, 관리자 보안 골격과 연결된 Mapper가 남아 있어 기능 제거 단계와 함께 판단 |
 | `tomcat-embed-jasper` | 보류 | REST API 서버 기준 제거 후보지만 중복 선언 정리와 함께 판단 |
 
 ## 9. 제거 진행 순서
@@ -264,7 +263,7 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 | 4 | 게시판 샘플 제거 | 큼 | 높음 | 완료, 게시판 이용정보/회원관리 샘플과 묶어서 처리 |
 | 5 | 게시판 이용정보/사용자 정보 샘플 제거 | 큼 | 높음 | 완료 |
 | 6 | 회원관리 샘플 제거 | 큼 | 높음 | 완료, 보안/token 골격은 유지 |
-| 7 | HSQL 및 벤더별 샘플 DB 자원 정리 | 중간 | 중간 | PostgreSQL 설정 안정화 후 진행 |
+| 7 | HSQL 및 벤더별 샘플 DB 자원 정리 | 중간 | 중간 | 완료, HSQL 내장 DB와 미사용 DB 드라이버 우선 제거 |
 
 첫 실제 삭제 작업은 영향이 가장 작은 `Selenium 테스트 샘플 제거`를 추천한다.
 
@@ -302,7 +301,8 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 - [x] 개인 일정 샘플 제거
 - [x] 게시판/게시판 이용정보 샘플 제거
 - [x] 회원관리 샘플 제거
-- [ ] HSQL 및 벤더별 샘플 DB 자원 정리
+- [x] HSQL 내장 DB 및 미사용 DB 드라이버 제거
+- [ ] 잔여 벤더별 Mapper 정리
 
 ### 검증 체크리스트
 
@@ -312,16 +312,17 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 - [x] JPA/QueryDSL 참조 제거 후 `rg` 확인
 - [x] 개인 일정 샘플 참조 제거 후 `rg` 확인
 - [x] 게시판/게시판 이용정보/회원관리 샘플 참조 제거 후 `rg` 확인
+- [x] HSQL/MySQL/log4jdbc/protobuf 참조 제거 후 `rg` 확인
 - [x] `mvn -q -DskipTests compile`
 - [x] `mvn -q test-compile`
 - [x] `GET /api/common-codes/RESERVATION_STATUS`
 
-Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 후 Maven compile과 test-compile을 확인했다. 게시판/게시판 이용정보/회원관리 샘플 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다.
+Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 후 Maven compile과 test-compile을 확인했다. 게시판/게시판 이용정보/회원관리 샘플 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다. HSQL 내장 DB 및 미사용 DB 드라이버 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다.
 
 ## 12. 다음 작업 추천
 
-1. 다음 삭제 작업은 `HSQL 및 벤더별 샘플 DB 자원 정리`로 진행한다.
-2. PostgreSQL 기준으로 남길 SQL과 제거할 HSQL/벤더별 Mapper·DB 자원을 구분한다.
+1. 다음 삭제 작업은 `잔여 벤더별 Mapper 정리` 여부를 판단한다.
+2. 파일, 로그인, 관리자 보안 골격을 유지할지 제거할지 먼저 결정한 뒤 관련 Mapper를 정리한다.
 3. 삭제 단계마다 Maven compile과 공통코드 API를 확인한다.
 
 ## 13. 커밋 메시지 초안
@@ -336,5 +337,6 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 - 개인 일정 샘플과 Security 인증 예외 경로 제거
 - 게시판/게시판 이용정보/회원관리 샘플 제거
 - 제거된 샘플 API의 Security 인증 예외와 MyBatis alias 정리
-- DB 샘플 제거를 다음 순서로 정리
+- HSQL 내장 DB, HSQL/MySQL 드라이버, log4jdbc, mysql 보완용 protobuf 의존성 제거
+- PostgreSQL 기준 datasource 설정으로 정리
 ```
