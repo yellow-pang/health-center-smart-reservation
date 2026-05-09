@@ -86,10 +86,6 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.tomcat.embed</groupId>
-			<artifactId>tomcat-embed-jasper</artifactId>
-		</dependency>
 		<!-- CVE-2026-40972(HIGH): DevTools remote secret 타이밍 공격 취약점
 		     수정 버전: Spring Boot 3.5.14+ (미출시) - 릴리스 후 버전 명시 업데이트 필요
 		     참고: DevTools는 개발 환경 전용(optional)이며 프로덕션 배포 시 포함되지 않음 -->
@@ -193,11 +189,6 @@
 			<version>${commons-validator.version}</version>
 		</dependency>
 
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-		</dependency>
-
 		<!-- postgresql driver -->
 		<!-- CVE-2026-42198: SCRAM PBKDF2 iterations DoS 취약점 보완 -->
 		<dependency>
@@ -266,19 +257,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.apache.tomcat.embed</groupId>
-			<artifactId>tomcat-embed-jasper</artifactId>
-			<version>${tomcat-embed.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.tomcat.embed</groupId>
 			<artifactId>tomcat-embed-websocket</artifactId>
-			<version>${tomcat-embed.version}</version>
-		</dependency>
-
-		<!-- CVE-2025-48924: 보안취약점 보완용 직접 주입 -->
-		<dependency>
-			<groupId>org.apache.tomcat</groupId>
-			<artifactId>tomcat-annotations-api</artifactId>
 			<version>${tomcat-embed.version}</version>
 		</dependency>
 

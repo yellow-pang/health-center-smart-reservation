@@ -56,7 +56,7 @@
 | GitNexus 상태 | stale |
 | GitNexus analyze | `Not inside a git repository`로 실패 |
 | 대체 탐색 | `rg`, 파일 구조 확인 사용 |
-| 삭제 실행 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플, 게시판/게시판 이용정보/회원관리 샘플, HSQL 내장 DB, 미사용 DB 드라이버, 잔여 벤더별 Mapper 제거 완료 |
+| 삭제 실행 | Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플, 게시판/게시판 이용정보/회원관리 샘플, HSQL 내장 DB, 미사용 DB 드라이버, 잔여 벤더별 Mapper, JSP 태그 핸들러 및 Jasper 의존성 제거 완료 |
 
 GitNexus 인덱스 갱신이 실패했으므로 이번 문서는 `rg` 결과와 파일 구조 기준으로 작성했다. 실제 삭제를 수행할 때는 선택한 대상별로 GitNexus 또는 `rg` 기반 영향 확인을 다시 수행한다.
 
@@ -248,7 +248,7 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 | SNS 로그인 샘플 `egovframework.com.sns` | 유지 | 향후 소셜 로그인/간편 인증 UX 확장 후보 |
 | 로그인 샘플 `egovframework.let.uat.uia` | 보안 관련 보류 | token 방식과 Spring Security 유지 예정이므로 Auth/Member 전환 전 삭제하지 않음 |
 | 관리자 샘플 `egovframework.let.uat.esm` | 보안 관련 보류 | 관리자 권한, 비밀번호 변경, JWT 권한 흐름 확인용으로 남김 |
-| `tomcat-embed-jasper` | 보류 | REST API 서버 기준 제거 후보지만 중복 선언 정리와 함께 판단 |
+| `tomcat-embed-core`, `tomcat-embed-el`, `tomcat-embed-websocket`, `tomcat-annotations-api` | 유지 | Tomcat 보안 패치용 직접 버전 고정 |
 
 ## 9. 제거 진행 순서
 
@@ -263,6 +263,7 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 | 5 | 게시판 이용정보/사용자 정보 샘플 제거 | 큼 | 높음 | 완료 |
 | 6 | 회원관리 샘플 제거 | 큼 | 높음 | 완료, 보안/token 골격은 유지 |
 | 7 | HSQL 및 벤더별 샘플 DB 자원 정리 | 중간 | 중간 | 완료, HSQL 내장 DB/미사용 DB 드라이버/잔여 벤더별 Mapper 제거 |
+| 8 | JSP 태그 핸들러와 Jasper 의존성 정리 | 작음 | 낮음 | 완료, REST API 서버 기준 JSP 미사용 확인 |
 
 첫 실제 삭제 작업은 영향이 가장 작은 `Selenium 테스트 샘플 제거`를 추천한다.
 
@@ -302,6 +303,7 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 - [x] 회원관리 샘플 제거
 - [x] HSQL 내장 DB 및 미사용 DB 드라이버 제거
 - [x] 잔여 벤더별 Mapper 정리
+- [x] JSP 태그 핸들러와 Jasper 의존성 제거
 
 ### 검증 체크리스트
 
@@ -313,16 +315,18 @@ HSQL 및 벤더별 샘플 DB 자원 정리
 - [x] 게시판/게시판 이용정보/회원관리 샘플 참조 제거 후 `rg` 확인
 - [x] HSQL/MySQL/log4jdbc/protobuf 참조 제거 후 `rg` 확인
 - [x] `egovframework/mapper/let` 잔여 Mapper 제거 후 `rg --files` 확인
+- [x] JSP 파일 부재와 `EgovComCrossSiteHndlr` 미참조 확인
+- [x] `tomcat-embed-jasper` 제거 후 참조 확인
 - [x] `mvn -q -DskipTests compile`
 - [x] `mvn -q test-compile`
 - [x] `GET /api/common-codes/RESERVATION_STATUS`
 
-Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 후 Maven compile과 test-compile을 확인했다. 게시판/게시판 이용정보/회원관리 샘플 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다. HSQL 내장 DB, 미사용 DB 드라이버, 잔여 벤더별 Mapper 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다.
+Selenium 테스트 샘플, JPA/QueryDSL 테스트 샘플, 개인 일정 샘플 제거 후 Maven compile과 test-compile을 확인했다. 게시판/게시판 이용정보/회원관리 샘플 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다. HSQL 내장 DB, 미사용 DB 드라이버, 잔여 벤더별 Mapper 제거 후에도 Maven compile, test-compile, 공통코드 API 정상 응답을 확인했다. JSP 태그 핸들러와 Jasper 의존성 제거 후 Maven compile과 test-compile을 확인했다.
 
 ## 12. 다음 작업 추천
 
-1. 다음 작업은 REST API 서버 기준으로 남은 중복/미사용 의존성 정리를 검토한다.
-2. `tomcat-embed-jasper` 중복 선언과 JSP 관련 필요 여부를 확인한다.
+1. 다음 작업은 Swagger 노출 API 목록과 남은 샘플 Controller를 재점검한다.
+2. 보안/token 골격으로 남긴 로그인, 관리자, SNS 샘플을 Auth/Member 설계 전까지 보류할지 다시 확인한다.
 3. 삭제 단계마다 Maven compile과 공통코드 API를 확인한다.
 
 ## 13. 커밋 메시지 초안
@@ -340,4 +344,5 @@ docs: eGovFrame 샘플 API 제거 기준 확정
 - HSQL 내장 DB, HSQL/MySQL 드라이버, log4jdbc, mysql 보완용 protobuf 의존성 제거
 - PostgreSQL 기준 datasource 설정으로 정리
 - `egovframework/mapper/let` 하위 벤더별 샘플 Mapper XML 제거
+- JSP 태그 핸들러와 `tomcat-embed-jasper` 의존성 제거
 ```
