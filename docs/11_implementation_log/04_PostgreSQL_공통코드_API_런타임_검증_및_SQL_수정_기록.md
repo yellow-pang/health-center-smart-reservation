@@ -14,7 +14,9 @@
 | 시작 브랜치 | `main` |
 | 작업 성격 | 런타임 검증, SQL 초기 데이터 오류 수정, 문서 갱신 |
 
-처음 추천한 브랜치명은 `fix/postgres-common-code-runtime-verification`이었지만, 현재 환경에서 Git refs 디렉터리 생성이 실패해 슬래시 없는 이름으로 생성했다.
+현재 프로젝트의 브랜치 이름은 `type/topic-kebab-case` 형식으로 통일한다.
+
+권장 형식 기준으로는 `fix/postgres-common-code-runtime-verification`이 맞지만, 이 브랜치는 생성 당시 로컬 Git refs 권한 문제로 슬래시 없는 `fix-postgres-common-code-runtime-verification` 이름으로 만들어졌다. 이후 브랜치부터는 `refactor/egov-sample-api-cleanup`처럼 `/`를 포함한 형식을 사용한다.
 
 ## 3. 작업 배경
 
