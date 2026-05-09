@@ -14,6 +14,7 @@ import egovframework.com.cmm.ResponseCode;
 import egovframework.com.cmm.service.ResultVO;
 import egovframework.let.uat.esm.service.EgovSiteManagerService;
 import egovframework.let.utl.sim.service.EgovFileScrty;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.Explode;
@@ -45,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
  *  </pre>
  */
 @Slf4j
+@Hidden
 @RestController
 @Tag(name="EgovSiteManagerApiController",description = "사용자 관리")
 public class EgovSiteManagerApiController {

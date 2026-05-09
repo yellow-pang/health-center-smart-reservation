@@ -28,6 +28,7 @@ import egovframework.com.sns.SnsVO.KakaoTokenVO;
 import egovframework.com.sns.SnsVO.KakaoProfileVO;
 import egovframework.com.sns.SnsVO.KakaoResponseVO;
 import egovframework.let.uat.uia.service.EgovLoginService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -49,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
  *  </pre>
  */
 @Slf4j
+@Hidden
 @RestController
 @Tag(name="SnsLoginApiController",description = "Sns 로그인 관련")
 public class SnsLoginApiController {

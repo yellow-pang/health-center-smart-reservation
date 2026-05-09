@@ -45,9 +45,6 @@ public class SecurityConfig {
     private String[] AUTH_WHITELIST = {
             "/",
             "/error", // 에러 페이지
-            "/login/**",
-            "/auth/login-jwt", // JWT 로그인
-            "/auth/logout", // 로그아웃
             "/api/auth/login", // 보건소 로그인
             "/api/auth/reissue", // 보건소 토큰 재발급
             "/api/common-codes", // 보건소 공통코드 일괄 조회

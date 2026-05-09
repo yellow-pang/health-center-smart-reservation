@@ -17,6 +17,7 @@ import egovframework.com.cmm.ResponseCode;
 import egovframework.com.cmm.service.ResultVO;
 import egovframework.com.jwt.EgovJwtTokenUtil;
 import egovframework.let.uat.uia.service.EgovLoginService;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -46,6 +47,7 @@ import lombok.extern.slf4j.Slf4j;
  *  </pre>
  */
 @Slf4j
+@Hidden
 @RestController
 @Tag(name="EgovLoginApiController",description = "로그인 관련")
 public class EgovLoginApiController {
