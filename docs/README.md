@@ -30,8 +30,9 @@
 22. `09_agent/04_다음_작업_프롬프트.md`
 23. `13_schedule/01_남은_일정_단계별_진행_계획.md`
 24. `13_schedule/02_전체_작업_체크리스트.md`
-25. `11_implementation_log/00_브랜치_작업_기록_가이드.md`
-26. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
+25. `14_deferred_cleanup/01_보류_정리_목록.md`
+26. `11_implementation_log/00_브랜치_작업_기록_가이드.md`
+27. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
 
 ## 코드 작성 전 반드시 확인할 문서
 
@@ -42,6 +43,7 @@
 - `09_agent/06_새대화_시작_가이드.md`
 - `09_agent/04_다음_작업_프롬프트.md`
 - `13_schedule/02_전체_작업_체크리스트.md`
+- `14_deferred_cleanup/01_보류_정리_목록.md`
 - `11_implementation_log/00_브랜치_작업_기록_가이드.md`
 - `02_domain/04_공통코드_관리_설계서.md`
 - `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
@@ -84,6 +86,7 @@ docs/11_implementation_log/00_브랜치_작업_기록_가이드.md 기준으로
 - Maven과 Gradle을 혼용하지 않는다.
 - 전자정부프레임워크 관련 핵심 설정은 임의로 제거하지 않는다.
 - 샘플 기능 제거가 필요한 경우, 제거 대상 목록을 먼저 제안한 뒤 진행한다.
+- 삭제 여부가 애매한 항목은 즉시 제거하지 않고 `14_deferred_cleanup/01_보류_정리_목록.md`에 보류 사유와 확인 조건을 기록한다.
 - 템플릿은 먼저 HSQL 기준으로 실행 확인한 뒤 PostgreSQL로 전환한다.
 - MVP에서는 JPA를 사용하지 않고 MyBatis를 기본 DB 접근 방식으로 사용한다.
 - 신규 보건소 도메인은 `egovframework.healthcenter` 하위 패키지에 작성한다.

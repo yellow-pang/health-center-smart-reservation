@@ -66,6 +66,8 @@ refactor: eGovFrame 레거시 인증 샘플 제거
 - 사용자 직접 Auth API와 Swagger UI 확인 결과 반영
 - `JwtAuthenticationFilter`의 레거시 `LoginVO` fallback 유지 여부 별도 판단
 - `EgovJwtTokenUtil`, `LoginVO`, eGov 보안 유틸 사용 범위 재점검
+
+위 보안 골격 재점검 항목은 이번 PR에서 제거하지 않고 `docs/14_deferred_cleanup/01_보류_정리_목록.md`로 이관했습니다.
 ```
 
 ## 변경 파일 요약

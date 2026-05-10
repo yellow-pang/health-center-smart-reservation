@@ -92,6 +92,8 @@ GitNexus MCP 리소스가 현재 세션에 노출되지 않았고, `npm.cmd exec
 2. `JwtAuthenticationFilter`의 레거시 `LoginVO` fallback 유지 여부를 별도 브랜치에서 판단
 3. `EgovJwtTokenUtil`, `LoginVO`, eGov 보안 유틸 사용 범위 재점검
 
+2~3번 항목은 이번 브랜치에서 제거하지 않고 `docs/14_deferred_cleanup/01_보류_정리_목록.md`로 이관했다.
+
 ## 9. 커밋 메시지 초안
 
 ```text
