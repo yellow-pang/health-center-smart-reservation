@@ -1,6 +1,8 @@
 package egovframework.healthcenter.reservation.mapper;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 public class ReservationVO {
 
@@ -9,7 +11,11 @@ public class ReservationVO {
 	private Long healthCenterId;
 	private Long memberId;
 	private Long serviceTypeId;
+	private String serviceTypeName;
 	private Long reservationSlotId;
+	private LocalDate slotDate;
+	private LocalTime startTime;
+	private LocalTime endTime;
 	private String visitorName;
 	private String visitorPhone;
 	private String status;
@@ -55,12 +61,44 @@ public class ReservationVO {
 		this.serviceTypeId = serviceTypeId;
 	}
 
+	public String getServiceTypeName() {
+		return serviceTypeName;
+	}
+
+	public void setServiceTypeName(String serviceTypeName) {
+		this.serviceTypeName = serviceTypeName;
+	}
+
 	public Long getReservationSlotId() {
 		return reservationSlotId;
 	}
 
 	public void setReservationSlotId(Long reservationSlotId) {
 		this.reservationSlotId = reservationSlotId;
+	}
+
+	public LocalDate getSlotDate() {
+		return slotDate;
+	}
+
+	public void setSlotDate(LocalDate slotDate) {
+		this.slotDate = slotDate;
+	}
+
+	public LocalTime getStartTime() {
+		return startTime;
+	}
+
+	public void setStartTime(LocalTime startTime) {
+		this.startTime = startTime;
+	}
+
+	public LocalTime getEndTime() {
+		return endTime;
+	}
+
+	public void setEndTime(LocalTime endTime) {
+		this.endTime = endTime;
 	}
 
 	public String getVisitorName() {
