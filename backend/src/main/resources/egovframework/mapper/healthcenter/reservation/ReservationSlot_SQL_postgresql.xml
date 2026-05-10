@@ -54,7 +54,17 @@
 		INNER JOIN service_types st
 			ON st.id = rs.service_type_id
 		WHERE rs.id = #{slotId}
+		  AND st.active = true
 	</select>
+
+	<update id="increaseReservedCountIfAvailable" parameterType="long">
+		UPDATE reservation_slots
+		SET reserved_count = reserved_count + 1,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{slotId}
+		  AND active = true
+		  AND reserved_count <![CDATA[<]]> capacity
+	</update>
 
 	<insert id="insertSlot" parameterType="map">
 		INSERT INTO reservation_slots (
