@@ -5,11 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import egovframework.com.cmm.interceptor.AuthenticInterceptor;
 
 /**
  * @ClassName : EgovConfigWebDispatcherServlet.java
@@ -35,23 +32,6 @@ import egovframework.com.cmm.interceptor.AuthenticInterceptor;
 	@ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class)
 })
 public class EgovConfigWebDispatcherServlet implements WebMvcConfigurer {
-
-	// =====================================================================
-	// RequestMappingHandlerMapping 설정
-	// =====================================================================
-	// -------------------------------------------------------------
-	// RequestMappingHandlerMapping 설정 - Interceptor 추가
-	// -------------------------------------------------------------
-	@Override
-	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(new AuthenticInterceptor())
-			.addPathPatterns(
-				"/auth/*")
-			.excludePathPatterns(
-				"/auth/login-jwt",
-				"/auth/logout"
-				);
-	}
 
 	// -------------------------------------------------------------
 	// RequestMappingHandlerMapping 설정 View Controller 추가
