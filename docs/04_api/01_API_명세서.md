@@ -462,6 +462,44 @@ Response:
 }
 ```
 
+### 4.6.3 예약 취소
+
+`DELETE /api/reservations/{id}`
+
+권한:
+
+- 예약자 본인
+- 같은 보건소 소속 `ADMIN`
+
+정책:
+
+- `RESERVED` 상태 예약만 취소할 수 있다.
+- 예약 시간 1시간 전까지만 취소할 수 있다.
+- 취소 성공 시 예약 상태는 `CANCELED`로 변경되고 예약 슬롯의 `reservedCount`는 1 감소한다.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": null,
+  "error": null
+}
+```
+
+취소 가능 시간 초과 Response:
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "RESERVATION_CANCEL_TIME_EXPIRED",
+    "message": "예약 취소는 예약 시간 1시간 전까지만 가능합니다."
+  }
+}
+```
+
 ### 4.7 예약자 체크인
 
 `POST /api/visits/check-in`
@@ -560,6 +598,7 @@ Response:
 | RESERVATION_DUPLICATED | 중복 예약 |
 | RESERVATION_NOT_FOUND | 예약 없음 |
 | RESERVATION_CANCEL_TIME_EXPIRED | 취소 가능 시간 초과 |
+| RESERVATION_CANCEL_INVALID_STATUS | 취소할 수 없는 예약 상태 |
 | VISIT_NOT_FOUND | 방문 정보 없음 |
 | QUEUE_TICKET_NOT_FOUND | 대기표 없음 |
 | QUEUE_INVALID_STATUS | 현재 상태에서 수행할 수 없는 요청 |

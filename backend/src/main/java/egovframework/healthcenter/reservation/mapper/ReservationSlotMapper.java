@@ -28,6 +28,10 @@ public class ReservationSlotMapper extends EgovAbstractMapper {
 		return update("ReservationSlotMapper.increaseReservedCountIfAvailable", slotId);
 	}
 
+	public int decreaseReservedCount(Long slotId) {
+		return update("ReservationSlotMapper.decreaseReservedCount", slotId);
+	}
+
 	public void insertSlot(Long healthCenterId, ReservationSlotCreateRequest request) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("healthCenterId", healthCenterId);
