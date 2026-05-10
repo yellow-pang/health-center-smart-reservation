@@ -1,6 +1,7 @@
 package egovframework.healthcenter.reservation.application;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
@@ -15,6 +16,7 @@ import egovframework.healthcenter.reservation.mapper.ReservationMapper;
 import egovframework.healthcenter.reservation.mapper.ReservationSlotMapper;
 import egovframework.healthcenter.reservation.mapper.ReservationSlotVO;
 import egovframework.healthcenter.reservation.mapper.ReservationVO;
+import egovframework.healthcenter.reservation.policy.ReservationCancelPolicy;
 
 @Service
 public class ReservationCommandService {
@@ -23,12 +25,15 @@ public class ReservationCommandService {
 
 	private final ReservationMapper reservationMapper;
 	private final ReservationSlotMapper reservationSlotMapper;
+	private final ReservationCancelPolicy reservationCancelPolicy;
 
 	public ReservationCommandService(
 			ReservationMapper reservationMapper,
-			ReservationSlotMapper reservationSlotMapper) {
+			ReservationSlotMapper reservationSlotMapper,
+			ReservationCancelPolicy reservationCancelPolicy) {
 		this.reservationMapper = reservationMapper;
 		this.reservationSlotMapper = reservationSlotMapper;
+		this.reservationCancelPolicy = reservationCancelPolicy;
 	}
 
 	@Transactional
@@ -54,6 +59,26 @@ public class ReservationCommandService {
 
 		ReservationVO reservation = reservationMapper.selectReservationByNo(reservationNo);
 		return ReservationCreateResponse.from(reservation);
+	}
+
+	@Transactional
+	public void cancelReservation(MemberPrincipal principal, Long reservationId) {
+		validatePrincipal(principal);
+		if (reservationId == null || reservationId < 1) {
+			throw new IllegalArgumentException("예약 ID가 올바르지 않습니다.");
+		}
+
+		ReservationVO reservation = reservationMapper.selectReservationById(reservationId);
+		reservationCancelPolicy.validateCancelable(principal, reservation, LocalDateTime.now());
+
+		int canceled = reservationMapper.cancelReservation(reservationId);
+		if (canceled == 0) {
+			throw new IllegalArgumentException("현재 상태에서는 예약을 취소할 수 없습니다.");
+		}
+		int decreased = reservationSlotMapper.decreaseReservedCount(reservation.getReservationSlotId());
+		if (decreased == 0) {
+			throw new IllegalArgumentException("예약 슬롯 예약 수를 복구할 수 없습니다.");
+		}
 	}
 
 	private void validatePrincipal(MemberPrincipal principal) {

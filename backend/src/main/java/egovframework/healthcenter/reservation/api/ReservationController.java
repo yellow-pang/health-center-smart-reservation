@@ -3,6 +3,7 @@ package egovframework.healthcenter.reservation.api;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -100,6 +101,29 @@ public class ReservationController {
 		}
 	}
 
+	@DeleteMapping("/{reservationId}")
+	@Operation(
+		summary = "예약 취소",
+		description = "예약자 본인 또는 같은 보건소 관리자가 방문 1시간 전까지 예약을 취소한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<Void>> cancelReservation(
+			Authentication authentication,
+			@PathVariable Long reservationId) {
+		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
+			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
+		}
+
+		try {
+			reservationCommandService.cancelReservation(principal, reservationId);
+			return ResponseEntity.ok(ApiResponse.success(null));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.status(resolveStatus(e.getMessage()))
+				.body(ApiResponse.failure(resolveErrorCode(e.getMessage()), e.getMessage()));
+		}
+	}
+
 	private String resolveErrorCode(String message) {
 		if (message != null && message.contains("권한")) {
 			return "FORBIDDEN";
@@ -113,6 +137,12 @@ public class ReservationController {
 		if (message != null && message.contains("이미 예약")) {
 			return "RESERVATION_DUPLICATED";
 		}
+		if (message != null && message.contains("1시간 전")) {
+			return "RESERVATION_CANCEL_TIME_EXPIRED";
+		}
+		if (message != null && message.contains("취소")) {
+			return "RESERVATION_CANCEL_INVALID_STATUS";
+		}
 		if (message != null && message.contains("슬롯")) {
 			return "RESERVATION_SLOT_NOT_FOUND";
 		}
@@ -125,6 +155,12 @@ public class ReservationController {
 		}
 		if (message != null && message.contains("예약 정보를 찾을 수 없습니다")) {
 			return HttpStatus.NOT_FOUND;
+		}
+		if (message != null && message.contains("1시간 전")) {
+			return HttpStatus.CONFLICT;
+		}
+		if (message != null && message.contains("취소")) {
+			return HttpStatus.CONFLICT;
 		}
 		return HttpStatus.BAD_REQUEST;
 	}

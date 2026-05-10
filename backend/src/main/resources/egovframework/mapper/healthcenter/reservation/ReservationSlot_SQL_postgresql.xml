@@ -66,6 +66,14 @@
 		  AND reserved_count <![CDATA[<]]> capacity
 	</update>
 
+	<update id="decreaseReservedCount" parameterType="long">
+		UPDATE reservation_slots
+		SET reserved_count = reserved_count - 1,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{slotId}
+		  AND reserved_count <![CDATA[>]]> 0
+	</update>
+
 	<insert id="insertSlot" parameterType="map">
 		INSERT INTO reservation_slots (
 			health_center_id,
