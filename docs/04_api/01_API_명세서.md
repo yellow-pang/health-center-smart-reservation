@@ -220,6 +220,43 @@ Response:
 }
 ```
 
+### 4.5.0 관리자 예약 슬롯 생성
+
+`POST /api/admin/reservation-slots`
+
+Request:
+
+```json
+{
+  "serviceTypeId": 1,
+  "date": "2026-05-10",
+  "startTime": "09:00",
+  "endTime": "09:30",
+  "capacity": 5
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "slotId": 10,
+    "serviceTypeId": 1,
+    "serviceTypeName": "예방접종",
+    "date": "2026-05-10",
+    "startTime": "09:00",
+    "endTime": "09:30",
+    "capacity": 5,
+    "reservedCount": 0,
+    "availableCount": 5,
+    "available": true
+  },
+  "error": null
+}
+```
+
 ### 4.5.1 업무 유형 조회
 
 `GET /api/service-types`

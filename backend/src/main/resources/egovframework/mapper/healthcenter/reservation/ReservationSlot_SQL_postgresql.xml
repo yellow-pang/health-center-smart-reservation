@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="ReservationSlotMapper">
+
+	<resultMap id="ReservationSlot" type="egovframework.healthcenter.reservation.mapper.ReservationSlotVO">
+		<id property="id" column="id"/>
+		<result property="healthCenterId" column="health_center_id"/>
+		<result property="serviceTypeId" column="service_type_id"/>
+		<result property="serviceTypeName" column="service_type_name"/>
+		<result property="date" column="slot_date"/>
+		<result property="startTime" column="start_time"/>
+		<result property="endTime" column="end_time"/>
+		<result property="capacity" column="capacity"/>
+		<result property="reservedCount" column="reserved_count"/>
+		<result property="active" column="active"/>
+	</resultMap>
+
+	<select id="selectActiveSlots" parameterType="map" resultMap="ReservationSlot">
+		SELECT
+			rs.id,
+			rs.health_center_id,
+			rs.service_type_id,
+			st.name AS service_type_name,
+			rs.slot_date,
+			rs.start_time,
+			rs.end_time,
+			rs.capacity,
+			rs.reserved_count,
+			rs.active
+		FROM reservation_slots rs
+		INNER JOIN service_types st
+			ON st.id = rs.service_type_id
+		WHERE rs.service_type_id = #{serviceTypeId}
+		  AND rs.slot_date = #{date}
+		  AND rs.active = true
+		  AND st.active = true
+		ORDER BY rs.start_time
+	</select>
+
+	<select id="selectSlotById" parameterType="long" resultMap="ReservationSlot">
+		SELECT
+			rs.id,
+			rs.health_center_id,
+			rs.service_type_id,
+			st.name AS service_type_name,
+			rs.slot_date,
+			rs.start_time,
+			rs.end_time,
+			rs.capacity,
+			rs.reserved_count,
+			rs.active
+		FROM reservation_slots rs
+		INNER JOIN service_types st
+			ON st.id = rs.service_type_id
+		WHERE rs.id = #{slotId}
+	</select>
+
+	<insert id="insertSlot" parameterType="map">
+		INSERT INTO reservation_slots (
+			health_center_id,
+			service_type_id,
+			slot_date,
+			start_time,
+			end_time,
+			capacity,
+			reserved_count,
+			active,
+			created_at
+		) VALUES (
+			#{healthCenterId},
+			#{serviceTypeId},
+			#{date},
+			#{startTime},
+			#{endTime},
+			#{capacity},
+			0,
+			true,
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+
+</mapper>

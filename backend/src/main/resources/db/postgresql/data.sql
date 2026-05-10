@@ -102,6 +102,51 @@ SET name = EXCLUDED.name,
     active = EXCLUDED.active,
     updated_at = CURRENT_TIMESTAMP;
 
+INSERT INTO reservation_slots (
+    health_center_id,
+    service_type_id,
+    slot_date,
+    start_time,
+    end_time,
+    capacity,
+    reserved_count,
+    active
+)
+SELECT
+    st.health_center_id,
+    st.id,
+    slot_days.slot_date::date,
+    slot_times.start_time::time,
+    (slot_times.start_time + INTERVAL '30 minutes')::time,
+    st.default_capacity,
+    0,
+    true
+FROM service_types st
+CROSS JOIN generate_series(CURRENT_DATE, CURRENT_DATE + INTERVAL '14 days', INTERVAL '1 day') AS slot_days(slot_date)
+CROSS JOIN (
+    VALUES
+        (TIME '09:00'),
+        (TIME '09:30'),
+        (TIME '10:00'),
+        (TIME '10:30'),
+        (TIME '11:00'),
+        (TIME '11:30'),
+        (TIME '13:00'),
+        (TIME '13:30'),
+        (TIME '14:00'),
+        (TIME '14:30'),
+        (TIME '15:00'),
+        (TIME '15:30'),
+        (TIME '16:00'),
+        (TIME '16:30')
+) AS slot_times(start_time)
+WHERE st.health_center_id = 1
+  AND st.active = true
+ON CONFLICT (service_type_id, slot_date, start_time, end_time) DO UPDATE
+SET capacity = EXCLUDED.capacity,
+    active = EXCLUDED.active,
+    updated_at = CURRENT_TIMESTAMP;
+
 INSERT INTO service_windows (health_center_id, window_number, name, status, active)
 VALUES
     (1, 1, '1번 창구', 'OPEN', true),

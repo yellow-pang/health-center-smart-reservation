@@ -68,6 +68,26 @@ CREATE TABLE IF NOT EXISTS service_types (
 CREATE INDEX IF NOT EXISTS idx_service_types_health_center_active
     ON service_types (health_center_id, active, id);
 
+CREATE TABLE IF NOT EXISTS reservation_slots (
+    id BIGSERIAL PRIMARY KEY,
+    health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
+    service_type_id BIGINT NOT NULL REFERENCES service_types(id),
+    slot_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    capacity INTEGER NOT NULL DEFAULT 5,
+    reserved_count INTEGER NOT NULL DEFAULT 0,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT uk_reservation_slots_service_time UNIQUE (service_type_id, slot_date, start_time, end_time),
+    CONSTRAINT chk_reservation_slots_capacity CHECK (capacity >= 1),
+    CONSTRAINT chk_reservation_slots_reserved_count CHECK (reserved_count >= 0 AND reserved_count <= capacity)
+);
+
+CREATE INDEX IF NOT EXISTS idx_reservation_slots_service_date_active
+    ON reservation_slots (service_type_id, slot_date, active, start_time);
+
 CREATE TABLE IF NOT EXISTS service_windows (
     id BIGSERIAL PRIMARY KEY,
     health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
