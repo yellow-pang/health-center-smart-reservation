@@ -9,7 +9,11 @@
 		<result property="healthCenterId" column="health_center_id"/>
 		<result property="memberId" column="member_id"/>
 		<result property="serviceTypeId" column="service_type_id"/>
+		<result property="serviceTypeName" column="service_type_name"/>
 		<result property="reservationSlotId" column="reservation_slot_id"/>
+		<result property="slotDate" column="slot_date"/>
+		<result property="startTime" column="start_time"/>
+		<result property="endTime" column="end_time"/>
 		<result property="visitorName" column="visitor_name"/>
 		<result property="visitorPhone" column="visitor_phone"/>
 		<result property="status" column="status"/>
@@ -64,6 +68,51 @@
 			reserved_at
 		FROM reservations
 		WHERE reservation_no = #{reservationNo}
+	</select>
+
+	<select id="selectReservationsByMemberId" parameterType="long" resultMap="Reservation">
+		SELECT
+			r.id,
+			r.reservation_no,
+			r.health_center_id,
+			r.member_id,
+			r.service_type_id,
+			st.name AS service_type_name,
+			r.reservation_slot_id,
+			rs.slot_date,
+			rs.start_time,
+			rs.end_time,
+			r.visitor_name,
+			r.visitor_phone,
+			r.status,
+			r.reserved_at
+		FROM reservations r
+		INNER JOIN service_types st ON st.id = r.service_type_id
+		INNER JOIN reservation_slots rs ON rs.id = r.reservation_slot_id
+		WHERE r.member_id = #{memberId}
+		ORDER BY rs.slot_date DESC, rs.start_time DESC, r.id DESC
+	</select>
+
+	<select id="selectReservationById" parameterType="long" resultMap="Reservation">
+		SELECT
+			r.id,
+			r.reservation_no,
+			r.health_center_id,
+			r.member_id,
+			r.service_type_id,
+			st.name AS service_type_name,
+			r.reservation_slot_id,
+			rs.slot_date,
+			rs.start_time,
+			rs.end_time,
+			r.visitor_name,
+			r.visitor_phone,
+			r.status,
+			r.reserved_at
+		FROM reservations r
+		INNER JOIN service_types st ON st.id = r.service_type_id
+		INNER JOIN reservation_slots rs ON rs.id = r.reservation_slot_id
+		WHERE r.id = #{reservationId}
 	</select>
 
 </mapper>

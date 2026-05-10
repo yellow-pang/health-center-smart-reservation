@@ -1,6 +1,7 @@
 package egovframework.healthcenter.reservation.mapper;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.egovframe.rte.psl.dataaccess.EgovAbstractMapper;
@@ -36,5 +37,17 @@ public class ReservationMapper extends EgovAbstractMapper {
 
 	public ReservationVO selectReservationByNo(String reservationNo) {
 		return selectOne("ReservationMapper.selectReservationByNo", reservationNo);
+	}
+
+	public List<ReservationVO> selectReservationsByMemberId(Long memberId) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("memberId", memberId);
+		return selectList("ReservationMapper.selectReservationsByMemberId", params);
+	}
+
+	public ReservationVO selectReservationById(Long reservationId) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("reservationId", reservationId);
+		return selectOne("ReservationMapper.selectReservationById", params);
 	}
 }

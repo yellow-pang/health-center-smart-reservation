@@ -401,6 +401,67 @@ Response:
 }
 ```
 
+### 4.6.1 내 예약 조회
+
+`GET /api/reservations/me`
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "reservationId": 100,
+      "reservationNo": "RSV-20260510-0001",
+      "serviceTypeId": 1,
+      "serviceTypeName": "예방접종",
+      "reservationSlotId": 10,
+      "date": "2026-05-10",
+      "startTime": "09:00",
+      "endTime": "09:30",
+      "visitorName": "홍길동",
+      "visitorPhone": "010-1234-5678",
+      "status": "RESERVED",
+      "reservedAt": "2026-05-10T08:30:00"
+    }
+  ],
+  "error": null
+}
+```
+
+### 4.6.2 예약 상세 조회
+
+`GET /api/reservations/{id}`
+
+권한:
+
+- 예약자 본인
+- 같은 보건소 소속 `STAFF`, `ADMIN`
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "reservationId": 100,
+    "reservationNo": "RSV-20260510-0001",
+    "serviceTypeId": 1,
+    "serviceTypeName": "예방접종",
+    "reservationSlotId": 10,
+    "date": "2026-05-10",
+    "startTime": "09:00",
+    "endTime": "09:30",
+    "visitorName": "홍길동",
+    "visitorPhone": "010-1234-5678",
+    "status": "RESERVED",
+    "reservedAt": "2026-05-10T08:30:00"
+  },
+  "error": null
+}
+```
+
 ### 4.7 예약자 체크인
 
 `POST /api/visits/check-in`
