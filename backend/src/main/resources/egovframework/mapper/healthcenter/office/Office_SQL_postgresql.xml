@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="OfficeMapper">
+
+	<resultMap id="ServiceType" type="egovframework.healthcenter.office.mapper.ServiceTypeVO">
+		<id property="id" column="id"/>
+		<result property="healthCenterId" column="health_center_id"/>
+		<result property="code" column="code"/>
+		<result property="name" column="name"/>
+		<result property="description" column="description"/>
+		<result property="defaultCapacity" column="default_capacity"/>
+		<result property="active" column="active"/>
+	</resultMap>
+
+	<resultMap id="Staff" type="egovframework.healthcenter.office.mapper.StaffVO">
+		<id property="id" column="id"/>
+		<result property="healthCenterId" column="health_center_id"/>
+		<result property="email" column="email"/>
+		<result property="name" column="name"/>
+		<result property="phone" column="phone"/>
+		<result property="role" column="role"/>
+		<result property="active" column="active"/>
+	</resultMap>
+
+	<resultMap id="ServiceWindowMapping" type="egovframework.healthcenter.office.mapper.ServiceWindowMappingVO">
+		<id property="windowId" column="window_id"/>
+		<result property="healthCenterId" column="health_center_id"/>
+		<result property="windowNumber" column="window_number"/>
+		<result property="windowName" column="window_name"/>
+		<result property="status" column="status"/>
+		<result property="windowActive" column="window_active"/>
+		<result property="serviceTypeId" column="service_type_id"/>
+		<result property="serviceTypeCode" column="service_type_code"/>
+		<result property="serviceTypeName" column="service_type_name"/>
+		<result property="serviceTypeDescription" column="service_type_description"/>
+		<result property="defaultCapacity" column="default_capacity"/>
+		<result property="serviceTypeActive" column="service_type_active"/>
+	</resultMap>
+
+	<select id="selectActiveServiceTypes" resultMap="ServiceType">
+		SELECT
+			id,
+			health_center_id,
+			code,
+			name,
+			description,
+			default_capacity,
+			active
+		FROM service_types
+		WHERE active = true
+		ORDER BY id
+	</select>
+
+	<select id="selectServiceTypeById" parameterType="long" resultMap="ServiceType">
+		SELECT
+			id,
+			health_center_id,
+			code,
+			name,
+			description,
+			default_capacity,
+			active
+		FROM service_types
+		WHERE id = #{serviceTypeId}
+	</select>
+
+	<insert id="insertServiceType" parameterType="map">
+		INSERT INTO service_types (
+			health_center_id,
+			code,
+			name,
+			description,
+			default_capacity,
+			active,
+			created_at
+		) VALUES (
+			#{healthCenterId},
+			#{code},
+			#{name},
+			#{description},
+			#{defaultCapacity},
+			true,
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+
+	<update id="updateServiceType" parameterType="map">
+		UPDATE service_types
+		SET name = #{name},
+			description = #{description},
+			default_capacity = #{defaultCapacity},
+			active = #{active},
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{serviceTypeId}
+	</update>
+
+	<update id="deactivateServiceType" parameterType="long">
+		UPDATE service_types
+		SET active = false,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{serviceTypeId}
+		  AND active = true
+	</update>
+
+	<select id="selectActiveStaff" resultMap="Staff">
+		SELECT
+			id,
+			health_center_id,
+			email,
+			name,
+			phone,
+			role,
+			active
+		FROM members
+		WHERE role = 'STAFF'
+		  AND active = true
+		ORDER BY id
+	</select>
+
+	<select id="selectServiceWindowMappings" resultMap="ServiceWindowMapping">
+		SELECT
+			sw.id AS window_id,
+			sw.health_center_id,
+			sw.window_number,
+			sw.name AS window_name,
+			sw.status,
+			sw.active AS window_active,
+			st.id AS service_type_id,
+			st.code AS service_type_code,
+			st.name AS service_type_name,
+			st.description AS service_type_description,
+			st.default_capacity,
+			st.active AS service_type_active
+		FROM service_windows sw
+		LEFT JOIN service_window_service_types swst
+			ON swst.service_window_id = sw.id
+		   AND swst.active = true
+		LEFT JOIN service_types st
+			ON st.id = swst.service_type_id
+		   AND st.active = true
+		WHERE sw.active = true
+		ORDER BY sw.window_number, st.id
+	</select>
+
+</mapper>

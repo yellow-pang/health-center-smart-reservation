@@ -81,8 +81,10 @@ Authorization: Bearer {accessToken}
 | GET | /api/congestion/current | 현재 혼잡도 | PUBLIC |
 | POST | /api/admin/service-types | 업무 유형 생성 | ADMIN |
 | PUT | /api/admin/service-types/{id} | 업무 유형 수정 | ADMIN |
+| PATCH | /api/admin/service-types/{id}/deactivate | 업무 유형 비활성화 | ADMIN |
 | POST | /api/admin/reservation-slots | 예약 슬롯 생성 | ADMIN |
 | GET | /api/admin/staff | 직원 목록 조회 | ADMIN |
+| GET | /api/admin/service-windows | 창구 업무 매핑 조회 | ADMIN |
 
 ## 4. 상세 예시
 
@@ -212,6 +214,158 @@ Response:
       "reservedCount": 2,
       "availableCount": 3,
       "available": true
+    }
+  ],
+  "error": null
+}
+```
+
+### 4.5.0 관리자 예약 슬롯 생성
+
+`POST /api/admin/reservation-slots`
+
+Request:
+
+```json
+{
+  "serviceTypeId": 1,
+  "date": "2026-05-10",
+  "startTime": "09:00",
+  "endTime": "09:30",
+  "capacity": 5
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "slotId": 10,
+    "serviceTypeId": 1,
+    "serviceTypeName": "예방접종",
+    "date": "2026-05-10",
+    "startTime": "09:00",
+    "endTime": "09:30",
+    "capacity": 5,
+    "reservedCount": 0,
+    "availableCount": 5,
+    "available": true
+  },
+  "error": null
+}
+```
+
+### 4.5.1 업무 유형 조회
+
+`GET /api/service-types`
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "healthCenterId": 1,
+      "code": "VACCINATION",
+      "name": "예방접종",
+      "description": "예방접종 예약 및 현장 접수",
+      "defaultCapacity": 5,
+      "active": true
+    }
+  ],
+  "error": null
+}
+```
+
+### 4.5.2 관리자 업무 유형 생성
+
+`POST /api/admin/service-types`
+
+Request:
+
+```json
+{
+  "code": "MATERNAL_HEALTH",
+  "name": "모자보건",
+  "description": "모자보건 상담 및 접수",
+  "defaultCapacity": 5
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "healthCenterId": 1,
+    "code": "MATERNAL_HEALTH",
+    "name": "모자보건",
+    "description": "모자보건 상담 및 접수",
+    "defaultCapacity": 5,
+    "active": true
+  },
+  "error": null
+}
+```
+
+### 4.5.3 관리자 직원 목록 조회
+
+`GET /api/admin/staff`
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 2,
+      "healthCenterId": 1,
+      "email": "staff@test.com",
+      "name": "보건소 직원",
+      "phone": "010-0000-0002",
+      "role": "STAFF",
+      "active": true
+    }
+  ],
+  "error": null
+}
+```
+
+### 4.5.4 관리자 창구 업무 매핑 조회
+
+`GET /api/admin/service-windows`
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "healthCenterId": 1,
+      "windowNumber": 1,
+      "name": "1번 창구",
+      "status": "OPEN",
+      "active": true,
+      "serviceTypes": [
+        {
+          "id": 1,
+          "healthCenterId": 1,
+          "code": "VACCINATION",
+          "name": "예방접종",
+          "description": "예방접종 예약 및 현장 접수",
+          "defaultCapacity": 5,
+          "active": true
+        }
+      ]
     }
   ],
   "error": null
