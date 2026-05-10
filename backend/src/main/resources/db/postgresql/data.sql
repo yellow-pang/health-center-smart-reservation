@@ -89,3 +89,43 @@ SET health_center_id = EXCLUDED.health_center_id,
     role = EXCLUDED.role,
     active = EXCLUDED.active,
     updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO service_types (health_center_id, code, name, description, default_capacity, active)
+VALUES
+    (1, 'VACCINATION', '예방접종', '예방접종 예약 및 현장 접수', 5, true),
+    (1, 'HEALTH_CHECK', '건강검진/검사', '건강검진과 검사 예약 및 현장 접수', 5, true),
+    (1, 'HEALTH_CONSULT', '건강상담', '건강 상담 예약 및 현장 접수', 5, true)
+ON CONFLICT (health_center_id, code) DO UPDATE
+SET name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    default_capacity = EXCLUDED.default_capacity,
+    active = EXCLUDED.active,
+    updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO service_windows (health_center_id, window_number, name, status, active)
+VALUES
+    (1, 1, '1번 창구', 'OPEN', true),
+    (1, 2, '2번 창구', 'OPEN', true),
+    (1, 3, '상담 창구', 'OPEN', true)
+ON CONFLICT (health_center_id, window_number) DO UPDATE
+SET name = EXCLUDED.name,
+    status = EXCLUDED.status,
+    active = EXCLUDED.active,
+    updated_at = CURRENT_TIMESTAMP;
+
+INSERT INTO service_window_service_types (service_window_id, service_type_id, active)
+SELECT sw.id,
+       st.id,
+       true
+FROM service_windows sw
+INNER JOIN service_types st
+    ON st.health_center_id = sw.health_center_id
+WHERE sw.health_center_id = 1
+  AND (
+      (sw.window_number = 1 AND st.code IN ('VACCINATION'))
+      OR (sw.window_number = 2 AND st.code IN ('HEALTH_CHECK'))
+      OR (sw.window_number = 3 AND st.code IN ('HEALTH_CONSULT'))
+  )
+ON CONFLICT (service_window_id, service_type_id) DO UPDATE
+SET active = EXCLUDED.active,
+    updated_at = CURRENT_TIMESTAMP;

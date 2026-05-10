@@ -52,6 +52,50 @@ CREATE TABLE IF NOT EXISTS members (
 CREATE INDEX IF NOT EXISTS idx_members_role_active
     ON members (role, active);
 
+CREATE TABLE IF NOT EXISTS service_types (
+    id BIGSERIAL PRIMARY KEY,
+    health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
+    code VARCHAR(50) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    default_capacity INTEGER NOT NULL DEFAULT 5,
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT uk_service_types_health_center_code UNIQUE (health_center_id, code)
+);
+
+CREATE INDEX IF NOT EXISTS idx_service_types_health_center_active
+    ON service_types (health_center_id, active, id);
+
+CREATE TABLE IF NOT EXISTS service_windows (
+    id BIGSERIAL PRIMARY KEY,
+    health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
+    window_number INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'OPEN',
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT uk_service_windows_health_center_number UNIQUE (health_center_id, window_number)
+);
+
+CREATE INDEX IF NOT EXISTS idx_service_windows_health_center_active
+    ON service_windows (health_center_id, active, window_number);
+
+CREATE TABLE IF NOT EXISTS service_window_service_types (
+    id BIGSERIAL PRIMARY KEY,
+    service_window_id BIGINT NOT NULL REFERENCES service_windows(id),
+    service_type_id BIGINT NOT NULL REFERENCES service_types(id),
+    active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT uk_service_window_service_types UNIQUE (service_window_id, service_type_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_service_window_service_types_active
+    ON service_window_service_types (service_window_id, active);
+
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id BIGSERIAL PRIMARY KEY,
     member_id BIGINT NOT NULL REFERENCES members(id),

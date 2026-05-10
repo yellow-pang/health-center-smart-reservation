@@ -28,6 +28,9 @@ erDiagram
     SERVICE_TYPE ||--o{ VISIT : selected
     SERVICE_TYPE ||--o{ QUEUE_TICKET : selected
 
+    SERVICE_WINDOW ||--o{ SERVICE_WINDOW_SERVICE_TYPE : maps
+    SERVICE_TYPE ||--o{ SERVICE_WINDOW_SERVICE_TYPE : maps
+
     RESERVATION_SLOT ||--o{ RESERVATION : contains
     RESERVATION ||--o| VISIT : creates
     VISIT ||--o| QUEUE_TICKET : issues
@@ -47,7 +50,8 @@ erDiagram
 | guardian_relations | 보호자와 보호 대상자 관계 | 2차 |
 | service_types | 업무 유형 | 포함 |
 | service_windows | 창구 | 포함 |
-| staff_service_assignments | 직원 담당 업무 | 포함 |
+| service_window_service_types | 창구별 담당 업무 매핑 | 포함 |
+| staff_service_assignments | 직원 담당 업무 | 2차 |
 | reservation_slots | 예약 가능 시간대 | 포함 |
 | reservations | 예약 정보 | 포함 |
 | visits | 방문 및 체크인 정보 | 포함 |
@@ -103,6 +107,48 @@ erDiagram
 | active | BOOLEAN | NOT NULL | 사용 여부 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 | updated_at | TIMESTAMP | NULL | 수정일 |
+
+추천 제약:
+
+```sql
+UNIQUE (health_center_id, code)
+```
+
+### 4.3.1 service_windows
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | BIGSERIAL | PK | 창구 ID |
+| health_center_id | BIGINT | FK, NOT NULL | 보건소 ID |
+| window_number | INT | NOT NULL | 창구 번호 |
+| name | VARCHAR(100) | NOT NULL | 창구명 |
+| status | VARCHAR(30) | NOT NULL | OPEN, PAUSED, CLOSED |
+| active | BOOLEAN | NOT NULL | 사용 여부 |
+| created_at | TIMESTAMP | NOT NULL | 생성일 |
+| updated_at | TIMESTAMP | NULL | 수정일 |
+
+추천 제약:
+
+```sql
+UNIQUE (health_center_id, window_number)
+```
+
+### 4.3.2 service_window_service_types
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | BIGSERIAL | PK | 창구 업무 매핑 ID |
+| service_window_id | BIGINT | FK, NOT NULL | 창구 ID |
+| service_type_id | BIGINT | FK, NOT NULL | 업무 유형 ID |
+| active | BOOLEAN | NOT NULL | 사용 여부 |
+| created_at | TIMESTAMP | NOT NULL | 생성일 |
+| updated_at | TIMESTAMP | NULL | 수정일 |
+
+추천 제약:
+
+```sql
+UNIQUE (service_window_id, service_type_id)
+```
 
 ### 4.4 reservation_slots
 
