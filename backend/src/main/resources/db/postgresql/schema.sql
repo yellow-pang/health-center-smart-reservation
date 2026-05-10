@@ -88,6 +88,33 @@ CREATE TABLE IF NOT EXISTS reservation_slots (
 CREATE INDEX IF NOT EXISTS idx_reservation_slots_service_date_active
     ON reservation_slots (service_type_id, slot_date, active, start_time);
 
+CREATE TABLE IF NOT EXISTS reservations (
+    id BIGSERIAL PRIMARY KEY,
+    reservation_no VARCHAR(50) NOT NULL UNIQUE,
+    health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
+    member_id BIGINT NOT NULL REFERENCES members(id),
+    service_type_id BIGINT NOT NULL REFERENCES service_types(id),
+    reservation_slot_id BIGINT NOT NULL REFERENCES reservation_slots(id),
+    visitor_name VARCHAR(50) NOT NULL,
+    visitor_phone VARCHAR(30) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'RESERVED',
+    reserved_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    canceled_at TIMESTAMP,
+    checked_in_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_reservations_member_status
+    ON reservations (member_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_reservations_slot
+    ON reservations (reservation_slot_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_reservations_member_slot_active
+    ON reservations (member_id, reservation_slot_id)
+    WHERE status IN ('RESERVED', 'CHECKED_IN');
+
 CREATE TABLE IF NOT EXISTS service_windows (
     id BIGSERIAL PRIMARY KEY,
     health_center_id BIGINT NOT NULL REFERENCES health_centers(id),

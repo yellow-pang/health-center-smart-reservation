@@ -182,6 +182,8 @@ UNIQUE (service_type_id, slot_date, start_time, end_time)
 | member_id | BIGINT | FK, NOT NULL | 예약자 ID |
 | service_type_id | BIGINT | FK, NOT NULL | 업무 유형 ID |
 | reservation_slot_id | BIGINT | FK, NOT NULL | 예약 슬롯 ID |
+| visitor_name | VARCHAR(50) | NOT NULL | 방문자 이름 |
+| visitor_phone | VARCHAR(30) | NOT NULL | 방문자 연락처 |
 | status | VARCHAR(30) | NOT NULL | 예약 상태 |
 | reserved_at | TIMESTAMP | NOT NULL | 예약 생성일 |
 | canceled_at | TIMESTAMP | NULL | 취소일 |
