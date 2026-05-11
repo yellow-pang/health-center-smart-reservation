@@ -75,6 +75,8 @@ feat: 현장 접수 및 대기번호 발급 구현
 
 - `serviceTypeId = 1`은 기존 업무 유형 seed를 전제로 한 대표 예시입니다.
 - 실제 DB에서 ID가 다르면 `GET /api/service-types`에서 확인한 업무 유형 ID로 바꿔 실행합니다.
+- Swagger Authorize 입력값은 토큰만 넣지 않고 `Bearer {accessToken}` 전체를 넣습니다.
+- curl로 확인할 때도 `Authorization: Bearer {accessToken}` 형식이어야 합니다.
 
 ## Swagger 추가 테스트 체크리스트
 
@@ -84,7 +86,8 @@ feat: 현장 접수 및 대기번호 발급 구현
 | 업무 유형 미선택 | `serviceTypeId`를 비움 | HTTP 400, `error.code = VISIT_INVALID_REQUEST` |
 | 없는 업무 유형 | 존재하지 않는 `serviceTypeId` 입력 | HTTP 404, `error.code = SERVICE_TYPE_NOT_FOUND` |
 | 권한 없는 사용자 | 시민 토큰으로 호출 | HTTP 403 또는 인증/권한 실패 |
-| 인증 없음 | Authorization 없이 호출 | HTTP 401 |
+| Bearer 누락 | `Authorization`에 토큰만 입력 | HTTP 403, `인가된 사용자가 아닙니다.` |
+| 인증 없음 | Authorization 없이 호출 | HTTP 401 또는 인증 실패 |
 
 ## 미검증 사유
 

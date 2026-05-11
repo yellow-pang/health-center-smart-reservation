@@ -112,6 +112,7 @@ GitNexus 확인:
 - `success`가 `true`
 - `data.accessToken`이 발급된다.
 - Swagger Authorization에 `Bearer {accessToken}` 형식으로 입력한다.
+- 현재 OpenAPI 보안 스키마가 APIKEY 방식이라 Swagger가 `Bearer `를 자동으로 붙이지 않는다. Authorize 입력값에는 토큰만 넣지 말고 `Bearer ey...` 전체를 입력한다.
 
 ### 8.2 Swagger 현장 접수
 
@@ -138,6 +139,7 @@ GitNexus 확인:
 
 - `serviceTypeId = 1`은 기존 업무 유형 seed를 전제로 한 대표 예시다.
 - 실제 DB에서 ID가 다르면 `GET /api/service-types`에서 확인한 업무 유형 ID로 바꿔 실행한다.
+- 403과 `인가된 사용자가 아닙니다.` 응답이 나오면 먼저 Authorization 값이 `Bearer {accessToken}` 형식인지 확인한다.
 
 ## 9. 진행 중 발견된 추가 작업
 
