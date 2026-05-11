@@ -95,6 +95,18 @@ public class QueueController {
 		return handleCommand(authentication, queueTicketId, QueueAction.COMPLETE);
 	}
 
+	@PostMapping("/{queueTicketId}/hold")
+	@Operation(
+		summary = "보류 처리",
+		description = "CALLED 상태 대기표를 HOLD 상태로 변경한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<QueueTicketResponse>> hold(
+			Authentication authentication,
+			@PathVariable Long queueTicketId) {
+		return handleCommand(authentication, queueTicketId, QueueAction.HOLD);
+	}
+
 	private ResponseEntity<ApiResponse<QueueTicketResponse>> handleCommand(
 			Authentication authentication,
 			Long queueTicketId,
@@ -109,6 +121,7 @@ public class QueueController {
 				case CALL -> queueCommandService.call(principal, queueTicketId);
 				case START -> queueCommandService.start(principal, queueTicketId);
 				case COMPLETE -> queueCommandService.complete(principal, queueTicketId);
+				case HOLD -> queueCommandService.hold(principal, queueTicketId);
 			};
 			return ResponseEntity.ok(ApiResponse.success(response));
 		} catch (IllegalArgumentException e) {
@@ -146,6 +159,7 @@ public class QueueController {
 	private enum QueueAction {
 		CALL,
 		START,
-		COMPLETE
+		COMPLETE,
+		HOLD
 	}
 }

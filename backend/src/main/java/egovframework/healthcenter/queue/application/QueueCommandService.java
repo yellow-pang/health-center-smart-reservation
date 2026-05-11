@@ -53,6 +53,16 @@ public class QueueCommandService {
 		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
 	}
 
+	@Transactional
+	public QueueTicketResponse hold(MemberPrincipal principal, Long queueTicketId) {
+		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
+		queueTicketPolicy.validateHold(ticket);
+		if (queueTicketMapper.markHold(queueTicketId) == 0) {
+			throw new IllegalArgumentException("보류할 수 없는 대기 상태입니다.");
+		}
+		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+	}
+
 	private QueueTicketVO loadTicket(MemberPrincipal principal, Long queueTicketId) {
 		queueTicketPolicy.validateStaff(principal);
 		if (queueTicketId == null) {

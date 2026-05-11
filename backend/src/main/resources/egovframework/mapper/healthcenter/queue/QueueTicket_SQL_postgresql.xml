@@ -18,6 +18,7 @@
 		<result property="calledAt" column="called_at"/>
 		<result property="startedAt" column="started_at"/>
 		<result property="completedAt" column="completed_at"/>
+		<result property="holdAt" column="hold_at"/>
 	</resultMap>
 
 	<sql id="QueueTicketColumns">
@@ -34,7 +35,8 @@
 		q.issued_at,
 		q.called_at,
 		q.started_at,
-		q.completed_at
+		q.completed_at,
+		q.hold_at
 	</sql>
 
 	<select id="issueWaitingTicket" parameterType="map" resultMap="QueueTicket">
@@ -128,6 +130,15 @@
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = #{queueTicketId}
 		  AND status = 'IN_PROGRESS'
+	</update>
+
+	<update id="markHold" parameterType="long">
+		UPDATE queue_tickets
+		SET status = 'HOLD',
+			hold_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{queueTicketId}
+		  AND status = 'CALLED'
 	</update>
 
 	<update id="markVisitInProgress" parameterType="long">

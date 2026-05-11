@@ -75,6 +75,7 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | POST | /api/queues/{id}/call | 대기자 호출 | STAFF, ADMIN |
 | POST | /api/queues/{id}/start | 처리 시작 | STAFF, ADMIN |
 | POST | /api/queues/{id}/complete | 처리 완료 | STAFF, ADMIN |
+| POST | /api/queues/{id}/hold | 보류 처리 | STAFF, ADMIN |
 | GET | /api/dashboard/summary | 대시보드 요약 | ADMIN |
 | GET | /api/dashboard/hourly-visits | 시간대별 방문자 수 | ADMIN |
 | GET | /api/dashboard/service-wait-times | 업무별 평균 대기시간 | ADMIN |
@@ -642,7 +643,8 @@ Response:
       "issuedAt": "2026-05-11T10:30:00",
       "calledAt": null,
       "startedAt": null,
-      "completedAt": null
+      "completedAt": null,
+      "holdAt": null
     }
   ],
   "error": null
@@ -667,7 +669,17 @@ Response:
 - `CALLED` 상태만 처리 시작할 수 있다.
 - 성공 시 대기표 상태는 `IN_PROGRESS`가 되고 Visit 상태도 `IN_PROGRESS`가 된다.
 
-#### 4.9.4 처리 완료
+#### 4.9.4 보류 처리
+
+`POST /api/queues/{queueTicketId}/hold`
+
+정책:
+
+- `CALLED` 상태만 보류 처리할 수 있다.
+- 성공 시 대기표 상태는 `HOLD`가 되고 `holdAt`이 기록된다.
+- `HOLD` 상태 대기표는 `POST /api/queues/{queueTicketId}/call`로 재호출할 수 있다.
+
+#### 4.9.5 처리 완료
 
 `POST /api/queues/{queueTicketId}/complete`
 

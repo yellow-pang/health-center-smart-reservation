@@ -18,6 +18,7 @@ public class QueueTicketVO {
 	private LocalDateTime calledAt;
 	private LocalDateTime startedAt;
 	private LocalDateTime completedAt;
+	private LocalDateTime holdAt;
 
 	public Long getId() {
 		return id;
@@ -129,5 +130,13 @@ public class QueueTicketVO {
 
 	public void setCompletedAt(LocalDateTime completedAt) {
 		this.completedAt = completedAt;
+	}
+
+	public LocalDateTime getHoldAt() {
+		return holdAt;
+	}
+
+	public void setHoldAt(LocalDateTime holdAt) {
+		this.holdAt = holdAt;
 	}
 }
