@@ -23,4 +23,20 @@ public class VisitMapper extends EgovAbstractMapper {
 		insert("VisitMapper.insertReservedVisit", params);
 		return (Long) params.get("id");
 	}
+
+	public Long insertWalkInVisit(
+			Long healthCenterId,
+			Long serviceTypeId,
+			Long registeredBy,
+			String visitorName,
+			String visitorPhone) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("healthCenterId", healthCenterId);
+		params.put("serviceTypeId", serviceTypeId);
+		params.put("registeredBy", registeredBy);
+		params.put("visitorName", visitorName);
+		params.put("visitorPhone", visitorPhone);
+		insert("VisitMapper.insertWalkInVisit", params);
+		return (Long) params.get("id");
+	}
 }

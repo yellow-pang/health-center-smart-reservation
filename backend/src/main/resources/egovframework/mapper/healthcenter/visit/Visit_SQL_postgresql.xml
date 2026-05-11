@@ -31,4 +31,28 @@
 		)
 	</insert>
 
+	<insert id="insertWalkInVisit" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO visits (
+			health_center_id,
+			service_type_id,
+			registered_by,
+			visitor_name,
+			visitor_phone,
+			visit_type,
+			status,
+			checked_in_at,
+			created_at
+		) VALUES (
+			#{healthCenterId},
+			#{serviceTypeId},
+			#{registeredBy},
+			#{visitorName},
+			#{visitorPhone},
+			'WALK_IN',
+			'WAITING',
+			CURRENT_TIMESTAMP,
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+
 </mapper>
