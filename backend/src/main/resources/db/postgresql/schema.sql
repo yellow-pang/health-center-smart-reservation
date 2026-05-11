@@ -115,6 +115,51 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_reservations_member_slot_active
     ON reservations (member_id, reservation_slot_id)
     WHERE status IN ('RESERVED', 'CHECKED_IN');
 
+CREATE TABLE IF NOT EXISTS visits (
+    id BIGSERIAL PRIMARY KEY,
+    health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
+    reservation_id BIGINT REFERENCES reservations(id),
+    service_type_id BIGINT NOT NULL REFERENCES service_types(id),
+    member_id BIGINT REFERENCES members(id),
+    registered_by BIGINT REFERENCES members(id),
+    visitor_name VARCHAR(50),
+    visitor_phone VARCHAR(30),
+    visit_type VARCHAR(30) NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'WAITING',
+    checked_in_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_visits_reservation
+    ON visits (reservation_id)
+    WHERE reservation_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_visits_health_center_checked_in
+    ON visits (health_center_id, checked_in_at);
+
+CREATE TABLE IF NOT EXISTS queue_tickets (
+    id BIGSERIAL PRIMARY KEY,
+    health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
+    visit_id BIGINT NOT NULL REFERENCES visits(id),
+    service_type_id BIGINT NOT NULL REFERENCES service_types(id),
+    ticket_number INTEGER NOT NULL,
+    status VARCHAR(30) NOT NULL DEFAULT 'WAITING',
+    issued_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    called_at TIMESTAMP,
+    started_at TIMESTAMP,
+    completed_at TIMESTAMP,
+    hold_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_health_center_service_status
+    ON queue_tickets (health_center_id, service_type_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_issued_at
+    ON queue_tickets (issued_at);
+
 CREATE TABLE IF NOT EXISTS service_windows (
     id BIGSERIAL PRIMARY KEY,
     health_center_id BIGINT NOT NULL REFERENCES health_centers(id),

@@ -56,4 +56,10 @@ public class ReservationMapper extends EgovAbstractMapper {
 		params.put("reservationId", reservationId);
 		return update("ReservationMapper.cancelReservation", params);
 	}
+
+	public int markCheckedIn(Long reservationId) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("reservationId", reservationId);
+		return update("ReservationMapper.markCheckedIn", params);
+	}
 }

@@ -147,6 +147,101 @@ SET capacity = EXCLUDED.capacity,
     active = EXCLUDED.active,
     updated_at = CURRENT_TIMESTAMP;
 
+WITH swagger_reservation_seed AS (
+    SELECT *
+    FROM (
+        VALUES
+            ('RSV-SWAGGER-CHECKIN-001', 'VACCINATION', 1, TIME '09:00', 'Swagger체크인', '010-1234-5678'),
+            ('RSV-SWAGGER-CANCEL-001', 'VACCINATION', 1, TIME '09:30', 'Swagger취소', '010-2345-6789'),
+            ('RSV-SWAGGER-DETAIL-001', 'HEALTH_CHECK', 1, TIME '10:00', 'Swagger상세', '010-3456-7890')
+    ) AS seed(reservation_no, service_code, slot_day_offset, start_time, visitor_name, visitor_phone)
+),
+swagger_member AS (
+    SELECT id AS member_id
+    FROM members
+    WHERE email = 'citizen@test.com'
+),
+swagger_target_reservation AS (
+    SELECT seed.reservation_no,
+           rs.health_center_id,
+           swagger_member.member_id,
+           rs.service_type_id,
+           rs.id AS reservation_slot_id,
+           seed.visitor_name,
+           seed.visitor_phone
+    FROM swagger_reservation_seed seed
+    INNER JOIN service_types st
+        ON st.code = seed.service_code
+       AND st.health_center_id = 1
+    INNER JOIN reservation_slots rs
+        ON rs.service_type_id = st.id
+       AND rs.slot_date = CURRENT_DATE + seed.slot_day_offset
+       AND rs.start_time = seed.start_time
+    CROSS JOIN swagger_member
+)
+INSERT INTO reservations (
+    reservation_no,
+    health_center_id,
+    member_id,
+    service_type_id,
+    reservation_slot_id,
+    visitor_name,
+    visitor_phone,
+    status,
+    reserved_at,
+    created_at
+)
+SELECT
+    reservation_no,
+    health_center_id,
+    member_id,
+    service_type_id,
+    reservation_slot_id,
+    visitor_name,
+    visitor_phone,
+    'RESERVED',
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM swagger_target_reservation
+ON CONFLICT (reservation_no) DO UPDATE
+SET health_center_id = EXCLUDED.health_center_id,
+    member_id = EXCLUDED.member_id,
+    service_type_id = EXCLUDED.service_type_id,
+    reservation_slot_id = EXCLUDED.reservation_slot_id,
+    visitor_name = EXCLUDED.visitor_name,
+    visitor_phone = EXCLUDED.visitor_phone,
+    status = 'RESERVED',
+    canceled_at = NULL,
+    checked_in_at = NULL,
+    updated_at = CURRENT_TIMESTAMP;
+
+DELETE FROM queue_tickets
+WHERE visit_id IN (
+    SELECT v.id
+    FROM visits v
+    INNER JOIN reservations r ON r.id = v.reservation_id
+    WHERE r.reservation_no IN ('RSV-SWAGGER-CHECKIN-001', 'RSV-SWAGGER-CANCEL-001', 'RSV-SWAGGER-DETAIL-001')
+);
+
+DELETE FROM visits
+WHERE reservation_id IN (
+    SELECT id
+    FROM reservations
+    WHERE reservation_no IN ('RSV-SWAGGER-CHECKIN-001', 'RSV-SWAGGER-CANCEL-001', 'RSV-SWAGGER-DETAIL-001')
+);
+
+UPDATE reservation_slots rs
+SET reserved_count = LEAST(rs.capacity, GREATEST(rs.reserved_count, swagger_slot_count.seed_count)),
+    updated_at = CURRENT_TIMESTAMP
+FROM (
+    SELECT reservation_slot_id, COUNT(*)::integer AS seed_count
+    FROM reservations
+    WHERE reservation_no IN ('RSV-SWAGGER-CHECKIN-001', 'RSV-SWAGGER-CANCEL-001', 'RSV-SWAGGER-DETAIL-001')
+      AND status = 'RESERVED'
+    GROUP BY reservation_slot_id
+) swagger_slot_count
+WHERE swagger_slot_count.reservation_slot_id = rs.id;
+
 INSERT INTO service_windows (health_center_id, window_number, name, status, active)
 VALUES
     (1, 1, '1번 창구', 'OPEN', true),

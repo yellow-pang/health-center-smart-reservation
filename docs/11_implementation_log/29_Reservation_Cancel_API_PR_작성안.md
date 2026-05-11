@@ -40,6 +40,7 @@ feat: 예약 취소 및 슬롯 예약 수 복구 구현
 - [x] `mvn -q test-compile`
 - [x] `git diff --check`
 - [ ] 서버 기동 후 `DELETE /api/reservations/{id}` 확인
+- [ ] Swagger에서 `RSV-SWAGGER-CANCEL-001` 취소 확인
 - [ ] 취소 후 예약 상세 상태가 `CANCELED`인지 확인
 - [ ] 취소 후 슬롯 `reservedCount`가 1 감소하는지 확인
 - [ ] 예약 시간 1시간 이내 취소 시 `RESERVATION_CANCEL_TIME_EXPIRED` 확인
@@ -62,6 +63,14 @@ feat: 예약 취소 및 슬롯 예약 수 복구 구현
 ```
 
 ## 사용자 직접 확인 명령
+
+Swagger 우선 확인:
+
+- `citizen@test.com`으로 로그인한다.
+- `GET /api/reservations/me`에서 `RSV-SWAGGER-CANCEL-001`의 `reservationId`를 확인한다.
+- `DELETE /api/reservations/{id}`에 해당 ID를 넣어 취소 응답을 확인한다.
+
+터미널 확인은 필요한 경우에만 보조로 사용한다.
 
 ```powershell
 cd backend

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="VisitMapper">
+
+	<insert id="insertReservedVisit" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO visits (
+			health_center_id,
+			reservation_id,
+			service_type_id,
+			member_id,
+			registered_by,
+			visitor_name,
+			visitor_phone,
+			visit_type,
+			status,
+			checked_in_at,
+			created_at
+		) VALUES (
+			#{healthCenterId},
+			#{reservationId},
+			#{serviceTypeId},
+			#{memberId},
+			#{registeredBy},
+			#{visitorName},
+			#{visitorPhone},
+			'RESERVED',
+			'WAITING',
+			CURRENT_TIMESTAMP,
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+
+</mapper>

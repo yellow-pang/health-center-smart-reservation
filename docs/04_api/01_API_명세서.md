@@ -434,6 +434,10 @@ Response:
 
 `GET /api/reservations/{id}`
 
+Swagger 테스트용 seed:
+
+- `RSV-SWAGGER-DETAIL-001`
+
 권한:
 
 - 예약자 본인
@@ -465,6 +469,10 @@ Response:
 ### 4.6.3 예약 취소
 
 `DELETE /api/reservations/{id}`
+
+Swagger 테스트용 seed:
+
+- `RSV-SWAGGER-CANCEL-001`
 
 권한:
 
@@ -504,13 +512,28 @@ Response:
 
 `POST /api/visits/check-in`
 
+권한:
+
+- 같은 보건소 소속 `STAFF`, `ADMIN`
+
+정책:
+
+- `RESERVED` 상태 예약만 체크인할 수 있다.
+- 체크인 성공 시 예약 상태는 `CHECKED_IN`으로 변경된다.
+- 체크인 성공 시 `visits`에 예약 방문 이력이 생성되고, `queue_tickets`에 `WAITING` 대기번호가 발급된다.
+- 체크인 이후 기존 예약 취소 API는 `RESERVATION_CANCEL_INVALID_STATUS`로 실패한다.
+
 Request:
 
 ```json
 {
-  "reservationNo": "RSV-20260510-0001"
+  "reservationNo": "RSV-SWAGGER-CHECKIN-001"
 }
 ```
+
+Swagger 테스트용 seed:
+
+- `RSV-SWAGGER-CHECKIN-001`
 
 Response:
 
@@ -524,6 +547,19 @@ Response:
     "status": "WAITING"
   },
   "error": null
+}
+```
+
+이미 체크인한 예약 Response:
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "ALREADY_CHECKED_IN",
+    "message": "이미 체크인했거나 체크인할 수 없는 예약입니다."
+  }
 }
 ```
 
