@@ -32,6 +32,7 @@ feat: 예약자 체크인 및 대기번호 발급 구현
 - Visit Context의 Controller, Service, Policy, Mapper 추가
 - QueueTicket 발급 Mapper 추가
 - PostgreSQL schema에 `visits`, `queue_tickets` 테이블 추가
+- Swagger 체크인 스모크 테스트용 seed 예약 추가
 - 예약번호 조회 SQL 보강 및 예약 상태 `CHECKED_IN` 변경 Mapper 추가
 - 체크인 이후 예약 취소 불가 정책 문서화
 
@@ -55,7 +56,7 @@ feat: 예약자 체크인 및 대기번호 발급 구현
 
 ```json
 {
-  "reservationNo": "RSV-20260510-0001"
+  "reservationNo": "RSV-SWAGGER-CHECKIN-001"
 }
 ```
 
@@ -67,6 +68,12 @@ feat: 예약자 체크인 및 대기번호 발급 구현
 - `data.queueTicketId` 존재
 - `data.ticketNumber`가 1 이상의 숫자
 - `data.status = WAITING`
+
+참고:
+
+- `RSV-SWAGGER-CHECKIN-001`은 Swagger 체크인 스모크 테스트용 seed 예약이다.
+- 체크인 성공 후 같은 예약번호로 다시 호출하면 중복 체크인 실패가 정상이다.
+- 정상 체크인을 다시 확인하려면 백엔드를 재시작해 seed 예약을 `RESERVED` 상태로 초기화한다.
 
 ## Swagger 추가 테스트 체크리스트
 

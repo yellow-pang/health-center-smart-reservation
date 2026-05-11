@@ -519,7 +519,7 @@ Request:
 
 ```json
 {
-  "reservationNo": "RSV-20260510-0001"
+  "reservationNo": "RSV-SWAGGER-CHECKIN-001"
 }
 ```
 

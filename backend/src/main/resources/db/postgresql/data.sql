@@ -147,6 +147,76 @@ SET capacity = EXCLUDED.capacity,
     active = EXCLUDED.active,
     updated_at = CURRENT_TIMESTAMP;
 
+WITH swagger_slot AS (
+    SELECT rs.id AS reservation_slot_id,
+           rs.health_center_id,
+           rs.service_type_id
+    FROM reservation_slots rs
+    INNER JOIN service_types st ON st.id = rs.service_type_id
+    WHERE st.code = 'VACCINATION'
+      AND rs.slot_date = (CURRENT_DATE + INTERVAL '1 day')::date
+      AND rs.start_time = TIME '09:00'
+    LIMIT 1
+),
+swagger_member AS (
+    SELECT id AS member_id
+    FROM members
+    WHERE email = 'citizen@test.com'
+)
+INSERT INTO reservations (
+    reservation_no,
+    health_center_id,
+    member_id,
+    service_type_id,
+    reservation_slot_id,
+    visitor_name,
+    visitor_phone,
+    status,
+    reserved_at,
+    created_at
+)
+SELECT
+    'RSV-SWAGGER-CHECKIN-001',
+    swagger_slot.health_center_id,
+    swagger_member.member_id,
+    swagger_slot.service_type_id,
+    swagger_slot.reservation_slot_id,
+    'Swagger체크인',
+    '010-1234-5678',
+    'RESERVED',
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM swagger_slot
+CROSS JOIN swagger_member
+ON CONFLICT (reservation_no) DO UPDATE
+SET status = 'RESERVED',
+    canceled_at = NULL,
+    checked_in_at = NULL,
+    updated_at = CURRENT_TIMESTAMP;
+
+DELETE FROM queue_tickets
+WHERE visit_id IN (
+    SELECT v.id
+    FROM visits v
+    INNER JOIN reservations r ON r.id = v.reservation_id
+    WHERE r.reservation_no = 'RSV-SWAGGER-CHECKIN-001'
+);
+
+DELETE FROM visits
+WHERE reservation_id = (
+    SELECT id
+    FROM reservations
+    WHERE reservation_no = 'RSV-SWAGGER-CHECKIN-001'
+);
+
+UPDATE reservation_slots rs
+SET reserved_count = GREATEST(rs.reserved_count, 1),
+    updated_at = CURRENT_TIMESTAMP
+FROM reservations r
+WHERE r.reservation_slot_id = rs.id
+  AND r.reservation_no = 'RSV-SWAGGER-CHECKIN-001'
+  AND r.status = 'RESERVED';
+
 INSERT INTO service_windows (health_center_id, window_number, name, status, active)
 VALUES
     (1, 1, '1번 창구', 'OPEN', true),
