@@ -5,9 +5,37 @@
 
 	<resultMap id="QueueTicket" type="egovframework.healthcenter.queue.mapper.QueueTicketVO">
 		<id property="id" column="id"/>
+		<result property="healthCenterId" column="health_center_id"/>
+		<result property="visitId" column="visit_id"/>
+		<result property="serviceTypeId" column="service_type_id"/>
+		<result property="serviceTypeName" column="service_type_name"/>
 		<result property="ticketNumber" column="ticket_number"/>
 		<result property="status" column="status"/>
+		<result property="visitType" column="visit_type"/>
+		<result property="visitorName" column="visitor_name"/>
+		<result property="visitorPhone" column="visitor_phone"/>
+		<result property="issuedAt" column="issued_at"/>
+		<result property="calledAt" column="called_at"/>
+		<result property="startedAt" column="started_at"/>
+		<result property="completedAt" column="completed_at"/>
 	</resultMap>
+
+	<sql id="QueueTicketColumns">
+		q.id,
+		q.health_center_id,
+		q.visit_id,
+		q.service_type_id,
+		st.name AS service_type_name,
+		q.ticket_number,
+		q.status,
+		v.visit_type,
+		v.visitor_name,
+		v.visitor_phone,
+		q.issued_at,
+		q.called_at,
+		q.started_at,
+		q.completed_at
+	</sql>
 
 	<select id="issueWaitingTicket" parameterType="map" resultMap="QueueTicket">
 		INSERT INTO queue_tickets (
@@ -35,5 +63,100 @@
 		)
 		RETURNING id, ticket_number, status
 	</select>
+
+	<select id="selectQueueTickets" parameterType="map" resultMap="QueueTicket">
+		SELECT
+			<include refid="QueueTicketColumns"/>
+		FROM queue_tickets q
+		INNER JOIN visits v ON v.id = q.visit_id
+		INNER JOIN service_types st ON st.id = q.service_type_id
+		WHERE q.health_center_id = #{healthCenterId}
+		  AND q.issued_at::date = CURRENT_DATE
+		<if test="serviceTypeId != null">
+		  AND q.service_type_id = #{serviceTypeId}
+		</if>
+		<choose>
+			<when test="status != null and status != ''">
+		  AND q.status = #{status}
+			</when>
+			<otherwise>
+		  AND q.status IN ('WAITING', 'CALLED', 'IN_PROGRESS', 'HOLD')
+			</otherwise>
+		</choose>
+		ORDER BY
+			CASE q.status
+				WHEN 'CALLED' THEN 1
+				WHEN 'IN_PROGRESS' THEN 2
+				WHEN 'WAITING' THEN 3
+				WHEN 'HOLD' THEN 4
+				ELSE 5
+			END,
+			q.ticket_number
+	</select>
+
+	<select id="selectQueueTicketById" parameterType="long" resultMap="QueueTicket">
+		SELECT
+			<include refid="QueueTicketColumns"/>
+		FROM queue_tickets q
+		INNER JOIN visits v ON v.id = q.visit_id
+		INNER JOIN service_types st ON st.id = q.service_type_id
+		WHERE q.id = #{queueTicketId}
+	</select>
+
+	<update id="markCalled" parameterType="long">
+		UPDATE queue_tickets
+		SET status = 'CALLED',
+			called_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{queueTicketId}
+		  AND status IN ('WAITING', 'HOLD')
+	</update>
+
+	<update id="markInProgress" parameterType="long">
+		UPDATE queue_tickets
+		SET status = 'IN_PROGRESS',
+			started_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{queueTicketId}
+		  AND status = 'CALLED'
+	</update>
+
+	<update id="markCompleted" parameterType="long">
+		UPDATE queue_tickets
+		SET status = 'COMPLETED',
+			completed_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{queueTicketId}
+		  AND status = 'IN_PROGRESS'
+	</update>
+
+	<update id="markVisitInProgress" parameterType="long">
+		UPDATE visits v
+		SET status = 'IN_PROGRESS',
+			updated_at = CURRENT_TIMESTAMP
+		FROM queue_tickets q
+		WHERE q.visit_id = v.id
+		  AND q.id = #{queueTicketId}
+	</update>
+
+	<update id="markVisitCompleted" parameterType="long">
+		UPDATE visits v
+		SET status = 'COMPLETED',
+			updated_at = CURRENT_TIMESTAMP
+		FROM queue_tickets q
+		WHERE q.visit_id = v.id
+		  AND q.id = #{queueTicketId}
+	</update>
+
+	<update id="markReservationCompleted" parameterType="long">
+		UPDATE reservations r
+		SET status = 'COMPLETED',
+			updated_at = CURRENT_TIMESTAMP
+		FROM visits v
+		INNER JOIN queue_tickets q ON q.visit_id = v.id
+		WHERE v.reservation_id = r.id
+		  AND q.id = #{queueTicketId}
+		  AND r.status = 'CHECKED_IN'
+	</update>
 
 </mapper>

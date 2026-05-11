@@ -242,6 +242,80 @@ FROM (
 ) swagger_slot_count
 WHERE swagger_slot_count.reservation_slot_id = rs.id;
 
+DELETE FROM queue_tickets
+WHERE visit_id IN (
+    SELECT id
+    FROM visits
+    WHERE visitor_name = 'Swagger대기열'
+      AND visitor_phone = '010-5678-9012'
+      AND visit_type = 'WALK_IN'
+);
+
+DELETE FROM visits
+WHERE visitor_name = 'Swagger대기열'
+  AND visitor_phone = '010-5678-9012'
+  AND visit_type = 'WALK_IN';
+
+WITH swagger_queue_service_type AS (
+    SELECT id AS service_type_id,
+           health_center_id
+    FROM service_types
+    WHERE health_center_id = 1
+      AND code = 'VACCINATION'
+      AND active = true
+    LIMIT 1
+),
+swagger_queue_visit AS (
+    INSERT INTO visits (
+        health_center_id,
+        service_type_id,
+        registered_by,
+        visitor_name,
+        visitor_phone,
+        visit_type,
+        status,
+        checked_in_at,
+        created_at
+    )
+    SELECT
+        service_type.health_center_id,
+        service_type.service_type_id,
+        staff.id,
+        'Swagger대기열',
+        '010-5678-9012',
+        'WALK_IN',
+        'WAITING',
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    FROM swagger_queue_service_type service_type
+    INNER JOIN members staff ON staff.email = 'staff@test.com'
+    RETURNING id, health_center_id, service_type_id
+)
+INSERT INTO queue_tickets (
+    health_center_id,
+    visit_id,
+    service_type_id,
+    ticket_number,
+    status,
+    issued_at,
+    created_at
+)
+SELECT
+    visit.health_center_id,
+    visit.id,
+    visit.service_type_id,
+    (
+        SELECT COALESCE(MAX(q.ticket_number), 0) + 1
+        FROM queue_tickets q
+        WHERE q.health_center_id = visit.health_center_id
+          AND q.service_type_id = visit.service_type_id
+          AND q.issued_at::date = CURRENT_DATE
+    ),
+    'WAITING',
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM swagger_queue_visit visit;
+
 INSERT INTO service_windows (health_center_id, window_number, name, status, active)
 VALUES
     (1, 1, '1번 창구', 'OPEN', true),
