@@ -71,10 +71,10 @@ npm.cmd exec -- gitnexus analyze
 
 | 직접 실행하지 않는 작업 | 대신 할 일 |
 |---|---|
-| `mvn spring-boot:run` 등 서버 기동 | 사용자가 실행할 명령과 기대 로그/URL 안내 |
+| `mvn spring-boot:run` 등 서버 기동 | 사용자가 VS Code Spring Boot Dashboard 등으로 실행할 기준과 기대 로그/URL 안내 |
 | `docker compose up/down` | 사용자가 실행할 명령과 확인 방법 안내 |
-| 실제 API 런타임 호출 | PowerShell/curl 호출 예시와 기대 JSON 안내 |
-| Swagger UI 브라우저 확인 | 접속 URL과 확인할 Controller/Mapping 안내 |
+| 실제 API 런타임 호출 | Swagger `Try it out` 대표 예시 1개와 기대 JSON 안내 |
+| Swagger UI 브라우저 확인 | 접속 URL, 인증 방법, 확인할 Controller/Mapping 안내 |
 | 포트 점유 프로세스 종료 | 포트 확인 명령과 종료 방법 안내 |
 | 방화벽/관리자 권한이 필요한 작업 | 사용자가 직접 수행하도록 안내 |
 
@@ -94,7 +94,7 @@ mvn -q test-compile
 ```text
 빌드: 에이전트가 직접 확인
 테스트 컴파일: 에이전트가 직접 확인
-실행/API: 사용자 직접 확인 필요, 명령과 기대 결과 제공
+실행/API: 사용자 직접 확인 필요, Docker/Spring Boot Dashboard 기준과 Swagger 대표 예시 1개 제공
 ```
 
 ## 샘플 코드 정리 전 확인
@@ -106,7 +106,7 @@ mvn -q test-compile
 3. 삭제 대상과 유지 대상을 문서에 먼저 기록
 4. 한 기능 묶음씩 제거
 5. 빌드 확인
-6. 신규 보건소 API 동작은 사용자가 직접 확인할 수 있게 명령과 기대 결과 안내
+6. 신규 보건소 API 동작은 사용자가 Swagger에서 직접 확인할 수 있게 대표 예시 1개와 기대 결과 안내
 
 참고 문서:
 

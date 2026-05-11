@@ -66,13 +66,14 @@ GitNexus 확인:
 
 - [x] Maven compile 확인
 - [x] Maven test-compile 확인
-- [x] API 수동 호출 방법과 기대 결과 작성
+- [x] Swagger 우선 API 확인 방법과 대표 예시 데이터 작성
 - [x] Swagger 확인 URL과 확인 항목 작성
 - [x] `git diff --check` 확인
 - [ ] `gitnexus detect-changes` 확인
-- [ ] 서버 기동 확인
-- [ ] API 런타임 호출 확인
-- [ ] Swagger 브라우저 확인
+- [ ] 사용자가 Docker PostgreSQL 실행 확인
+- [ ] 사용자가 VS Code Spring Boot Dashboard로 서버 기동 확인
+- [ ] 사용자가 Swagger에서 대표 예시로 API 런타임 호출 확인
+- [ ] 사용자가 PR 문서의 추가 테스트 체크리스트 확인
 
 ## 7. 구현 내용
 
@@ -90,27 +91,76 @@ GitNexus 확인:
 - 체크인 이후 예약 상태는 `CHECKED_IN`이므로 기존 예약 취소 API는 `RESERVATION_CANCEL_INVALID_STATUS`로 실패한다.
 - 대기번호는 MVP 기준으로 업무 유형별 당일 최대 번호 + 1로 발급한다.
 
-## 8. 사용자 직접 확인 방법
+## 8. 사용자 직접 런타임 확인 방법
 
-### 8.1 서버 기동
+이번 브랜치의 런타임 검증은 에이전트가 `mvn spring-boot:run`으로 서버를 직접 띄우지 않고, 사용자가 Docker PostgreSQL, VS Code Spring Boot Dashboard, Swagger UI로 확인한다. API 테스트는 터미널 명령보다 Swagger `Try it out`을 우선 사용한다.
+
+### 8.1 Docker PostgreSQL 실행
 
 ```powershell
-cd backend
-mvn spring-boot:run
+docker compose up -d postgres
+docker compose ps
 ```
 
-### 8.2 직원 로그인
+기대 결과:
 
-```powershell
-$login = Invoke-RestMethod -Method Post -Uri 'http://localhost:8080/api/auth/login' -ContentType 'application/json' -Body '{"email":"staff@test.com","password":"password1234"}'
-$token = $login.data.accessToken
+- PostgreSQL 컨테이너가 `Up` 상태다.
+- 백엔드가 사용할 DB 포트가 정상 노출되어 있다.
+
+### 8.2 VS Code Spring Boot Dashboard 서버 기동
+
+확인 방법:
+
+- VS Code 왼쪽 Spring Boot Dashboard에서 backend 애플리케이션을 실행한다.
+- 콘솔에서 Spring Boot started 로그를 확인한다.
+- 기본 접속 주소는 `http://localhost:8080`이다.
+
+기대 결과:
+
+- 애플리케이션이 종료되지 않고 기동 상태를 유지한다.
+- PostgreSQL schema 초기화가 적용되어 `visits`, `queue_tickets` 테이블을 사용할 수 있다.
+
+### 8.3 Swagger 접속
+
+```text
+http://localhost:8080/swagger-ui/index.html
 ```
 
-### 8.3 예약자 체크인
+기대 결과:
 
-```powershell
-$body = '{"reservationNo":"RSV-20260510-0001"}'
-Invoke-RestMethod -Method Post -Uri 'http://localhost:8080/api/visits/check-in' -Headers @{Authorization="Bearer $token"} -ContentType 'application/json' -Body $body
+- Swagger UI가 열리고 `AuthController`, `ReservationController`, `VisitController`가 보인다.
+
+### 8.4 Swagger 인증
+
+1. Swagger에서 `POST /api/auth/login`을 연다.
+2. `Try it out`을 누른다.
+3. 아래 대표 예시로 실행한다.
+
+```json
+{
+  "email": "staff@test.com",
+  "password": "password1234"
+}
+```
+
+기대 결과:
+
+- `success`가 `true`
+- `data.accessToken`이 발급된다.
+- Swagger 상단 또는 API별 Authorization 입력란에 `Bearer {accessToken}` 형식으로 입력한다.
+
+### 8.5 Swagger 예약자 체크인
+
+1. 체크인할 예약번호를 준비한다.
+   - 이미 생성된 예약이 있으면 해당 `reservationNo`를 사용한다.
+   - 없다면 Swagger에서 예약 슬롯 조회와 예약 신청을 먼저 수행해 예약번호를 만든다.
+2. Swagger에서 `VisitController`의 `POST /api/visits/check-in`을 연다.
+3. `Try it out`을 누르고 아래 대표 예시 1개로 실행한다.
+
+```json
+{
+  "reservationNo": "RSV-20260510-0001"
+}
 ```
 
 기대 결과:
@@ -121,23 +171,11 @@ Invoke-RestMethod -Method Post -Uri 'http://localhost:8080/api/visits/check-in' 
 - `data.queueTicketId`가 생성됨
 - `data.ticketNumber`가 1 이상의 숫자
 - `data.status`가 `WAITING`
-- 같은 예약 상세 조회 시 `status`가 `CHECKED_IN`
 
-### 8.4 체크인 이후 예약 취소 불가 확인
+### 8.6 추가 확인은 PR 체크리스트에서 수행
 
-체크인된 예약을 `DELETE /api/reservations/{id}`로 취소하면 기대 결과:
+대표 예시로 정상 체크인을 확인한 뒤, 체크인 이후 예약 취소 불가와 중복 체크인 같은 추가 케이스는 PR 문서의 테스트 체크리스트를 보고 사용자가 완료 여부를 체크한다.
 
-- HTTP 409
-- `success`가 `false`
-- `error.code`가 `RESERVATION_CANCEL_INVALID_STATUS`
-
-### 8.5 중복 체크인 확인
-
-같은 예약번호로 다시 체크인하면 기대 결과:
-
-- HTTP 409
-- `success`가 `false`
-- `error.code`가 `ALREADY_CHECKED_IN`
 
 ## 9. Swagger 확인 항목
 
@@ -150,7 +188,7 @@ http://localhost:8080/swagger-ui/index.html
 확인:
 
 - `VisitController`에 `POST /api/visits/check-in` 노출
-- 요청 DTO `reservationNo` 확인
+- 요청 DTO `reservationNo`와 대표 예시 데이터 확인
 - 성공 응답이 `success + data + error` 구조인지 확인
 - 실패 응답 코드 `FORBIDDEN`, `RESERVATION_NOT_FOUND`, `ALREADY_CHECKED_IN` 확인
 
