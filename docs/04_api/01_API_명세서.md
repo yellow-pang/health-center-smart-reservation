@@ -567,13 +567,39 @@ Response:
 
 `POST /api/visits/walk-in`
 
+권한:
+
+- 같은 보건소 소속 `STAFF`, `ADMIN`
+
+정책:
+
+- 예약 없이 방문자를 접수한다.
+- 활성 업무 유형만 접수할 수 있다.
+- 현장 접수 성공 시 `visits`에 현장 방문 이력이 생성되고, `queue_tickets`에 `WAITING` 대기번호가 발급된다.
+- Swagger 대표 예시는 기존 업무 유형 seed 중 `serviceTypeId = 1`을 사용한다. 실제 ID가 다르면 `GET /api/service-types`에서 확인한 ID로 바꿔 실행한다.
+
 Request:
 
 ```json
 {
   "serviceTypeId": 1,
-  "visitorName": "김철수",
-  "visitorPhone": "010-1111-2222"
+  "visitorName": "Swagger현장접수",
+  "visitorPhone": "010-4567-8901"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "visitId": 201,
+    "queueTicketId": 301,
+    "ticketNumber": 16,
+    "status": "WAITING"
+  },
+  "error": null
 }
 ```
 
