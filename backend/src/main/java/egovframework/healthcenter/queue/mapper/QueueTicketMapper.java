@@ -42,6 +42,10 @@ public class QueueTicketMapper extends EgovAbstractMapper {
 		return update("QueueTicketMapper.markCompleted", queueTicketId);
 	}
 
+	public int markHold(Long queueTicketId) {
+		return update("QueueTicketMapper.markHold", queueTicketId);
+	}
+
 	public int markVisitInProgress(Long queueTicketId) {
 		return update("QueueTicketMapper.markVisitInProgress", queueTicketId);
 	}

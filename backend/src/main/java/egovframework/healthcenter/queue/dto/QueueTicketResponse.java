@@ -32,7 +32,9 @@ public record QueueTicketResponse(
 	@Schema(description = "처리 시작 일시", example = "2026-05-11T10:36:00")
 	LocalDateTime startedAt,
 	@Schema(description = "처리 완료 일시", example = "2026-05-11T10:45:00")
-	LocalDateTime completedAt
+	LocalDateTime completedAt,
+	@Schema(description = "보류 일시", example = "2026-05-11T10:38:00")
+	LocalDateTime holdAt
 ) {
 
 	public static QueueTicketResponse from(QueueTicketVO ticket) {
@@ -49,7 +51,8 @@ public record QueueTicketResponse(
 			ticket.getIssuedAt(),
 			ticket.getCalledAt(),
 			ticket.getStartedAt(),
-			ticket.getCompletedAt()
+			ticket.getCompletedAt(),
+			ticket.getHoldAt()
 		);
 	}
 }

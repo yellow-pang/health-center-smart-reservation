@@ -47,4 +47,10 @@ public class QueueTicketPolicy {
 			throw new IllegalArgumentException("완료할 수 없는 대기 상태입니다.");
 		}
 	}
+
+	public void validateHold(QueueTicketVO ticket) {
+		if (!"CALLED".equals(ticket.getStatus())) {
+			throw new IllegalArgumentException("보류할 수 없는 대기 상태입니다.");
+		}
+	}
 }
