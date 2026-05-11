@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="QueueTicketMapper">
+
+	<resultMap id="QueueTicket" type="egovframework.healthcenter.queue.mapper.QueueTicketVO">
+		<id property="id" column="id"/>
+		<result property="ticketNumber" column="ticket_number"/>
+		<result property="status" column="status"/>
+	</resultMap>
+
+	<select id="issueWaitingTicket" parameterType="map" resultMap="QueueTicket">
+		INSERT INTO queue_tickets (
+			health_center_id,
+			visit_id,
+			service_type_id,
+			ticket_number,
+			status,
+			issued_at,
+			created_at
+		) VALUES (
+			#{healthCenterId},
+			#{visitId},
+			#{serviceTypeId},
+			(
+				SELECT COALESCE(MAX(q.ticket_number), 0) + 1
+				FROM queue_tickets q
+				WHERE q.health_center_id = #{healthCenterId}
+				  AND q.service_type_id = #{serviceTypeId}
+				  AND q.issued_at::date = CURRENT_DATE
+			),
+			'WAITING',
+			CURRENT_TIMESTAMP,
+			CURRENT_TIMESTAMP
+		)
+		RETURNING id, ticket_number, status
+	</select>
+
+</mapper>

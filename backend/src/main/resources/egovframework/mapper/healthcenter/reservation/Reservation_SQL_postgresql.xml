@@ -56,18 +56,24 @@
 
 	<select id="selectReservationByNo" parameterType="string" resultMap="Reservation">
 		SELECT
-			id,
-			reservation_no,
-			health_center_id,
-			member_id,
-			service_type_id,
-			reservation_slot_id,
-			visitor_name,
-			visitor_phone,
-			status,
-			reserved_at
-		FROM reservations
-		WHERE reservation_no = #{reservationNo}
+			r.id,
+			r.reservation_no,
+			r.health_center_id,
+			r.member_id,
+			r.service_type_id,
+			st.name AS service_type_name,
+			r.reservation_slot_id,
+			rs.slot_date,
+			rs.start_time,
+			rs.end_time,
+			r.visitor_name,
+			r.visitor_phone,
+			r.status,
+			r.reserved_at
+		FROM reservations r
+		INNER JOIN service_types st ON st.id = r.service_type_id
+		INNER JOIN reservation_slots rs ON rs.id = r.reservation_slot_id
+		WHERE r.reservation_no = #{reservationNo}
 	</select>
 
 	<select id="selectReservationsByMemberId" parameterType="long" resultMap="Reservation">
@@ -119,6 +125,15 @@
 		UPDATE reservations
 		SET status = 'CANCELED',
 			canceled_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{reservationId}
+		  AND status = 'RESERVED'
+	</update>
+
+	<update id="markCheckedIn" parameterType="map">
+		UPDATE reservations
+		SET status = 'CHECKED_IN',
+			checked_in_at = CURRENT_TIMESTAMP,
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = #{reservationId}
 		  AND status = 'RESERVED'
