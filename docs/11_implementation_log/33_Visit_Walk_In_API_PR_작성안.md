@@ -34,6 +34,7 @@ feat: 현장 접수 및 대기번호 발급 구현
 - Visit CommandService에 현장 접수 트랜잭션 추가
 - Visit Mapper에 `WALK_IN` 방문 insert 추가
 - 기존 QueueTicket 발급 흐름 재사용
+- Swagger/OpenAPI 인증 스키마를 HTTP bearer 방식으로 정리
 - API 명세, 브랜치 구현 기록, 전체 체크리스트 갱신
 
 ## 검증
@@ -75,8 +76,8 @@ feat: 현장 접수 및 대기번호 발급 구현
 
 - `serviceTypeId = 1`은 기존 업무 유형 seed를 전제로 한 대표 예시입니다.
 - 실제 DB에서 ID가 다르면 `GET /api/service-types`에서 확인한 업무 유형 ID로 바꿔 실행합니다.
-- Swagger Authorize 입력값은 토큰만 넣지 않고 `Bearer {accessToken}` 전체를 넣습니다.
-- curl로 확인할 때도 `Authorization: Bearer {accessToken}` 형식이어야 합니다.
+- Swagger Authorize 창에는 `Bearer `를 제외한 accessToken 값만 입력합니다.
+- curl로 확인할 때는 `Authorization: Bearer {accessToken}` 형식이어야 합니다.
 
 ## Swagger 추가 테스트 체크리스트
 
@@ -86,12 +87,13 @@ feat: 현장 접수 및 대기번호 발급 구현
 | 업무 유형 미선택 | `serviceTypeId`를 비움 | HTTP 400, `error.code = VISIT_INVALID_REQUEST` |
 | 없는 업무 유형 | 존재하지 않는 `serviceTypeId` 입력 | HTTP 404, `error.code = SERVICE_TYPE_NOT_FOUND` |
 | 권한 없는 사용자 | 시민 토큰으로 호출 | HTTP 403 또는 인증/권한 실패 |
-| Bearer 누락 | `Authorization`에 토큰만 입력 | HTTP 403, `인가된 사용자가 아닙니다.` |
+| curl Bearer 누락 | curl에서 `Authorization`에 토큰만 입력 | HTTP 403, `인가된 사용자가 아닙니다.` |
 | 인증 없음 | Authorization 없이 호출 | HTTP 401 또는 인증 실패 |
 
 ## 미검증 사유
 
 - 서버 기동은 사용자가 VS Code Spring Boot Dashboard에서 직접 수행합니다.
+- OpenAPI 인증 스키마 변경은 서버 재시작과 Swagger 새로고침 후 확인이 필요합니다.
 - Docker PostgreSQL 실행과 API 런타임 검증은 프로젝트 운영 기준상 사용자가 직접 수행합니다.
 - API 런타임 검증은 터미널 호출보다 Swagger UI를 우선 사용합니다.
 - GitNexus index는 stale 상태이며 신규 Visit 심볼 impact는 대상 심볼을 찾지 못해 `rg`와 Maven 검증으로 보완했습니다.

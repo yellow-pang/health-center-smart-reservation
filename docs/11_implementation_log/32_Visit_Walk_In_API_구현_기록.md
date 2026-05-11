@@ -111,8 +111,8 @@ GitNexus 확인:
 
 - `success`가 `true`
 - `data.accessToken`이 발급된다.
-- Swagger Authorization에 `Bearer {accessToken}` 형식으로 입력한다.
-- 현재 OpenAPI 보안 스키마가 APIKEY 방식이라 Swagger가 `Bearer `를 자동으로 붙이지 않는다. Authorize 입력값에는 토큰만 넣지 말고 `Bearer ey...` 전체를 입력한다.
+- Swagger Authorize 창에는 `Bearer `를 제외한 accessToken 값만 입력한다.
+- OpenAPI 보안 스키마가 HTTP bearer 방식으로 변경되어 Swagger 요청에는 `Authorization: Bearer {accessToken}` 헤더가 자동 적용된다.
 
 ### 8.2 Swagger 현장 접수
 
@@ -139,7 +139,8 @@ GitNexus 확인:
 
 - `serviceTypeId = 1`은 기존 업무 유형 seed를 전제로 한 대표 예시다.
 - 실제 DB에서 ID가 다르면 `GET /api/service-types`에서 확인한 업무 유형 ID로 바꿔 실행한다.
-- 403과 `인가된 사용자가 아닙니다.` 응답이 나오면 먼저 Authorization 값이 `Bearer {accessToken}` 형식인지 확인한다.
+- Swagger에서 403과 `인가된 사용자가 아닙니다.` 응답이 나오면 먼저 Authorize 창에 accessToken 값이 입력되어 있는지, 서버 재시작 후 최신 OpenAPI 설정이 반영되었는지 확인한다.
+- curl 같은 직접 호출에서는 `Authorization: Bearer {accessToken}` 형식을 사용한다.
 
 ## 9. 진행 중 발견된 추가 작업
 
@@ -149,6 +150,7 @@ GitNexus 확인:
 | 범위 정리 | 대기번호 발급 동시성 정책 보강 | 현재는 업무 유형별 당일 최대 번호 + 1 방식이라 동시 접수 경쟁 조건 검증 필요 | 후속 작업 |
 | 범위 정리 | 방문/대기 취소 전용 정책 정리 | 예약 취소와 별개로 접수 이후 취소 정책이 필요함 | 후속 작업 |
 | 검증 중 | GitNexus detect-changes 확인 | CLI에서 `unknown command 'detect-changes'`로 실패 | `git status`, `git diff --stat`, Maven 검증으로 보완 |
+| 검증 중 | Swagger 인증 방식 정리 | OpenAPI 보안 스키마를 HTTP bearer로 바꿔 Swagger Authorize 입력값은 토큰만 받도록 정리 | 문서 반영 |
 
 ## 10. 브랜치 종료 전 체크리스트
 

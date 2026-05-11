@@ -14,7 +14,8 @@
 Authorization: Bearer {accessToken}
 ```
 
-Swagger Authorize 창에도 토큰만 넣지 않고 `Bearer {accessToken}` 전체를 입력한다. 현재 OpenAPI 보안 스키마가 APIKEY 방식이라 `Bearer ` 접두사를 자동으로 붙이지 않는다.
+직접 HTTP 호출이나 curl에서는 `Bearer ` 접두사를 포함한다.
+Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 제외한 accessToken 값만 입력한다.
 
 ### 공통 응답 형식
 
@@ -579,7 +580,7 @@ Response:
 - 활성 업무 유형만 접수할 수 있다.
 - 현장 접수 성공 시 `visits`에 현장 방문 이력이 생성되고, `queue_tickets`에 `WAITING` 대기번호가 발급된다.
 - Swagger 대표 예시는 기존 업무 유형 seed 중 `serviceTypeId = 1`을 사용한다. 실제 ID가 다르면 `GET /api/service-types`에서 확인한 ID로 바꿔 실행한다.
-- `Authorization` 헤더는 `Bearer {accessToken}` 형식이어야 한다.
+- Swagger Authorize 창에는 accessToken 값만 입력한다. curl 같은 직접 호출에서는 `Authorization: Bearer {accessToken}` 형식을 사용한다.
 
 Request:
 
