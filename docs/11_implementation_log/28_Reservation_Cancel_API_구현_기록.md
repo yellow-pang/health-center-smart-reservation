@@ -144,6 +144,11 @@ http://localhost:8080/swagger-ui/index.html
 - 성공 응답이 `success + data + error` 구조인지 확인
 - 실패 응답 코드 `FORBIDDEN`, `RESERVATION_CANCEL_TIME_EXPIRED`, `RESERVATION_CANCEL_INVALID_STATUS` 확인
 
+Swagger 테스트용 seed:
+
+- 예약 취소 확인용 예약번호: `RSV-SWAGGER-CANCEL-001`
+- `citizen@test.com`으로 로그인 후 내 예약 목록에서 해당 예약번호의 `reservationId`를 확인하고 취소에 사용한다.
+
 ## 10. 진행 중 발견된 추가 작업
 
 | 발견 시점 | 추가 작업 | 이유 | 처리 |
@@ -151,6 +156,7 @@ http://localhost:8080/swagger-ui/index.html
 | 구현 중 | 프론트 내 예약 화면 취소 버튼 연동 | API 구현 후 사용자 예약 관리 UX 완성 필요 | 후속 작업 |
 | 구현 중 | 체크인 후 취소 정책 확장 | Visit/Queue 생성 이후에는 예약 취소와 방문/대기 취소 정책이 함께 필요 | Visit/Queue 구현 이후 재검토 |
 | 구현 중 | 브랜치명 오타 정리 검토 | 현재 브랜치명 `cancle` 오타와 `reserved_count` 언더스코어가 규칙과 다름 | 사용자가 필요 시 별도 rename |
+| Swagger 테스트 기준 보강 | 예약 취소 seed 예약번호 명시 | Swagger에서 체크인 테스트와 충돌하지 않는 취소 전용 예시 데이터가 필요함 | data.sql 반영 |
 
 ## 11. 브랜치 종료 전 체크리스트
 

@@ -59,7 +59,7 @@ GitNexus 확인:
 - [x] Mapper XML 추가
 - [x] DTO 추가
 - [x] PostgreSQL schema에 `visits`, `queue_tickets` 추가
-- [x] Swagger 체크인 스모크 테스트용 seed 예약 추가
+- [x] Swagger 체크인/취소/상세 테스트용 seed 예약 추가
 - [x] 예외 처리 확인
 - [x] 공통 응답 형식 확인
 
@@ -91,8 +91,8 @@ GitNexus 확인:
 - 체크인, Visit 생성, QueueTicket 생성은 하나의 트랜잭션에서 처리한다.
 - 체크인 이후 예약 상태는 `CHECKED_IN`이므로 기존 예약 취소 API는 `RESERVATION_CANCEL_INVALID_STATUS`로 실패한다.
 - 대기번호는 MVP 기준으로 업무 유형별 당일 최대 번호 + 1로 발급한다.
-- Swagger 테스트용 seed 예약번호는 `RSV-SWAGGER-CHECKIN-001`이다.
-- 앱 재시작 시 seed 예약은 다시 `RESERVED` 상태로 초기화되어 체크인 스모크 테스트에 재사용할 수 있다.
+- Swagger 테스트용 seed 예약번호는 체크인 `RSV-SWAGGER-CHECKIN-001`, 취소 `RSV-SWAGGER-CANCEL-001`, 상세 `RSV-SWAGGER-DETAIL-001`이다.
+- 앱 재시작 시 Swagger seed 예약은 다시 `RESERVED` 상태로 초기화되어 스모크 테스트에 재사용할 수 있다.
 
 ## 8. 사용자 직접 런타임 확인 방법
 
@@ -179,6 +179,8 @@ http://localhost:8080/swagger-ui/index.html
 
 대표 예시로 정상 체크인을 확인한 뒤, 체크인 이후 예약 취소 불가와 중복 체크인 같은 추가 케이스는 PR 문서의 테스트 체크리스트를 보고 사용자가 완료 여부를 체크한다.
 
+예약 상세와 예약 취소 API를 Swagger에서 별도로 확인할 때는 체크인 대표 예시를 소모하지 않도록 `RSV-SWAGGER-DETAIL-001`, `RSV-SWAGGER-CANCEL-001`을 사용한다.
+
 
 ## 9. Swagger 확인 항목
 
@@ -204,7 +206,7 @@ http://localhost:8080/swagger-ui/index.html
 | 구현 중 | 대기번호 발급 동시성 보강 | 현재는 업무 유형별 당일 최대 번호 + 1 방식이라 동시 체크인 경쟁 조건 검증 필요 | 후속 작업 |
 | 구현 중 | 방문/대기 취소 전용 정책 정리 | 체크인 이후 예약 취소는 막았지만 방문/대기 자체 취소 API는 아직 없음 | 후속 작업 |
 | 검증 중 | GitNexus detect-changes 재확인 | CLI가 상세 출력 없이 exit 1로 실패함 | 후속 확인 |
-| 검증 중 | Swagger 체크인 seed 운영 방식 정리 | 체크인 성공 후 같은 예약번호는 재사용할 수 없어 앱 재시작 시 seed를 초기화하도록 함 | data.sql 반영 |
+| 검증 중 | Swagger seed 운영 방식 정리 | 체크인/취소처럼 호출 후 상태가 바뀌는 API가 서로 대표 예시를 소모하지 않도록 seed 예약을 분리함 | data.sql 반영 |
 
 ## 11. 브랜치 종료 전 체크리스트
 

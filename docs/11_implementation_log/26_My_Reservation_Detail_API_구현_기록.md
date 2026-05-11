@@ -156,6 +156,11 @@ http://localhost:8080/swagger-ui/index.html
 - `ReservationController`에 `GET /api/reservations/{reservationId}` 노출
 - 응답 스키마가 `success + data + error` 구조인지 확인
 
+Swagger 테스트용 seed:
+
+- 예약 상세 확인용 예약번호: `RSV-SWAGGER-DETAIL-001`
+- `citizen@test.com`으로 로그인 후 내 예약 목록에서 해당 예약번호의 `reservationId`를 확인하고 상세 조회에 사용한다.
+
 ## 10. 진행 중 발견된 추가 작업
 
 | 발견 시점 | 추가 작업 | 이유 | 처리 |
@@ -163,6 +168,7 @@ http://localhost:8080/swagger-ui/index.html
 | 구현 중 | 예약 취소 API 구현 | 내 예약 조회 후 사용자가 예약을 취소하는 후속 흐름 필요 | 후속 작업 |
 | 구현 중 | 예약 상세의 직원/관리자 객체 권한 런타임 확인 | 같은 보건소 조건이 실제 토큰/seed와 맞는지 확인 필요 | 사용자 직접 확인 |
 | 구현 중 | GitNexus analyze 실패 원인 점검 | stale index 갱신이 실패해 detect_changes 전용 검증을 수행하지 못함 | 후속 점검 |
+| Swagger 테스트 기준 보강 | 예약 상세 seed 예약번호 명시 | Swagger에서 바로 테스트할 수 있는 고정 예시 데이터가 필요함 | data.sql 반영 |
 
 ## 11. 브랜치 종료 전 체크리스트
 

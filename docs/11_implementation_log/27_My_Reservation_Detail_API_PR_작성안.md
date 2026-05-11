@@ -42,6 +42,7 @@ feat: 내 예약 및 예약 상세 조회 API 구현
 - [x] `git diff --check`
 - [ ] 서버 기동 후 `GET /api/reservations/me` 확인
 - [ ] 서버 기동 후 `GET /api/reservations/{id}` 확인
+- [ ] Swagger에서 `RSV-SWAGGER-DETAIL-001` 상세 조회 확인
 - [ ] 다른 시민 계정으로 타인 예약 상세 조회 시 `FORBIDDEN` 확인
 - [ ] Swagger UI에서 Reservation API 노출 확인
 
@@ -60,6 +61,14 @@ feat: 내 예약 및 예약 상세 조회 API 구현
 ```
 
 ## 사용자 직접 확인 명령
+
+Swagger 우선 확인:
+
+- `citizen@test.com`으로 로그인한다.
+- `GET /api/reservations/me`에서 `RSV-SWAGGER-DETAIL-001`의 `reservationId`를 확인한다.
+- `GET /api/reservations/{id}`에 해당 ID를 넣어 상세 응답을 확인한다.
+
+터미널 확인은 필요한 경우에만 보조로 사용한다.
 
 ```powershell
 cd backend

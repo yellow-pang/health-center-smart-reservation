@@ -434,6 +434,10 @@ Response:
 
 `GET /api/reservations/{id}`
 
+Swagger 테스트용 seed:
+
+- `RSV-SWAGGER-DETAIL-001`
+
 권한:
 
 - 예약자 본인
@@ -465,6 +469,10 @@ Response:
 ### 4.6.3 예약 취소
 
 `DELETE /api/reservations/{id}`
+
+Swagger 테스트용 seed:
+
+- `RSV-SWAGGER-CANCEL-001`
 
 권한:
 
@@ -522,6 +530,10 @@ Request:
   "reservationNo": "RSV-SWAGGER-CHECKIN-001"
 }
 ```
+
+Swagger 테스트용 seed:
+
+- `RSV-SWAGGER-CHECKIN-001`
 
 Response:
 
