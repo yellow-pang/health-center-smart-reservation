@@ -45,14 +45,14 @@ feat: 대기열 조회와 상태 전이 API 구현
 - [x] Maven test-compile
 - [x] git diff --check
 - [x] Swagger 대표 예시에 필요한 seed/mock 데이터 추가
-- [ ] Docker PostgreSQL 실행 확인
-- [ ] VS Code Spring Boot Dashboard 서버 기동 확인
-- [ ] Swagger에서 `POST /api/auth/login` 직원 계정 로그인 확인
-- [ ] Swagger에서 `GET /api/queues?status=WAITING` 조회 확인
-- [ ] Swagger에서 `POST /api/queues/{id}/call` 호출 확인
-- [ ] Swagger에서 `POST /api/queues/{id}/start` 처리 시작 확인
-- [ ] Swagger에서 `POST /api/queues/{id}/complete` 처리 완료 확인
-- [ ] Swagger에서 잘못된 상태 전이 시 `QUEUE_INVALID_STATUS` 확인
+- [x] Docker PostgreSQL 실행 확인
+- [x] VS Code Spring Boot Dashboard 서버 기동 확인
+- [x] Swagger에서 `POST /api/auth/login` 직원 계정 로그인 확인
+- [x] Swagger에서 `GET /api/queues?status=WAITING` 조회 확인
+- [x] Swagger에서 `POST /api/queues/{id}/call` 호출 확인
+- [x] Swagger에서 `POST /api/queues/{id}/start` 처리 시작 확인
+- [x] Swagger에서 `POST /api/queues/{id}/complete` 처리 완료 확인
+- [x] Swagger에서 잘못된 상태 전이 시 `QUEUE_INVALID_STATUS` 확인
 
 ## Swagger 대표 테스트 순서
 
