@@ -75,7 +75,6 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | POST | /api/queues/{id}/call | 대기자 호출 | STAFF, ADMIN |
 | POST | /api/queues/{id}/start | 처리 시작 | STAFF, ADMIN |
 | POST | /api/queues/{id}/complete | 처리 완료 | STAFF, ADMIN |
-| POST | /api/queues/{id}/hold | 보류 처리 | STAFF, ADMIN |
 | GET | /api/dashboard/summary | 대시보드 요약 | ADMIN |
 | GET | /api/dashboard/hourly-visits | 시간대별 방문자 수 | ADMIN |
 | GET | /api/dashboard/service-wait-times | 업무별 평균 대기시간 | ADMIN |
@@ -607,7 +606,91 @@ Response:
 }
 ```
 
-### 4.9 대시보드 요약
+### 4.9 대기열 조회와 상태 전이
+
+#### 4.9.1 대기열 조회
+
+`GET /api/queues?serviceTypeId=1&status=WAITING`
+
+권한:
+
+- 같은 보건소 소속 `STAFF`, `ADMIN`
+
+정책:
+
+- 오늘 발급된 대기표를 조회한다.
+- `serviceTypeId`를 생략하면 전체 업무 유형을 조회한다.
+- `status`를 생략하면 `WAITING`, `CALLED`, `IN_PROGRESS`, `HOLD` 상태를 조회한다.
+- Swagger 테스트용 seed 방문자 이름은 `Swagger대기열`이며, 조회 결과에서 `queueTicketId`를 확인해 호출/시작/완료에 사용한다.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "queueTicketId": 301,
+      "visitId": 201,
+      "serviceTypeId": 1,
+      "serviceTypeName": "예방접종",
+      "ticketNumber": 16,
+      "status": "WAITING",
+      "visitType": "WALK_IN",
+      "visitorName": "Swagger대기열",
+      "visitorPhone": "010-5678-9012",
+      "issuedAt": "2026-05-11T10:30:00",
+      "calledAt": null,
+      "startedAt": null,
+      "completedAt": null
+    }
+  ],
+  "error": null
+}
+```
+
+#### 4.9.2 대기자 호출
+
+`POST /api/queues/{queueTicketId}/call`
+
+정책:
+
+- `WAITING`, `HOLD` 상태만 호출할 수 있다.
+- 성공 시 상태는 `CALLED`가 되고 `calledAt`이 기록된다.
+
+#### 4.9.3 처리 시작
+
+`POST /api/queues/{queueTicketId}/start`
+
+정책:
+
+- `CALLED` 상태만 처리 시작할 수 있다.
+- 성공 시 대기표 상태는 `IN_PROGRESS`가 되고 Visit 상태도 `IN_PROGRESS`가 된다.
+
+#### 4.9.4 처리 완료
+
+`POST /api/queues/{queueTicketId}/complete`
+
+정책:
+
+- `IN_PROGRESS` 상태만 완료할 수 있다.
+- 성공 시 대기표 상태는 `COMPLETED`가 되고 Visit 상태도 `COMPLETED`가 된다.
+- 예약 기반 방문이면 예약 상태도 `COMPLETED`로 변경된다.
+
+상태 오류 Response:
+
+```json
+{
+  "success": false,
+  "data": null,
+  "error": {
+    "code": "QUEUE_INVALID_STATUS",
+    "message": "호출할 수 없는 대기 상태입니다."
+  }
+}
+```
+
+### 4.10 대시보드 요약
 
 `GET /api/dashboard/summary?date=2026-05-10`
 
@@ -626,7 +709,7 @@ Response:
 }
 ```
 
-### 4.10 현재 혼잡도
+### 4.11 현재 혼잡도
 
 `GET /api/congestion/current`
 
