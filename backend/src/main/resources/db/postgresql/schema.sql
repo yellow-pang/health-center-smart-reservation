@@ -138,6 +138,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS uk_visits_reservation
 CREATE INDEX IF NOT EXISTS idx_visits_health_center_checked_in
     ON visits (health_center_id, checked_in_at);
 
+CREATE TABLE IF NOT EXISTS queue_ticket_counters (
+    id BIGSERIAL PRIMARY KEY,
+    health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
+    service_type_id BIGINT NOT NULL REFERENCES service_types(id),
+    issued_date DATE NOT NULL,
+    last_ticket_number INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT uk_queue_ticket_counters_daily UNIQUE (health_center_id, service_type_id, issued_date),
+    CONSTRAINT chk_queue_ticket_counters_last_number CHECK (last_ticket_number >= 0)
+);
+
+CREATE INDEX IF NOT EXISTS idx_queue_ticket_counters_daily
+    ON queue_ticket_counters (health_center_id, service_type_id, issued_date);
+
 CREATE TABLE IF NOT EXISTS queue_tickets (
     id BIGSERIAL PRIMARY KEY,
     health_center_id BIGINT NOT NULL REFERENCES health_centers(id),
@@ -159,6 +174,9 @@ CREATE INDEX IF NOT EXISTS idx_queue_tickets_health_center_service_status
 
 CREATE INDEX IF NOT EXISTS idx_queue_tickets_issued_at
     ON queue_tickets (issued_at);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uk_queue_tickets_daily_ticket_number
+    ON queue_tickets (health_center_id, service_type_id, (issued_at::date), ticket_number);
 
 CREATE TABLE IF NOT EXISTS service_windows (
     id BIGSERIAL PRIMARY KEY,

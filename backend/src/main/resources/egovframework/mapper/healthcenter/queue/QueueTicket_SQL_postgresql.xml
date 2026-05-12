@@ -40,6 +40,34 @@
 	</sql>
 
 	<select id="issueWaitingTicket" parameterType="map" resultMap="QueueTicket">
+		WITH next_ticket AS (
+			INSERT INTO queue_ticket_counters (
+				health_center_id,
+				service_type_id,
+				issued_date,
+				last_ticket_number,
+				created_at,
+				updated_at
+			) VALUES (
+				#{healthCenterId},
+				#{serviceTypeId},
+				CURRENT_DATE,
+				(
+					SELECT COALESCE(MAX(q.ticket_number), 0) + 1
+					FROM queue_tickets q
+					WHERE q.health_center_id = #{healthCenterId}
+					  AND q.service_type_id = #{serviceTypeId}
+					  AND q.issued_at::date = CURRENT_DATE
+				),
+				CURRENT_TIMESTAMP,
+				CURRENT_TIMESTAMP
+			)
+			ON CONFLICT (health_center_id, service_type_id, issued_date)
+			DO UPDATE
+			SET last_ticket_number = queue_ticket_counters.last_ticket_number + 1,
+				updated_at = CURRENT_TIMESTAMP
+			RETURNING last_ticket_number
+		)
 		INSERT INTO queue_tickets (
 			health_center_id,
 			visit_id,
@@ -48,21 +76,16 @@
 			status,
 			issued_at,
 			created_at
-		) VALUES (
+		)
+		SELECT
 			#{healthCenterId},
 			#{visitId},
 			#{serviceTypeId},
-			(
-				SELECT COALESCE(MAX(q.ticket_number), 0) + 1
-				FROM queue_tickets q
-				WHERE q.health_center_id = #{healthCenterId}
-				  AND q.service_type_id = #{serviceTypeId}
-				  AND q.issued_at::date = CURRENT_DATE
-			),
+			next_ticket.last_ticket_number,
 			'WAITING',
 			CURRENT_TIMESTAMP,
 			CURRENT_TIMESTAMP
-		)
+		FROM next_ticket
 		RETURNING id, ticket_number, status
 	</select>
 
