@@ -17,6 +17,32 @@
 		<result property="averageProcessingMinutes" column="average_processing_minutes"/>
 	</resultMap>
 
+	<resultMap id="HourlyVisit" type="egovframework.healthcenter.dashboard.mapper.HourlyVisitVO">
+		<id property="hour" column="hour"/>
+		<result property="visitCount" column="visit_count"/>
+	</resultMap>
+
+	<resultMap id="ServiceWaitTime" type="egovframework.healthcenter.dashboard.mapper.ServiceWaitTimeVO">
+		<id property="serviceTypeId" column="service_type_id"/>
+		<result property="serviceTypeName" column="service_type_name"/>
+		<result property="averageWaitMinutes" column="average_wait_minutes"/>
+		<result property="calledCount" column="called_count"/>
+	</resultMap>
+
+	<resultMap id="VisitTypeRatio" type="egovframework.healthcenter.dashboard.mapper.VisitTypeRatioVO">
+		<result property="totalVisitCount" column="total_visit_count"/>
+		<result property="reservedVisitCount" column="reserved_visit_count"/>
+		<result property="walkInVisitCount" column="walk_in_visit_count"/>
+		<result property="reservedVisitRatio" column="reserved_visit_ratio"/>
+		<result property="walkInVisitRatio" column="walk_in_visit_ratio"/>
+	</resultMap>
+
+	<resultMap id="NoShowRate" type="egovframework.healthcenter.dashboard.mapper.NoShowRateVO">
+		<result property="targetReservationCount" column="target_reservation_count"/>
+		<result property="noShowReservationCount" column="no_show_reservation_count"/>
+		<result property="noShowRate" column="no_show_rate"/>
+	</resultMap>
+
 	<select id="selectSummary" parameterType="map" resultMap="DashboardSummary">
 		WITH visit_stats AS (
 			SELECT COUNT(*)::integer AS today_visit_count
@@ -79,6 +105,84 @@
 		  AND st.active = true
 		GROUP BY st.id, st.name
 		ORDER BY st.id
+	</select>
+
+	<select id="selectHourlyVisits" parameterType="map" resultMap="HourlyVisit">
+		SELECT
+			h.hour::integer AS hour,
+			COUNT(v.id)::integer AS visit_count
+		FROM generate_series(0, 23) h(hour)
+		LEFT JOIN visits v
+			ON EXTRACT(HOUR FROM v.checked_in_at)::integer = h.hour
+		   AND v.health_center_id = #{healthCenterId}
+		   AND v.checked_in_at::date = #{targetDate}
+		GROUP BY h.hour
+		ORDER BY h.hour
+	</select>
+
+	<select id="selectServiceWaitTimes" parameterType="map" resultMap="ServiceWaitTime">
+		SELECT
+			st.id AS service_type_id,
+			st.name AS service_type_name,
+			COALESCE(
+				ROUND(AVG(EXTRACT(EPOCH FROM (q.called_at - q.issued_at)) / 60)
+					FILTER (WHERE q.called_at IS NOT NULL)),
+				0
+			)::integer AS average_wait_minutes,
+			COUNT(q.id) FILTER (WHERE q.called_at IS NOT NULL)::integer AS called_count
+		FROM service_types st
+		LEFT JOIN queue_tickets q
+			ON q.service_type_id = st.id
+		   AND q.health_center_id = st.health_center_id
+		   AND q.issued_at::date = #{targetDate}
+		WHERE st.health_center_id = #{healthCenterId}
+		  AND st.active = true
+		GROUP BY st.id, st.name
+		ORDER BY st.id
+	</select>
+
+	<select id="selectVisitTypeRatio" parameterType="map" resultMap="VisitTypeRatio">
+		WITH visit_stats AS (
+			SELECT
+				COUNT(*)::integer AS total_visit_count,
+				COUNT(*) FILTER (WHERE visit_type = 'RESERVED')::integer AS reserved_visit_count,
+				COUNT(*) FILTER (WHERE visit_type = 'WALK_IN')::integer AS walk_in_visit_count
+			FROM visits
+			WHERE health_center_id = #{healthCenterId}
+			  AND checked_in_at::date = #{targetDate}
+		)
+		SELECT
+			total_visit_count,
+			reserved_visit_count,
+			walk_in_visit_count,
+			CASE
+				WHEN total_visit_count = 0 THEN 0.0
+				ELSE ROUND((reserved_visit_count::numeric / total_visit_count::numeric) * 100, 1)
+			END AS reserved_visit_ratio,
+			CASE
+				WHEN total_visit_count = 0 THEN 0.0
+				ELSE ROUND((walk_in_visit_count::numeric / total_visit_count::numeric) * 100, 1)
+			END AS walk_in_visit_ratio
+		FROM visit_stats
+	</select>
+
+	<select id="selectNoShowRate" parameterType="map" resultMap="NoShowRate">
+		WITH reservation_stats AS (
+			SELECT
+				COUNT(*) FILTER (WHERE status != 'CANCELED')::integer AS target_reservation_count,
+				COUNT(*) FILTER (WHERE status = 'NO_SHOW')::integer AS no_show_reservation_count
+			FROM reservations
+			WHERE health_center_id = #{healthCenterId}
+			  AND reserved_at::date = #{targetDate}
+		)
+		SELECT
+			target_reservation_count,
+			no_show_reservation_count,
+			CASE
+				WHEN target_reservation_count = 0 THEN 0.0
+				ELSE ROUND((no_show_reservation_count::numeric / target_reservation_count::numeric) * 100, 1)
+			END AS no_show_rate
+		FROM reservation_stats
 	</select>
 
 </mapper>

@@ -8,6 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import egovframework.healthcenter.dashboard.dto.CongestionResponse;
 import egovframework.healthcenter.dashboard.dto.DashboardSummaryResponse;
+import egovframework.healthcenter.dashboard.dto.HourlyVisitResponse;
+import egovframework.healthcenter.dashboard.dto.NoShowRateResponse;
+import egovframework.healthcenter.dashboard.dto.ServiceWaitTimeResponse;
+import egovframework.healthcenter.dashboard.dto.VisitTypeRatioResponse;
 import egovframework.healthcenter.dashboard.mapper.CongestionVO;
 import egovframework.healthcenter.dashboard.mapper.DashboardMapper;
 import egovframework.healthcenter.dashboard.mapper.DashboardSummaryVO;
@@ -31,6 +35,40 @@ public class DashboardQueryService {
 		LocalDate targetDate = date == null ? LocalDate.now() : date;
 		DashboardSummaryVO summary = dashboardMapper.selectSummary(principal.healthCenterId(), targetDate);
 		return DashboardSummaryResponse.from(summary);
+	}
+
+	@Transactional(readOnly = true)
+	public List<HourlyVisitResponse> findHourlyVisits(MemberPrincipal principal, LocalDate date) {
+		validateAdmin(principal);
+		LocalDate targetDate = resolveDate(date);
+		return dashboardMapper.selectHourlyVisits(principal.healthCenterId(), targetDate)
+			.stream()
+			.map(HourlyVisitResponse::from)
+			.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<ServiceWaitTimeResponse> findServiceWaitTimes(MemberPrincipal principal, LocalDate date) {
+		validateAdmin(principal);
+		LocalDate targetDate = resolveDate(date);
+		return dashboardMapper.selectServiceWaitTimes(principal.healthCenterId(), targetDate)
+			.stream()
+			.map(ServiceWaitTimeResponse::from)
+			.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public VisitTypeRatioResponse findVisitTypeRatio(MemberPrincipal principal, LocalDate date) {
+		validateAdmin(principal);
+		LocalDate targetDate = resolveDate(date);
+		return VisitTypeRatioResponse.from(dashboardMapper.selectVisitTypeRatio(principal.healthCenterId(), targetDate));
+	}
+
+	@Transactional(readOnly = true)
+	public NoShowRateResponse findNoShowRate(MemberPrincipal principal, LocalDate date) {
+		validateAdmin(principal);
+		LocalDate targetDate = resolveDate(date);
+		return NoShowRateResponse.from(dashboardMapper.selectNoShowRate(principal.healthCenterId(), targetDate));
 	}
 
 	@Transactional(readOnly = true)
@@ -63,6 +101,10 @@ public class DashboardQueryService {
 
 	private int safeInt(Integer value) {
 		return value == null ? 0 : value;
+	}
+
+	private LocalDate resolveDate(LocalDate date) {
+		return date == null ? LocalDate.now() : date;
 	}
 
 	private void validateAdmin(MemberPrincipal principal) {

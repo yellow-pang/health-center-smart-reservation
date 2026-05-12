@@ -759,7 +759,111 @@ Response:
 }
 ```
 
-### 4.11 현재 혼잡도
+### 4.11 대시보드 세부 지표
+
+아래 API는 모두 `ADMIN` 권한이 필요하며, `date`를 생략하면 오늘 날짜 기준으로 조회한다.
+
+#### 4.11.1 시간대별 방문자 수
+
+`GET /api/dashboard/hourly-visits?date=2026-05-10`
+
+정책:
+
+- 로그인한 관리자의 `healthCenterId` 기준으로 집계한다.
+- 0시부터 23시까지 모든 시간대를 반환한다.
+- 방문자 수는 `visits.checked_in_at` 기준이다.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "hour": 9,
+      "visitCount": 12
+    }
+  ],
+  "error": null
+}
+```
+
+#### 4.11.2 업무별 평균 대기시간
+
+`GET /api/dashboard/service-wait-times?date=2026-05-10`
+
+정책:
+
+- 활성 업무 유형별 평균 대기시간을 조회한다.
+- 평균 대기시간은 `called_at - issued_at` 기준이다.
+- 호출 이력이 없는 업무 유형은 평균 대기시간 `0`, 호출 건수 `0`으로 반환한다.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "serviceTypeId": 1,
+      "serviceTypeName": "예방접종",
+      "averageWaitMinutes": 24,
+      "calledCount": 18
+    }
+  ],
+  "error": null
+}
+```
+
+#### 4.11.3 예약/현장 방문 비율
+
+`GET /api/dashboard/visit-type-ratio?date=2026-05-10`
+
+정책:
+
+- 방문 유형 `RESERVED`, `WALK_IN` 기준으로 비율을 계산한다.
+- 전체 방문 수가 0이면 각 비율은 `0.0`으로 반환한다.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "totalVisitCount": 120,
+    "reservedVisitCount": 80,
+    "walkInVisitCount": 40,
+    "reservedVisitRatio": 66.7,
+    "walkInVisitRatio": 33.3
+  },
+  "error": null
+}
+```
+
+#### 4.11.4 노쇼율
+
+`GET /api/dashboard/no-show-rate?date=2026-05-10`
+
+정책:
+
+- 취소 예약은 계산 대상에서 제외한다.
+- 계산 대상 예약 수가 0이면 노쇼율은 `0.0`으로 반환한다.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "targetReservationCount": 100,
+    "noShowReservationCount": 8,
+    "noShowRate": 8.0
+  },
+  "error": null
+}
+```
+
+### 4.12 현재 혼잡도
 
 `GET /api/congestion/current?healthCenterId=1`
 
