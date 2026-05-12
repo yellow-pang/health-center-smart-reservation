@@ -117,13 +117,13 @@ export default function CheckInPage() {
               {/* Queue Number Display */}
               <div className="my-6 p-6 rounded-xl bg-primary text-primary-foreground">
                 <p className="text-sm opacity-80 mb-1">대기번호</p>
-                <p className="text-5xl font-bold tracking-wider">{queueEntry.queueNumber}</p>
+                <p className="text-5xl font-bold tracking-wider">{queueEntry.ticketNumber}</p>
               </div>
 
               <div className="text-left rounded-lg bg-muted/50 p-4 text-sm space-y-2 mb-6">
                 <p className="flex justify-between">
                   <span className="text-muted-foreground">방문자</span>
-                  <span className="font-medium">{queueEntry.visitorName}</span>
+                  <span className="font-medium">{queueEntry.visitorNameMasked}</span>
                 </p>
                 <p className="flex justify-between">
                   <span className="text-muted-foreground">업무</span>
@@ -149,7 +149,7 @@ export default function CheckInPage() {
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">테스트 예약번호:</span>{' '}
-            R20260512001, R20260512002
+            RSV-20260513-0001, RSV-20260514-0002
           </p>
         </CardContent>
       </Card>

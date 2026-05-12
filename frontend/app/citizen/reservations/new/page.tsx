@@ -62,7 +62,7 @@ export default function NewReservationPage() {
         setIsLoading(true);
         try {
           const dateStr = format(selectedDate, 'yyyy-MM-dd');
-          const data = await getReservationSlots(selectedService.id, dateStr);
+          const data = await getReservationSlots(selectedService.serviceTypeId, dateStr);
           setSlots(data);
         } finally {
           setIsLoading(false);
@@ -96,9 +96,9 @@ export default function NewReservationPage() {
     setIsSubmitting(true);
     try {
       const result = await createReservation({
-        serviceTypeId: selectedService.id,
+        serviceTypeId: selectedService.serviceTypeId,
         date: format(selectedDate, 'yyyy-MM-dd'),
-        time: selectedSlot.time,
+        startTime: selectedSlot.startTime,
         visitorName,
         visitorPhone,
       });
@@ -186,11 +186,11 @@ export default function NewReservationPage() {
               <div className="grid gap-3">
                 {serviceTypes.map((service) => (
                   <button
-                    key={service.id}
+                    key={service.serviceTypeId}
                     onClick={() => handleServiceSelect(service)}
                     className={cn(
                       'flex items-start gap-4 p-4 rounded-lg border text-left transition-colors hover:bg-muted/50',
-                      selectedService?.id === service.id && 'border-primary bg-primary/5'
+                      selectedService?.serviceTypeId === service.serviceTypeId && 'border-primary bg-primary/5'
                     )}
                   >
                     <CalendarDays className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -198,7 +198,7 @@ export default function NewReservationPage() {
                       <p className="font-medium">{service.name}</p>
                       <p className="text-sm text-muted-foreground">{service.description}</p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        예상 소요시간: {service.estimatedMinutes}분
+                        기본 정원: {service.defaultCapacity}명
                       </p>
                     </div>
                   </button>
@@ -242,16 +242,16 @@ export default function NewReservationPage() {
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {slots.map((slot) => (
                         <button
-                          key={slot.id}
+                          key={slot.slotId}
                           onClick={() => handleSlotSelect(slot)}
                           className={cn(
                             'flex flex-col items-center justify-center p-3 rounded-lg border transition-colors hover:bg-muted/50',
-                            selectedSlot?.id === slot.id && 'border-primary bg-primary/5'
+                            selectedSlot?.slotId === slot.slotId && 'border-primary bg-primary/5'
                           )}
                         >
-                          <span className="font-medium">{slot.time}</span>
+                          <span className="font-medium">{slot.startTime}</span>
                           <span className="text-xs text-muted-foreground">
-                            {slot.capacity - slot.reserved}자리 남음
+                            {slot.availableCount}자리 남음
                           </span>
                         </button>
                       ))}
@@ -272,7 +272,7 @@ export default function NewReservationPage() {
               <div className="rounded-lg bg-muted/50 p-4 text-sm">
                 <p><span className="font-medium">업무:</span> {selectedService?.name}</p>
                 <p><span className="font-medium">날짜:</span> {selectedDate && format(selectedDate, 'yyyy년 M월 d일 (E)', { locale: ko })}</p>
-                <p><span className="font-medium">시간:</span> {selectedSlot?.time}</p>
+                <p><span className="font-medium">시간:</span> {selectedSlot?.startTime}</p>
               </div>
               
               <div className="space-y-2">
@@ -329,7 +329,7 @@ export default function NewReservationPage() {
               <div className="rounded-lg bg-muted/50 p-4 text-left text-sm space-y-2 mb-6">
                 <p className="flex justify-between">
                   <span className="text-muted-foreground">예약번호</span>
-                  <span className="font-mono font-semibold">{completedReservation.reservationNumber}</span>
+                  <span className="font-mono font-semibold">{completedReservation.reservationNo}</span>
                 </p>
                 <p className="flex justify-between">
                   <span className="text-muted-foreground">업무</span>
@@ -341,7 +341,7 @@ export default function NewReservationPage() {
                 </p>
                 <p className="flex justify-between">
                   <span className="text-muted-foreground">시간</span>
-                  <span>{completedReservation.time}</span>
+                  <span>{completedReservation.startTime}</span>
                 </p>
               </div>
 

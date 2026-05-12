@@ -61,7 +61,7 @@ export default function WalkInPage() {
       const result = await registerWalkIn({
         visitorName: visitorName.trim(),
         visitorPhone: visitorPhone.trim(),
-        serviceTypeId,
+        serviceTypeId: Number(serviceTypeId),
       });
       
       if (result.success && result.queueEntry) {
@@ -156,7 +156,7 @@ export default function WalkInPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {serviceTypes.map((service) => (
-                        <SelectItem key={service.id} value={service.id}>
+                        <SelectItem key={service.serviceTypeId} value={String(service.serviceTypeId)}>
                           {service.name}
                         </SelectItem>
                       ))}
@@ -189,13 +189,13 @@ export default function WalkInPage() {
                 {/* Queue Number Display */}
                 <div className="my-6 p-6 rounded-xl bg-primary text-primary-foreground">
                   <p className="text-sm opacity-80 mb-1">대기번호</p>
-                  <p className="text-5xl font-bold tracking-wider">{queueEntry.queueNumber}</p>
+                  <p className="text-5xl font-bold tracking-wider">{queueEntry.ticketNumber}</p>
                 </div>
 
                 <div className="text-left rounded-lg bg-muted/50 p-4 text-sm space-y-2 mb-6">
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">방문자</span>
-                    <span className="font-medium">{queueEntry.visitorName}</span>
+                    <span className="font-medium">{queueEntry.visitorNameMasked}</span>
                   </p>
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">업무</span>
@@ -234,16 +234,16 @@ export default function WalkInPage() {
               <div className="space-y-3">
                 {recentEntries.map((entry, index) => (
                   <div 
-                    key={`${entry.queueEntry.id}-${index}`}
+                    key={`${entry.queueEntry.queueTicketId}-${index}`}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-mono font-semibold text-primary">
-                          {entry.queueEntry.queueNumber}
+                          {entry.queueEntry.ticketNumber}
                         </span>
                         <span className="text-sm truncate">
-                          {entry.queueEntry.visitorName}
+                          {entry.queueEntry.visitorNameMasked}
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">

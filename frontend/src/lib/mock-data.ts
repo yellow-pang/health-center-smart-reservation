@@ -15,7 +15,9 @@ export type QueueStatus =
 
 export type VisitType = 'RESERVED' | 'WALK_IN';
 
-export type ReservationStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'COMPLETED' | 'NO_SHOW';
+export type ReservationStatus = 'RESERVED' | 'CANCELED' | 'CHECKED_IN' | 'NO_SHOW' | 'COMPLETED';
+
+export type CongestionLevel = 'LOW' | 'NORMAL' | 'HIGH';
 
 export interface User {
   id: string;
@@ -26,44 +28,48 @@ export interface User {
 }
 
 export interface ServiceType {
-  id: string;
+  serviceTypeId: number;
+  code: string;
   name: string;
   description: string;
-  estimatedMinutes: number;
-  isActive: boolean;
+  defaultCapacity: number;
+  active: boolean;
 }
 
 export interface ReservationSlot {
-  id: string;
-  serviceTypeId: string;
+  slotId: number;
+  serviceTypeId: number;
   date: string;
-  time: string;
+  startTime: string;
+  endTime: string;
   capacity: number;
-  reserved: number;
+  reservedCount: number;
+  availableCount: number;
+  available: boolean;
 }
 
 export interface Reservation {
-  id: string;
-  reservationNumber: string;
+  reservationId: number;
+  reservationNo: string;
   userId: string;
-  serviceTypeId: string;
+  serviceTypeId: number;
   visitorName: string;
   visitorPhone: string;
   date: string;
-  time: string;
+  startTime: string;
   status: ReservationStatus;
   createdAt: string;
 }
 
 export interface QueueEntry {
-  id: string;
-  queueNumber: string;
-  visitorName: string;
-  visitorPhone: string;
-  serviceTypeId: string;
+  queueTicketId: number;
+  ticketNumber: string;
+  visitorNameMasked: string;
+  visitorPhoneMasked: string;
+  serviceTypeId: number;
   visitType: VisitType;
   status: QueueStatus;
-  reservationId?: string;
+  reservationId?: number;
   windowId?: string;
   calledAt?: string;
   startedAt?: string;
@@ -74,9 +80,9 @@ export interface QueueEntry {
 export interface ServiceWindow {
   id: string;
   name: string;
-  serviceTypeIds: string[];
+  serviceTypeIds: number[];
   staffId?: string;
-  isActive: boolean;
+  active: boolean;
 }
 
 export interface Staff {
@@ -87,11 +93,11 @@ export interface Staff {
 }
 
 export interface CongestionInfo {
-  serviceTypeId: string;
+  serviceTypeId: number;
   serviceTypeName: string;
   waitingCount: number;
   estimatedWaitMinutes: number;
-  level: 'LOW' | 'MEDIUM' | 'HIGH';
+  level: CongestionLevel;
 }
 
 export interface DashboardStats {
@@ -128,60 +134,54 @@ export const mockUsers: User[] = [
 ];
 
 export const mockServiceTypes: ServiceType[] = [
-  { id: 'st-1', name: '예방접종', description: '각종 예방접종 서비스', estimatedMinutes: 15, isActive: true },
-  { id: 'st-2', name: '건강검진', description: '건강검진 상담 및 예약', estimatedMinutes: 30, isActive: true },
-  { id: 'st-3', name: '증명서 발급', description: '각종 건강 관련 증명서 발급', estimatedMinutes: 10, isActive: true },
-  { id: 'st-4', name: '모자보건', description: '임산부 및 영유아 건강관리', estimatedMinutes: 20, isActive: true },
-  { id: 'st-5', name: '정신건강 상담', description: '정신건강 관련 상담 서비스', estimatedMinutes: 45, isActive: true },
+  { serviceTypeId: 1, code: 'VACCINATION', name: '예방접종', description: '예방접종 예약 및 접수', defaultCapacity: 5, active: true },
+  { serviceTypeId: 2, code: 'HEALTH_CHECK', name: '건강검진/검사', description: '건강검진과 기본 검사 접수', defaultCapacity: 5, active: true },
+  { serviceTypeId: 3, code: 'HEALTH_CONSULT', name: '건강상담', description: '보건 상담과 생활 건강 안내', defaultCapacity: 5, active: true },
 ];
 
 export const mockReservationSlots: ReservationSlot[] = [
-  { id: 'slot-1', serviceTypeId: 'st-1', date: '2026-05-13', time: '09:00', capacity: 5, reserved: 2 },
-  { id: 'slot-2', serviceTypeId: 'st-1', date: '2026-05-13', time: '09:30', capacity: 5, reserved: 5 },
-  { id: 'slot-3', serviceTypeId: 'st-1', date: '2026-05-13', time: '10:00', capacity: 5, reserved: 1 },
-  { id: 'slot-4', serviceTypeId: 'st-1', date: '2026-05-13', time: '10:30', capacity: 5, reserved: 3 },
-  { id: 'slot-5', serviceTypeId: 'st-1', date: '2026-05-13', time: '11:00', capacity: 5, reserved: 0 },
-  { id: 'slot-6', serviceTypeId: 'st-2', date: '2026-05-13', time: '09:00', capacity: 3, reserved: 1 },
-  { id: 'slot-7', serviceTypeId: 'st-2', date: '2026-05-13', time: '10:00', capacity: 3, reserved: 2 },
-  { id: 'slot-8', serviceTypeId: 'st-2', date: '2026-05-13', time: '11:00', capacity: 3, reserved: 0 },
-  { id: 'slot-9', serviceTypeId: 'st-3', date: '2026-05-13', time: '09:00', capacity: 10, reserved: 4 },
-  { id: 'slot-10', serviceTypeId: 'st-3', date: '2026-05-13', time: '10:00', capacity: 10, reserved: 6 },
+  { slotId: 1, serviceTypeId: 1, date: '2026-05-13', startTime: '09:00', endTime: '09:30', capacity: 5, reservedCount: 2, availableCount: 3, available: true },
+  { slotId: 2, serviceTypeId: 1, date: '2026-05-13', startTime: '09:30', endTime: '10:00', capacity: 5, reservedCount: 5, availableCount: 0, available: false },
+  { slotId: 3, serviceTypeId: 1, date: '2026-05-13', startTime: '10:00', endTime: '10:30', capacity: 5, reservedCount: 1, availableCount: 4, available: true },
+  { slotId: 4, serviceTypeId: 2, date: '2026-05-13', startTime: '09:00', endTime: '09:30', capacity: 5, reservedCount: 1, availableCount: 4, available: true },
+  { slotId: 5, serviceTypeId: 2, date: '2026-05-13', startTime: '10:00', endTime: '10:30', capacity: 5, reservedCount: 2, availableCount: 3, available: true },
+  { slotId: 6, serviceTypeId: 3, date: '2026-05-13', startTime: '09:00', endTime: '09:30', capacity: 5, reservedCount: 4, availableCount: 1, available: true },
 ];
 
 export const mockReservations: Reservation[] = [
   {
-    id: 'res-1',
-    reservationNumber: 'R20260512001',
+    reservationId: 1,
+    reservationNo: 'RSV-20260513-0001',
     userId: 'user-1',
-    serviceTypeId: 'st-1',
+    serviceTypeId: 1,
     visitorName: '홍길동',
     visitorPhone: '010-1234-5678',
     date: '2026-05-13',
-    time: '09:00',
-    status: 'CONFIRMED',
+    startTime: '09:00',
+    status: 'RESERVED',
     createdAt: '2026-05-12T10:00:00Z',
   },
   {
-    id: 'res-2',
-    reservationNumber: 'R20260512002',
+    reservationId: 2,
+    reservationNo: 'RSV-20260514-0002',
     userId: 'user-1',
-    serviceTypeId: 'st-3',
+    serviceTypeId: 3,
     visitorName: '홍길동',
     visitorPhone: '010-1234-5678',
     date: '2026-05-14',
-    time: '10:00',
-    status: 'PENDING',
+    startTime: '10:00',
+    status: 'RESERVED',
     createdAt: '2026-05-12T11:30:00Z',
   },
   {
-    id: 'res-3',
-    reservationNumber: 'R20260510001',
+    reservationId: 3,
+    reservationNo: 'RSV-20260510-0001',
     userId: 'user-1',
-    serviceTypeId: 'st-2',
+    serviceTypeId: 2,
     visitorName: '홍길동',
     visitorPhone: '010-1234-5678',
     date: '2026-05-10',
-    time: '14:00',
+    startTime: '14:00',
     status: 'COMPLETED',
     createdAt: '2026-05-08T09:00:00Z',
   },
@@ -189,11 +189,11 @@ export const mockReservations: Reservation[] = [
 
 export const mockQueueEntries: QueueEntry[] = [
   {
-    id: 'q-1',
-    queueNumber: 'A001',
-    visitorName: '김철수',
-    visitorPhone: '010-1111-2222',
-    serviceTypeId: 'st-1',
+    queueTicketId: 1,
+    ticketNumber: 'A001',
+    visitorNameMasked: '김*수',
+    visitorPhoneMasked: '010-****-2222',
+    serviceTypeId: 1,
     visitType: 'RESERVED',
     status: 'IN_PROGRESS',
     windowId: 'win-1',
@@ -202,11 +202,11 @@ export const mockQueueEntries: QueueEntry[] = [
     createdAt: '2026-05-12T08:55:00Z',
   },
   {
-    id: 'q-2',
-    queueNumber: 'A002',
-    visitorName: '이영희',
-    visitorPhone: '010-2222-3333',
-    serviceTypeId: 'st-1',
+    queueTicketId: 2,
+    ticketNumber: 'A002',
+    visitorNameMasked: '이*희',
+    visitorPhoneMasked: '010-****-3333',
+    serviceTypeId: 1,
     visitType: 'WALK_IN',
     status: 'CALLED',
     windowId: 'win-2',
@@ -214,31 +214,31 @@ export const mockQueueEntries: QueueEntry[] = [
     createdAt: '2026-05-12T09:00:00Z',
   },
   {
-    id: 'q-3',
-    queueNumber: 'A003',
-    visitorName: '박민수',
-    visitorPhone: '010-3333-4444',
-    serviceTypeId: 'st-1',
+    queueTicketId: 3,
+    ticketNumber: 'A003',
+    visitorNameMasked: '박*수',
+    visitorPhoneMasked: '010-****-4444',
+    serviceTypeId: 1,
     visitType: 'RESERVED',
     status: 'WAITING',
     createdAt: '2026-05-12T09:02:00Z',
   },
   {
-    id: 'q-4',
-    queueNumber: 'B001',
-    visitorName: '최지영',
-    visitorPhone: '010-4444-5555',
-    serviceTypeId: 'st-2',
+    queueTicketId: 4,
+    ticketNumber: 'B001',
+    visitorNameMasked: '최*영',
+    visitorPhoneMasked: '010-****-5555',
+    serviceTypeId: 2,
     visitType: 'RESERVED',
     status: 'WAITING',
     createdAt: '2026-05-12T08:50:00Z',
   },
   {
-    id: 'q-5',
-    queueNumber: 'B002',
-    visitorName: '정수진',
-    visitorPhone: '010-5555-6666',
-    serviceTypeId: 'st-2',
+    queueTicketId: 5,
+    ticketNumber: 'B002',
+    visitorNameMasked: '정*진',
+    visitorPhoneMasked: '010-****-6666',
+    serviceTypeId: 2,
     visitType: 'WALK_IN',
     status: 'HOLD',
     windowId: 'win-3',
@@ -246,21 +246,21 @@ export const mockQueueEntries: QueueEntry[] = [
     createdAt: '2026-05-12T08:45:00Z',
   },
   {
-    id: 'q-6',
-    queueNumber: 'C001',
-    visitorName: '강호준',
-    visitorPhone: '010-6666-7777',
-    serviceTypeId: 'st-3',
+    queueTicketId: 6,
+    ticketNumber: 'C001',
+    visitorNameMasked: '강*준',
+    visitorPhoneMasked: '010-****-7777',
+    serviceTypeId: 3,
     visitType: 'WALK_IN',
     status: 'WAITING',
     createdAt: '2026-05-12T09:08:00Z',
   },
   {
-    id: 'q-7',
-    queueNumber: 'C002',
-    visitorName: '윤서연',
-    visitorPhone: '010-7777-8888',
-    serviceTypeId: 'st-3',
+    queueTicketId: 7,
+    ticketNumber: 'C002',
+    visitorNameMasked: '윤*연',
+    visitorPhoneMasked: '010-****-8888',
+    serviceTypeId: 3,
     visitType: 'RESERVED',
     status: 'WAITING',
     createdAt: '2026-05-12T09:12:00Z',
@@ -268,11 +268,9 @@ export const mockQueueEntries: QueueEntry[] = [
 ];
 
 export const mockServiceWindows: ServiceWindow[] = [
-  { id: 'win-1', name: '1번 창구', serviceTypeIds: ['st-1', 'st-4'], staffId: 'staff-1', isActive: true },
-  { id: 'win-2', name: '2번 창구', serviceTypeIds: ['st-1', 'st-4'], staffId: 'staff-2', isActive: true },
-  { id: 'win-3', name: '3번 창구', serviceTypeIds: ['st-2', 'st-5'], staffId: 'staff-3', isActive: true },
-  { id: 'win-4', name: '4번 창구', serviceTypeIds: ['st-3'], isActive: true },
-  { id: 'win-5', name: '5번 창구', serviceTypeIds: ['st-3'], isActive: false },
+  { id: 'win-1', name: '1번 창구', serviceTypeIds: [1], staffId: 'staff-1', active: true },
+  { id: 'win-2', name: '2번 창구', serviceTypeIds: [2], staffId: 'staff-2', active: true },
+  { id: 'win-3', name: '3번 창구', serviceTypeIds: [3], staffId: 'staff-3', active: true },
 ];
 
 export const mockStaff: Staff[] = [
@@ -282,11 +280,9 @@ export const mockStaff: Staff[] = [
 ];
 
 export const mockCongestionInfo: CongestionInfo[] = [
-  { serviceTypeId: 'st-1', serviceTypeName: '예방접종', waitingCount: 3, estimatedWaitMinutes: 15, level: 'MEDIUM' },
-  { serviceTypeId: 'st-2', serviceTypeName: '건강검진', waitingCount: 5, estimatedWaitMinutes: 45, level: 'HIGH' },
-  { serviceTypeId: 'st-3', serviceTypeName: '증명서 발급', waitingCount: 2, estimatedWaitMinutes: 8, level: 'LOW' },
-  { serviceTypeId: 'st-4', serviceTypeName: '모자보건', waitingCount: 0, estimatedWaitMinutes: 0, level: 'LOW' },
-  { serviceTypeId: 'st-5', serviceTypeName: '정신건강 상담', waitingCount: 1, estimatedWaitMinutes: 20, level: 'LOW' },
+  { serviceTypeId: 1, serviceTypeName: '예방접종', waitingCount: 3, estimatedWaitMinutes: 15, level: 'NORMAL' },
+  { serviceTypeId: 2, serviceTypeName: '건강검진/검사', waitingCount: 5, estimatedWaitMinutes: 45, level: 'HIGH' },
+  { serviceTypeId: 3, serviceTypeName: '건강상담', waitingCount: 2, estimatedWaitMinutes: 8, level: 'LOW' },
 ];
 
 export const mockDashboardStats: DashboardStats = {
@@ -310,10 +306,8 @@ export const mockHourlyVisitors: HourlyVisitors[] = [
 
 export const mockServiceWaitTimes: ServiceWaitTime[] = [
   { serviceType: '예방접종', avgMinutes: 12 },
-  { serviceType: '건강검진', avgMinutes: 28 },
-  { serviceType: '증명서 발급', avgMinutes: 8 },
-  { serviceType: '모자보건', avgMinutes: 15 },
-  { serviceType: '정신건강 상담', avgMinutes: 22 },
+  { serviceType: '건강검진/검사', avgMinutes: 28 },
+  { serviceType: '건강상담', avgMinutes: 8 },
 ];
 
 export const mockVisitTypeRatio: VisitTypeRatio[] = [
@@ -325,23 +319,23 @@ export const mockVisitTypeRatio: VisitTypeRatio[] = [
 // Helper functions to get data
 // ============================================
 
-export function getServiceTypeName(id: string): string {
-  return mockServiceTypes.find(s => s.id === id)?.name || '알 수 없음';
+export function getServiceTypeName(serviceTypeId: number): string {
+  return mockServiceTypes.find(s => s.serviceTypeId === serviceTypeId)?.name || '알 수 없음';
 }
 
-export function getServiceTypeById(id: string): ServiceType | undefined {
-  return mockServiceTypes.find(s => s.id === id);
+export function getServiceTypeById(serviceTypeId: number): ServiceType | undefined {
+  return mockServiceTypes.find(s => s.serviceTypeId === serviceTypeId);
 }
 
 export function getWindowName(id: string): string {
   return mockServiceWindows.find(w => w.id === id)?.name || '알 수 없음';
 }
 
-export function getAvailableSlots(serviceTypeId: string, date: string): ReservationSlot[] {
+export function getAvailableSlots(serviceTypeId: number, date: string): ReservationSlot[] {
   return mockReservationSlots.filter(
     slot => slot.serviceTypeId === serviceTypeId && 
             slot.date === date && 
-            slot.reserved < slot.capacity
+            slot.available
   );
 }
 

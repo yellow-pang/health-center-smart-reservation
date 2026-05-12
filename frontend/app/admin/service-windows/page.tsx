@@ -38,7 +38,7 @@ export default function ServiceWindowsPage() {
 
   // Form state
   const [formName, setFormName] = useState('');
-  const [formServiceTypeIds, setFormServiceTypeIds] = useState<string[]>([]);
+  const [formServiceTypeIds, setFormServiceTypeIds] = useState<number[]>([]);
   const [formIsActive, setFormIsActive] = useState(true);
 
   const loadData = async () => {
@@ -76,11 +76,11 @@ export default function ServiceWindowsPage() {
     setEditingItem(item);
     setFormName(item.name);
     setFormServiceTypeIds(item.serviceTypeIds);
-    setFormIsActive(item.isActive);
+    setFormIsActive(item.active);
     setIsDialogOpen(true);
   };
 
-  const handleServiceTypeToggle = (serviceTypeId: string) => {
+  const handleServiceTypeToggle = (serviceTypeId: number) => {
     setFormServiceTypeIds(prev =>
       prev.includes(serviceTypeId)
         ? prev.filter(id => id !== serviceTypeId)
@@ -98,7 +98,7 @@ export default function ServiceWindowsPage() {
       setWindows(prev =>
         prev.map(w =>
           w.id === editingItem.id
-            ? { ...w, name: formName, serviceTypeIds: formServiceTypeIds, isActive: formIsActive }
+            ? { ...w, name: formName, serviceTypeIds: formServiceTypeIds, active: formIsActive }
             : w
         )
       );
@@ -108,7 +108,7 @@ export default function ServiceWindowsPage() {
         id: `win-${Date.now()}`,
         name: formName,
         serviceTypeIds: formServiceTypeIds,
-        isActive: formIsActive,
+        active: formIsActive,
       };
       setWindows(prev => [...prev, newWindow]);
       toast.success('창구가 추가되었습니다.');
@@ -154,14 +154,14 @@ export default function ServiceWindowsPage() {
                   <Label>담당 업무</Label>
                   <div className="rounded-md border p-4 space-y-3">
                     {serviceTypes.map((st) => (
-                      <div key={st.id} className="flex items-center space-x-2">
+                      <div key={st.serviceTypeId} className="flex items-center space-x-2">
                         <Checkbox
-                          id={`st-${st.id}`}
-                          checked={formServiceTypeIds.includes(st.id)}
-                          onCheckedChange={() => handleServiceTypeToggle(st.id)}
+                          id={`st-${st.serviceTypeId}`}
+                          checked={formServiceTypeIds.includes(st.serviceTypeId)}
+                          onCheckedChange={() => handleServiceTypeToggle(st.serviceTypeId)}
                         />
                         <label
-                          htmlFor={`st-${st.id}`}
+                          htmlFor={`st-${st.serviceTypeId}`}
                           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                         >
                           {st.name}
@@ -200,29 +200,29 @@ export default function ServiceWindowsPage() {
             {windows.map((window) => (
               <Card 
                 key={window.id}
-                className={cn(!window.isActive && 'opacity-60')}
+                className={cn(!window.active && 'opacity-60')}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className={cn(
                         'flex h-10 w-10 items-center justify-center rounded-lg',
-                        window.isActive ? 'bg-primary/10' : 'bg-muted'
+                        window.active ? 'bg-primary/10' : 'bg-muted'
                       )}>
                         <Building2 className={cn(
                           'h-5 w-5',
-                          window.isActive ? 'text-primary' : 'text-muted-foreground'
+                          window.active ? 'text-primary' : 'text-muted-foreground'
                         )} />
                       </div>
                       <div>
                         <h3 className="font-medium">{window.name}</h3>
                         <span className={cn(
                           'text-xs px-2 py-0.5 rounded-full',
-                          window.isActive 
+                          window.active
                             ? 'bg-green-100 text-green-700' 
                             : 'bg-gray-100 text-gray-500'
                         )}>
-                          {window.isActive ? '운영 중' : '미운영'}
+                          {window.active ? '운영 중' : '미운영'}
                         </span>
                       </div>
                     </div>

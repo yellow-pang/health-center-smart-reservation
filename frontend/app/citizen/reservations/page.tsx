@@ -34,7 +34,7 @@ export default function MyReservationsPage() {
   const router = useRouter();
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
-  const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<number | null>(null);
 
   const loadReservations = async () => {
     setLoadState('loading');
@@ -51,7 +51,7 @@ export default function MyReservationsPage() {
     loadReservations();
   }, []);
 
-  const handleCancel = async (reservationId: string) => {
+  const handleCancel = async (reservationId: number) => {
     setCancelingId(reservationId);
     try {
       const result = await cancelReservation(reservationId);
@@ -59,7 +59,7 @@ export default function MyReservationsPage() {
         toast.success('예약이 취소되었습니다.');
         // Update local state
         setReservations(prev => 
-          prev.map(r => r.id === reservationId ? { ...r, status: 'CANCELED' as const } : r)
+          prev.map(r => r.reservationId === reservationId ? { ...r, status: 'CANCELED' as const } : r)
         );
       } else {
         toast.error(result.error || '취소 중 오류가 발생했습니다.');
@@ -70,18 +70,18 @@ export default function MyReservationsPage() {
   };
 
   const canCancel = (status: Reservation['status']) => {
-    return status === 'CONFIRMED' || status === 'PENDING';
+    return status === 'RESERVED';
   };
 
   // Sort reservations: upcoming first, then by date
   const sortedReservations = [...reservations].sort((a, b) => {
-    const dateA = parseISO(`${a.date}T${a.time}`);
-    const dateB = parseISO(`${b.date}T${b.time}`);
+    const dateA = parseISO(`${a.date}T${a.startTime}`);
+    const dateB = parseISO(`${b.date}T${b.startTime}`);
     return dateB.getTime() - dateA.getTime();
   });
 
   const upcomingReservations = sortedReservations.filter(r => 
-    (r.status === 'CONFIRMED' || r.status === 'PENDING') && parseISO(r.date) >= new Date(new Date().setHours(0,0,0,0))
+    r.status === 'RESERVED' && parseISO(r.date) >= new Date(new Date().setHours(0,0,0,0))
   );
   const pastReservations = sortedReservations.filter(r => 
     r.status === 'COMPLETED' || r.status === 'CANCELED' || r.status === 'NO_SHOW' || parseISO(r.date) < new Date(new Date().setHours(0,0,0,0))
@@ -129,7 +129,7 @@ export default function MyReservationsPage() {
                 <h2 className="text-sm font-medium text-muted-foreground mb-3">예정된 예약</h2>
                 <div className="space-y-3">
                   {upcomingReservations.map((reservation) => (
-                    <Card key={reservation.id}>
+                    <Card key={reservation.reservationId}>
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
@@ -140,10 +140,10 @@ export default function MyReservationsPage() {
                               <StatusBadge status={reservation.status} />
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {format(parseISO(reservation.date), 'yyyy년 M월 d일 (E)', { locale: ko })} {reservation.time}
+                              {format(parseISO(reservation.date), 'yyyy년 M월 d일 (E)', { locale: ko })} {reservation.startTime}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              예약번호: <span className="font-mono">{reservation.reservationNumber}</span>
+                              예약번호: <span className="font-mono">{reservation.reservationNo}</span>
                             </p>
                           </div>
                           {canCancel(reservation.status) && (
@@ -153,7 +153,7 @@ export default function MyReservationsPage() {
                                   variant="ghost" 
                                   size="sm" 
                                   className="text-destructive hover:text-destructive shrink-0"
-                                  disabled={cancelingId === reservation.id}
+                                  disabled={cancelingId === reservation.reservationId}
                                 >
                                   <X className="h-4 w-4 mr-1" />
                                   취소
@@ -163,7 +163,7 @@ export default function MyReservationsPage() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>예약을 취소하시겠습니까?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    {getServiceTypeName(reservation.serviceTypeId)} - {format(parseISO(reservation.date), 'yyyy년 M월 d일', { locale: ko })} {reservation.time}
+                                    {getServiceTypeName(reservation.serviceTypeId)} - {format(parseISO(reservation.date), 'yyyy년 M월 d일', { locale: ko })} {reservation.startTime}
                                     <br />
                                     취소 후에는 되돌릴 수 없습니다.
                                   </AlertDialogDescription>
@@ -171,7 +171,7 @@ export default function MyReservationsPage() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>아니요</AlertDialogCancel>
                                   <AlertDialogAction 
-                                    onClick={() => handleCancel(reservation.id)}
+                                    onClick={() => handleCancel(reservation.reservationId)}
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                   >
                                     예약 취소
@@ -194,7 +194,7 @@ export default function MyReservationsPage() {
                 <h2 className="text-sm font-medium text-muted-foreground mb-3">지난 예약</h2>
                 <div className="space-y-3">
                   {pastReservations.map((reservation) => (
-                    <Card key={reservation.id} className="opacity-70">
+                    <Card key={reservation.reservationId} className="opacity-70">
                       <CardContent className="p-4">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
@@ -205,10 +205,10 @@ export default function MyReservationsPage() {
                               <StatusBadge status={reservation.status} />
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {format(parseISO(reservation.date), 'yyyy년 M월 d일 (E)', { locale: ko })} {reservation.time}
+                              {format(parseISO(reservation.date), 'yyyy년 M월 d일 (E)', { locale: ko })} {reservation.startTime}
                             </p>
                             <p className="text-xs text-muted-foreground mt-1">
-                              예약번호: <span className="font-mono">{reservation.reservationNumber}</span>
+                              예약번호: <span className="font-mono">{reservation.reservationNo}</span>
                             </p>
                           </div>
                         </div>

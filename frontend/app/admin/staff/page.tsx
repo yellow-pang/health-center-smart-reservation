@@ -296,7 +296,7 @@ export default function StaffManagementPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">미배정</SelectItem>
-                      {windows.filter(w => w.isActive).map((w) => (
+                      {windows.filter(w => w.active).map((w) => (
                         <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                       ))}
                     </SelectContent>
