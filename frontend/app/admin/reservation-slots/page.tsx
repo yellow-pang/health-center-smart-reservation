@@ -1,0 +1,297 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Calendar, Plus, Filter } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { PageHeader } from '@/src/components/common/page-header';
+import { DataTable, type Column } from '@/src/components/common/data-table';
+import { LoadingState } from '@/src/components/common/loading-state';
+import { ErrorState } from '@/src/components/common/error-state';
+import { getAllReservationSlots, getServiceTypes } from '@/src/lib/mock-services';
+import { getServiceTypeName } from '@/src/lib/mock-data';
+import type { ReservationSlot, ServiceType } from '@/src/lib/mock-data';
+import { toast } from 'sonner';
+import { format, parseISO } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
+
+type LoadState = 'loading' | 'success' | 'error';
+
+export default function ReservationSlotsPage() {
+  const [slots, setSlots] = useState<ReservationSlot[]>([]);
+  const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [loadState, setLoadState] = useState<LoadState>('loading');
+  const [filterServiceType, setFilterServiceType] = useState<string>('all');
+  const [filterDate, setFilterDate] = useState<string>('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Form state
+  const [formServiceType, setFormServiceType] = useState('');
+  const [formDate, setFormDate] = useState('');
+  const [formTime, setFormTime] = useState('');
+  const [formCapacity, setFormCapacity] = useState('5');
+
+  const loadData = async () => {
+    setLoadState('loading');
+    try {
+      const [slotsData, servicesData] = await Promise.all([
+        getAllReservationSlots(),
+        getServiceTypes(),
+      ]);
+      setSlots(slotsData);
+      setServiceTypes(servicesData);
+      setLoadState('success');
+    } catch {
+      setLoadState('error');
+    }
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleCreate = () => {
+    if (!formServiceType || !formDate || !formTime) {
+      toast.error('모든 항목을 입력해주세요.');
+      return;
+    }
+
+    const newSlot: ReservationSlot = {
+      id: `slot-${Date.now()}`,
+      serviceTypeId: formServiceType,
+      date: formDate,
+      time: formTime,
+      capacity: parseInt(formCapacity) || 5,
+      reserved: 0,
+    };
+
+    setSlots(prev => [...prev, newSlot]);
+    setIsDialogOpen(false);
+    setFormServiceType('');
+    setFormDate('');
+    setFormTime('');
+    setFormCapacity('5');
+    toast.success('예약 슬롯이 추가되었습니다.');
+  };
+
+  // Filter slots
+  const filteredSlots = slots.filter(slot => {
+    if (filterServiceType !== 'all' && slot.serviceTypeId !== filterServiceType) return false;
+    if (filterDate && slot.date !== filterDate) return false;
+    return true;
+  });
+
+  const columns: Column<ReservationSlot>[] = [
+    {
+      key: 'date',
+      header: '날짜',
+      cell: (item) => format(parseISO(item.date), 'yyyy년 M월 d일 (E)', { locale: ko }),
+    },
+    {
+      key: 'time',
+      header: '시간',
+      cell: (item) => <span className="font-mono">{item.time}</span>,
+      className: 'w-24',
+    },
+    {
+      key: 'serviceType',
+      header: '업무 유형',
+      cell: (item) => getServiceTypeName(item.serviceTypeId),
+    },
+    {
+      key: 'capacity',
+      header: '정원',
+      cell: (item) => `${item.capacity}명`,
+      className: 'w-20',
+    },
+    {
+      key: 'reserved',
+      header: '예약됨',
+      cell: (item) => {
+        const percentage = (item.reserved / item.capacity) * 100;
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
+              <div 
+                className={cn(
+                  'h-full rounded-full transition-all',
+                  percentage >= 100 ? 'bg-red-500' :
+                  percentage >= 70 ? 'bg-amber-500' :
+                  'bg-green-500'
+                )}
+                style={{ width: `${Math.min(percentage, 100)}%` }}
+              />
+            </div>
+            <span className="text-sm">
+              {item.reserved}/{item.capacity}
+            </span>
+          </div>
+        );
+      },
+      className: 'w-36',
+    },
+    {
+      key: 'status',
+      header: '상태',
+      cell: (item) => {
+        const remaining = item.capacity - item.reserved;
+        if (remaining <= 0) {
+          return <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">마감</span>;
+        }
+        if (remaining <= 2) {
+          return <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">마감 임박</span>;
+        }
+        return <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">예약 가능</span>;
+      },
+      className: 'w-24',
+    },
+  ];
+
+  return (
+    <div>
+      <PageHeader
+        title="예약 슬롯 관리"
+        description="업무별 예약 가능 시간을 관리합니다"
+        actions={
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                슬롯 추가
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>새 예약 슬롯 추가</DialogTitle>
+                <DialogDescription>
+                  새로운 예약 가능 시간대를 추가합니다.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>업무 유형</Label>
+                  <Select value={formServiceType} onValueChange={setFormServiceType}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="업무 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {serviceTypes.map((st) => (
+                        <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="date">날짜</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formDate}
+                    onChange={(e) => setFormDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="time">시간</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={formTime}
+                    onChange={(e) => setFormTime(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="capacity">정원</Label>
+                  <Input
+                    id="capacity"
+                    type="number"
+                    min="1"
+                    value={formCapacity}
+                    onChange={(e) => setFormCapacity(e.target.value)}
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  취소
+                </Button>
+                <Button onClick={handleCreate}>추가</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
+
+      {/* Filters */}
+      <Card className="mt-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            필터
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-4">
+            <div className="w-full sm:w-48">
+              <Select value={filterServiceType} onValueChange={setFilterServiceType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="업무 유형" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">전체 업무</SelectItem>
+                  {serviceTypes.map(st => (
+                    <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-full sm:w-48">
+              <Input
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                placeholder="날짜 선택"
+              />
+            </div>
+            {(filterServiceType !== 'all' || filterDate) && (
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setFilterServiceType('all');
+                  setFilterDate('');
+                }}
+              >
+                필터 초기화
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="mt-6">
+        {loadState === 'loading' && <LoadingState />}
+        {loadState === 'error' && <ErrorState onRetry={loadData} />}
+        {loadState === 'success' && (
+          <DataTable
+            columns={columns}
+            data={filteredSlots}
+            keyExtractor={(item) => item.id}
+            emptyMessage="등록된 예약 슬롯이 없습니다."
+          />
+        )}
+      </div>
+    </div>
+  );
+}
