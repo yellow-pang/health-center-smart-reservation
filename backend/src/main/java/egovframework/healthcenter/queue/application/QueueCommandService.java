@@ -1,8 +1,11 @@
 package egovframework.healthcenter.queue.application;
 
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.logging.AuditLogSupport;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.queue.dto.QueueTicketResponse;
 import egovframework.healthcenter.queue.mapper.QueueTicketMapper;
@@ -11,6 +14,8 @@ import egovframework.healthcenter.queue.policy.QueueTicketPolicy;
 
 @Service
 public class QueueCommandService {
+
+	private static final Logger log = LoggerFactory.getLogger(QueueCommandService.class);
 
 	private final QueueTicketMapper queueTicketMapper;
 	private final QueueTicketPolicy queueTicketPolicy;
@@ -27,7 +32,9 @@ public class QueueCommandService {
 		if (queueTicketMapper.markCalled(queueTicketId) == 0) {
 			throw new IllegalArgumentException("호출할 수 없는 대기 상태입니다.");
 		}
-		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		logTransition(principal, "queue.called", ticket, response);
+		return response;
 	}
 
 	@Transactional
@@ -38,7 +45,9 @@ public class QueueCommandService {
 			throw new IllegalArgumentException("처리 시작할 수 없는 대기 상태입니다.");
 		}
 		queueTicketMapper.markVisitInProgress(queueTicketId);
-		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		logTransition(principal, "queue.started", ticket, response);
+		return response;
 	}
 
 	@Transactional
@@ -50,7 +59,9 @@ public class QueueCommandService {
 		}
 		queueTicketMapper.markVisitCompleted(queueTicketId);
 		queueTicketMapper.markReservationCompleted(queueTicketId);
-		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		logTransition(principal, "queue.completed", ticket, response);
+		return response;
 	}
 
 	@Transactional
@@ -60,7 +71,9 @@ public class QueueCommandService {
 		if (queueTicketMapper.markHold(queueTicketId) == 0) {
 			throw new IllegalArgumentException("보류할 수 없는 대기 상태입니다.");
 		}
-		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		logTransition(principal, "queue.held", ticket, response);
+		return response;
 	}
 
 	@Transactional
@@ -72,7 +85,9 @@ public class QueueCommandService {
 		}
 		queueTicketMapper.markVisitNoShow(queueTicketId);
 		queueTicketMapper.markReservationNoShow(queueTicketId);
-		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		logTransition(principal, "queue.no_show", ticket, response);
+		return response;
 	}
 
 	@Transactional
@@ -84,7 +99,9 @@ public class QueueCommandService {
 		}
 		queueTicketMapper.markVisitCanceled(queueTicketId);
 		queueTicketMapper.markReservationCanceled(queueTicketId);
-		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+		logTransition(principal, "queue.canceled", ticket, response);
+		return response;
 	}
 
 	private QueueTicketVO loadTicket(MemberPrincipal principal, Long queueTicketId) {
@@ -95,5 +112,22 @@ public class QueueCommandService {
 		QueueTicketVO ticket = queueTicketMapper.selectQueueTicketById(queueTicketId);
 		queueTicketPolicy.validateAccess(principal, ticket);
 		return ticket;
+	}
+
+	private void logTransition(MemberPrincipal principal, String event, QueueTicketVO before, QueueTicketResponse after) {
+		log.info(
+			"event={} traceId={} memberId={} role={} healthCenterId={} queueTicketId={} visitId={} serviceTypeId={} ticketNumber={} previousStatus={} status={}",
+			event,
+			AuditLogSupport.traceId(),
+			AuditLogSupport.memberId(principal),
+			AuditLogSupport.role(principal),
+			AuditLogSupport.healthCenterId(principal),
+			after.queueTicketId(),
+			after.visitId(),
+			after.serviceTypeId(),
+			after.ticketNumber(),
+			before.getStatus(),
+			after.status()
+		);
 	}
 }

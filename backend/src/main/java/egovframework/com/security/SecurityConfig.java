@@ -3,6 +3,7 @@ package egovframework.com.security;
 import java.util.Arrays;
 
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.support.MultipartFilter;
 import egovframework.com.cmm.filter.HTMLTagFilter;
 import egovframework.com.jwt.JwtAuthenticationEntryPoint;
 import egovframework.com.jwt.JwtAuthenticationFilter;
+import egovframework.healthcenter.common.logging.RequestLoggingFilter;
 import jakarta.servlet.MultipartConfigElement;
 
 /**
@@ -76,6 +78,19 @@ public class SecurityConfig {
     @Bean
     public JwtAuthenticationFilter authenticationTokenFilterBean() throws Exception {
         return new JwtAuthenticationFilter();
+    }
+
+    @Bean
+    public RequestLoggingFilter requestLoggingFilter() {
+        return new RequestLoggingFilter();
+    }
+
+    @Bean
+    public FilterRegistrationBean<RequestLoggingFilter> requestLoggingFilterRegistration(
+            RequestLoggingFilter requestLoggingFilter) {
+        FilterRegistrationBean<RequestLoggingFilter> registration = new FilterRegistrationBean<>(requestLoggingFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -149,6 +164,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .addFilterBefore(characterEncodingFilter(), ChannelProcessingFilter.class)
                 .addFilterBefore(authenticationTokenFilterBean(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(requestLoggingFilter(), JwtAuthenticationFilter.class)
                 .addFilterBefore(multipartFilter(), CsrfFilter.class)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
