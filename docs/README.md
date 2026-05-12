@@ -18,21 +18,22 @@
 10. `04_api/01_API_명세서.md`
 11. `05_frontend/01_화면_설계서_v0_프롬프트.md`
 12. `05_frontend/02_UX_API_계약_우선순위.md`
-13. `10_backend_transition/01_eGovFrame_백엔드_템플릿_전환_현황.md`
-14. `10_backend_transition/02_PostgreSQL_전환_준비_완료_및_다음_작업.md`
-15. `10_backend_transition/03_샘플_코드_정리_범위_및_안전_절차.md`
-16. `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
-17. `09_agent/01_코드_에이전트_작업_가이드.md`
-18. `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
-19. `09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`
-20. `09_agent/05_문서기반_자동진행_운영가이드.md`
-21. `09_agent/06_새대화_시작_가이드.md`
-22. `09_agent/04_다음_작업_프롬프트.md`
-23. `13_schedule/01_남은_일정_단계별_진행_계획.md`
-24. `13_schedule/02_전체_작업_체크리스트.md`
-25. `14_deferred_cleanup/01_보류_정리_목록.md`
-26. `11_implementation_log/00_브랜치_작업_기록_가이드.md`
-27. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
+13. `05_frontend/03_v0_MVP_프론트엔드_제작_프롬프트.md`
+14. `10_backend_transition/01_eGovFrame_백엔드_템플릿_전환_현황.md`
+15. `10_backend_transition/02_PostgreSQL_전환_준비_완료_및_다음_작업.md`
+16. `10_backend_transition/03_샘플_코드_정리_범위_및_안전_절차.md`
+17. `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
+18. `09_agent/01_코드_에이전트_작업_가이드.md`
+19. `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
+20. `09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`
+21. `09_agent/05_문서기반_자동진행_운영가이드.md`
+22. `09_agent/06_새대화_시작_가이드.md`
+23. `09_agent/04_다음_작업_프롬프트.md`
+24. `13_schedule/01_남은_일정_단계별_진행_계획.md`
+25. `13_schedule/02_전체_작업_체크리스트.md`
+26. `14_deferred_cleanup/01_보류_정리_목록.md`
+27. `11_implementation_log/00_브랜치_작업_기록_가이드.md`
+28. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
 
 ## 코드 작성 전 반드시 확인할 문서
 
@@ -48,6 +49,7 @@
 - `02_domain/04_공통코드_관리_설계서.md`
 - `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
 - `05_frontend/02_UX_API_계약_우선순위.md`
+- `05_frontend/03_v0_MVP_프론트엔드_제작_프롬프트.md`
 
 ## 새 대화 시작 기준
 
