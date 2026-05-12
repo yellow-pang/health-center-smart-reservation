@@ -63,6 +63,30 @@ public class QueueCommandService {
 		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
 	}
 
+	@Transactional
+	public QueueTicketResponse noShow(MemberPrincipal principal, Long queueTicketId) {
+		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
+		queueTicketPolicy.validateNoShow(ticket);
+		if (queueTicketMapper.markNoShow(queueTicketId) == 0) {
+			throw new IllegalArgumentException("최종 미응답 처리할 수 없는 대기 상태입니다.");
+		}
+		queueTicketMapper.markVisitNoShow(queueTicketId);
+		queueTicketMapper.markReservationNoShow(queueTicketId);
+		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+	}
+
+	@Transactional
+	public QueueTicketResponse cancel(MemberPrincipal principal, Long queueTicketId) {
+		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
+		queueTicketPolicy.validateCancel(ticket);
+		if (queueTicketMapper.markCanceled(queueTicketId) == 0) {
+			throw new IllegalArgumentException("취소할 수 없는 대기 상태입니다.");
+		}
+		queueTicketMapper.markVisitCanceled(queueTicketId);
+		queueTicketMapper.markReservationCanceled(queueTicketId);
+		return QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
+	}
+
 	private QueueTicketVO loadTicket(MemberPrincipal principal, Long queueTicketId) {
 		queueTicketPolicy.validateStaff(principal);
 		if (queueTicketId == null) {

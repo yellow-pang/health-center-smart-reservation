@@ -141,6 +141,22 @@
 		  AND status = 'CALLED'
 	</update>
 
+	<update id="markNoShow" parameterType="long">
+		UPDATE queue_tickets
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{queueTicketId}
+		  AND status = 'HOLD'
+	</update>
+
+	<update id="markCanceled" parameterType="long">
+		UPDATE queue_tickets
+		SET status = 'CANCELED',
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{queueTicketId}
+		  AND status IN ('WAITING', 'CALLED', 'HOLD')
+	</update>
+
 	<update id="markVisitInProgress" parameterType="long">
 		UPDATE visits v
 		SET status = 'IN_PROGRESS',
@@ -159,9 +175,50 @@
 		  AND q.id = #{queueTicketId}
 	</update>
 
+	<update id="markVisitNoShow" parameterType="long">
+		UPDATE visits v
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		FROM queue_tickets q
+		WHERE q.visit_id = v.id
+		  AND q.id = #{queueTicketId}
+	</update>
+
+	<update id="markVisitCanceled" parameterType="long">
+		UPDATE visits v
+		SET status = 'CANCELED',
+			updated_at = CURRENT_TIMESTAMP
+		FROM queue_tickets q
+		WHERE q.visit_id = v.id
+		  AND q.id = #{queueTicketId}
+	</update>
+
 	<update id="markReservationCompleted" parameterType="long">
 		UPDATE reservations r
 		SET status = 'COMPLETED',
+			updated_at = CURRENT_TIMESTAMP
+		FROM visits v
+		INNER JOIN queue_tickets q ON q.visit_id = v.id
+		WHERE v.reservation_id = r.id
+		  AND q.id = #{queueTicketId}
+		  AND r.status = 'CHECKED_IN'
+	</update>
+
+	<update id="markReservationNoShow" parameterType="long">
+		UPDATE reservations r
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		FROM visits v
+		INNER JOIN queue_tickets q ON q.visit_id = v.id
+		WHERE v.reservation_id = r.id
+		  AND q.id = #{queueTicketId}
+		  AND r.status = 'CHECKED_IN'
+	</update>
+
+	<update id="markReservationCanceled" parameterType="long">
+		UPDATE reservations r
+		SET status = 'CANCELED',
+			canceled_at = CURRENT_TIMESTAMP,
 			updated_at = CURRENT_TIMESTAMP
 		FROM visits v
 		INNER JOIN queue_tickets q ON q.visit_id = v.id

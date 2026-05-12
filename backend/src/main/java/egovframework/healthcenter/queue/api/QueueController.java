@@ -107,6 +107,30 @@ public class QueueController {
 		return handleCommand(authentication, queueTicketId, QueueAction.HOLD);
 	}
 
+	@PostMapping("/{queueTicketId}/no-show")
+	@Operation(
+		summary = "최종 미응답 처리",
+		description = "HOLD 상태 대기표를 NO_SHOW 상태로 변경하고 방문 상태도 NO_SHOW로 변경한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<QueueTicketResponse>> noShow(
+			Authentication authentication,
+			@PathVariable Long queueTicketId) {
+		return handleCommand(authentication, queueTicketId, QueueAction.NO_SHOW);
+	}
+
+	@PostMapping("/{queueTicketId}/cancel")
+	@Operation(
+		summary = "방문/대기 취소",
+		description = "WAITING, CALLED, HOLD 상태 대기표를 CANCELED 상태로 변경하고 방문 상태도 CANCELED로 변경한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<QueueTicketResponse>> cancel(
+			Authentication authentication,
+			@PathVariable Long queueTicketId) {
+		return handleCommand(authentication, queueTicketId, QueueAction.CANCEL);
+	}
+
 	private ResponseEntity<ApiResponse<QueueTicketResponse>> handleCommand(
 			Authentication authentication,
 			Long queueTicketId,
@@ -122,6 +146,8 @@ public class QueueController {
 				case START -> queueCommandService.start(principal, queueTicketId);
 				case COMPLETE -> queueCommandService.complete(principal, queueTicketId);
 				case HOLD -> queueCommandService.hold(principal, queueTicketId);
+				case NO_SHOW -> queueCommandService.noShow(principal, queueTicketId);
+				case CANCEL -> queueCommandService.cancel(principal, queueTicketId);
 			};
 			return ResponseEntity.ok(ApiResponse.success(response));
 		} catch (IllegalArgumentException e) {
@@ -160,6 +186,8 @@ public class QueueController {
 		CALL,
 		START,
 		COMPLETE,
-		HOLD
+		HOLD,
+		NO_SHOW,
+		CANCEL
 	}
 }

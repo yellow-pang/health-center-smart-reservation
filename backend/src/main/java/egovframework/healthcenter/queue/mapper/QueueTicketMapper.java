@@ -46,6 +46,14 @@ public class QueueTicketMapper extends EgovAbstractMapper {
 		return update("QueueTicketMapper.markHold", queueTicketId);
 	}
 
+	public int markNoShow(Long queueTicketId) {
+		return update("QueueTicketMapper.markNoShow", queueTicketId);
+	}
+
+	public int markCanceled(Long queueTicketId) {
+		return update("QueueTicketMapper.markCanceled", queueTicketId);
+	}
+
 	public int markVisitInProgress(Long queueTicketId) {
 		return update("QueueTicketMapper.markVisitInProgress", queueTicketId);
 	}
@@ -54,7 +62,23 @@ public class QueueTicketMapper extends EgovAbstractMapper {
 		return update("QueueTicketMapper.markVisitCompleted", queueTicketId);
 	}
 
+	public int markVisitNoShow(Long queueTicketId) {
+		return update("QueueTicketMapper.markVisitNoShow", queueTicketId);
+	}
+
+	public int markVisitCanceled(Long queueTicketId) {
+		return update("QueueTicketMapper.markVisitCanceled", queueTicketId);
+	}
+
 	public int markReservationCompleted(Long queueTicketId) {
 		return update("QueueTicketMapper.markReservationCompleted", queueTicketId);
+	}
+
+	public int markReservationNoShow(Long queueTicketId) {
+		return update("QueueTicketMapper.markReservationNoShow", queueTicketId);
+	}
+
+	public int markReservationCanceled(Long queueTicketId) {
+		return update("QueueTicketMapper.markReservationCanceled", queueTicketId);
 	}
 }
