@@ -325,6 +325,28 @@ SELECT
     CURRENT_TIMESTAMP
 FROM swagger_queue_visit visit;
 
+INSERT INTO queue_ticket_counters (
+    health_center_id,
+    service_type_id,
+    issued_date,
+    last_ticket_number,
+    created_at,
+    updated_at
+)
+SELECT
+    q.health_center_id,
+    q.service_type_id,
+    q.issued_at::date,
+    MAX(q.ticket_number),
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM queue_tickets q
+WHERE q.issued_at::date = CURRENT_DATE
+GROUP BY q.health_center_id, q.service_type_id, q.issued_at::date
+ON CONFLICT (health_center_id, service_type_id, issued_date) DO UPDATE
+SET last_ticket_number = GREATEST(queue_ticket_counters.last_ticket_number, EXCLUDED.last_ticket_number),
+    updated_at = CURRENT_TIMESTAMP;
+
 INSERT INTO service_windows (health_center_id, window_number, name, status, active)
 VALUES
     (1, 1, '1번 창구', 'OPEN', true),

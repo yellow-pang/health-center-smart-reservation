@@ -624,6 +624,7 @@ Response:
 - 오늘 발급된 대기표를 조회한다.
 - `serviceTypeId`를 생략하면 전체 업무 유형을 조회한다.
 - `status`를 생략하면 `WAITING`, `CALLED`, `IN_PROGRESS`, `HOLD` 상태를 조회한다.
+- 대기번호는 같은 보건소, 같은 업무 유형, 같은 발급일 기준으로 중복되지 않도록 DB 채번 테이블과 유니크 인덱스로 보호한다.
 - Swagger 테스트용 seed 방문자 이름은 `Swagger대기열`이며, 조회 결과에서 `queueTicketId`를 확인해 호출/시작/완료에 사용한다.
 
 Response:
