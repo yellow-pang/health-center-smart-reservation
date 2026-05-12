@@ -65,13 +65,13 @@ export default function QueuesPage() {
     loadData();
   }, []);
 
-  const handleStatusChange = async (entryId: string, newStatus: QueueStatus) => {
-    setActionLoading(entryId);
+  const handleStatusChange = async (entryId: number, newStatus: QueueStatus) => {
+    setActionLoading(String(entryId));
     try {
       const result = await updateQueueStatus(entryId, newStatus);
       if (result.success) {
         setEntries(prev =>
-          prev.map(e => e.id === entryId ? { ...e, status: newStatus } : e)
+          prev.map(e => e.queueTicketId === entryId ? { ...e, status: newStatus } : e)
         );
         toast.success('상태가 변경되었습니다.');
       } else {
@@ -86,7 +86,7 @@ export default function QueuesPage() {
 
   // Filter entries
   const filteredEntries = entries.filter(entry => {
-    if (filterServiceType !== 'all' && entry.serviceTypeId !== filterServiceType) return false;
+    if (filterServiceType !== 'all' && String(entry.serviceTypeId) !== filterServiceType) return false;
     if (filterStatus !== 'all' && entry.status !== filterStatus) return false;
     return true;
   });
@@ -122,14 +122,14 @@ export default function QueuesPage() {
 
   const columns: Column<QueueEntry>[] = [
     {
-      key: 'queueNumber',
+      key: 'ticketNumber',
       header: '대기번호',
       cell: (entry) => (
         <span className={cn(
           'font-mono font-semibold',
           entry.status === 'CALLED' && 'text-primary animate-pulse'
         )}>
-          {entry.queueNumber}
+          {entry.ticketNumber}
         </span>
       ),
       className: 'w-24',
@@ -139,8 +139,8 @@ export default function QueuesPage() {
       header: '방문자',
       cell: (entry) => (
         <div>
-          <p className="font-medium">{entry.visitorName}</p>
-          <p className="text-xs text-muted-foreground">{entry.visitorPhone}</p>
+          <p className="font-medium">{entry.visitorNameMasked}</p>
+          <p className="text-xs text-muted-foreground">{entry.visitorPhoneMasked}</p>
         </div>
       ),
     },
@@ -184,8 +184,8 @@ export default function QueuesPage() {
                 key={action.status}
                 size="sm"
                 variant={action.variant || 'outline'}
-                onClick={() => handleStatusChange(entry.id, action.status)}
-                disabled={actionLoading === entry.id}
+                onClick={() => handleStatusChange(entry.queueTicketId, action.status)}
+                disabled={actionLoading === String(entry.queueTicketId)}
                 className="h-7 text-xs"
               >
                 <action.icon className="h-3 w-3 mr-1" />
@@ -264,7 +264,7 @@ export default function QueuesPage() {
                     <SelectContent>
                       <SelectItem value="all">전체 업무</SelectItem>
                       {serviceTypes.map(st => (
-                        <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
+                        <SelectItem key={st.serviceTypeId} value={String(st.serviceTypeId)}>{st.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -292,7 +292,7 @@ export default function QueuesPage() {
             <DataTable
               columns={columns}
               data={filteredEntries}
-              keyExtractor={(entry) => entry.id}
+              keyExtractor={(entry) => String(entry.queueTicketId)}
               emptyMessage="대기 중인 방문자가 없습니다."
             />
           </div>

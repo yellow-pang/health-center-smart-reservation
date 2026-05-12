@@ -79,9 +79,9 @@ export async function logout(): Promise<void> {
 // ============================================
 
 export interface CreateReservationInput {
-  serviceTypeId: string;
+  serviceTypeId: number;
   date: string;
-  time: string;
+  startTime: string;
   visitorName: string;
   visitorPhone: string;
 }
@@ -94,10 +94,10 @@ export interface CreateReservationResponse {
 
 export async function getServiceTypes(): Promise<ServiceType[]> {
   await delay(300);
-  return mockServiceTypes.filter(s => s.isActive);
+  return mockServiceTypes.filter(s => s.active);
 }
 
-export async function getReservationSlots(serviceTypeId: string, date: string): Promise<ReservationSlot[]> {
+export async function getReservationSlots(serviceTypeId: number, date: string): Promise<ReservationSlot[]> {
   await delay(300);
   return getAvailableSlots(serviceTypeId, date);
 }
@@ -106,15 +106,15 @@ export async function createReservation(input: CreateReservationInput): Promise<
   await delay(500);
   
   const newReservation: Reservation = {
-    id: `res-${Date.now()}`,
-    reservationNumber: `R${new Date().toISOString().slice(0, 10).replace(/-/g, '')}${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`,
+    reservationId: Date.now(),
+    reservationNo: `RSV-${new Date().toISOString().slice(0, 10).replace(/-/g, '')}-${String(Math.floor(Math.random() * 1000)).padStart(4, '0')}`,
     userId: 'user-1', // Will be from auth context
     serviceTypeId: input.serviceTypeId,
     visitorName: input.visitorName,
     visitorPhone: input.visitorPhone,
     date: input.date,
-    time: input.time,
-    status: 'CONFIRMED',
+    startTime: input.startTime,
+    status: 'RESERVED',
     createdAt: new Date().toISOString(),
   };
   
@@ -126,14 +126,14 @@ export async function getUserReservations(): Promise<Reservation[]> {
   return mockReservations;
 }
 
-export async function cancelReservation(reservationId: string): Promise<{ success: boolean; error?: string }> {
+export async function cancelReservation(reservationId: number): Promise<{ success: boolean; error?: string }> {
   await delay(400);
   
-  const reservation = mockReservations.find(r => r.id === reservationId);
+  const reservation = mockReservations.find(r => r.reservationId === reservationId);
   if (!reservation) {
     return { success: false, error: '예약을 찾을 수 없습니다.' };
   }
-  if (reservation.status !== 'CONFIRMED' && reservation.status !== 'PENDING') {
+  if (reservation.status !== 'RESERVED') {
     return { success: false, error: '취소할 수 없는 예약입니다.' };
   }
   
@@ -159,23 +159,23 @@ export interface CheckInResponse {
   error?: string;
 }
 
-export async function checkInByReservationNumber(reservationNumber: string): Promise<CheckInResponse> {
+export async function checkInByReservationNumber(reservationNo: string): Promise<CheckInResponse> {
   await delay(400);
   
-  const reservation = mockReservations.find(r => r.reservationNumber === reservationNumber);
+  const reservation = mockReservations.find(r => r.reservationNo === reservationNo);
   if (!reservation) {
     return { success: false, error: '예약을 찾을 수 없습니다.' };
   }
   
   const queueEntry: QueueEntry = {
-    id: `q-${Date.now()}`,
-    queueNumber: `A${String(Math.floor(Math.random() * 100)).padStart(3, '0')}`,
-    visitorName: reservation.visitorName,
-    visitorPhone: reservation.visitorPhone,
+    queueTicketId: Date.now(),
+    ticketNumber: `A${String(Math.floor(Math.random() * 100)).padStart(3, '0')}`,
+    visitorNameMasked: `${reservation.visitorName.charAt(0)}*${reservation.visitorName.slice(-1)}`,
+    visitorPhoneMasked: reservation.visitorPhone.replace(/(\d{3})-\d{4}-(\d{4})/, '$1-****-$2'),
     serviceTypeId: reservation.serviceTypeId,
     visitType: 'RESERVED',
     status: 'WAITING',
-    reservationId: reservation.id,
+    reservationId: reservation.reservationId,
     createdAt: new Date().toISOString(),
   };
   
@@ -185,20 +185,20 @@ export async function checkInByReservationNumber(reservationNumber: string): Pro
 export interface WalkInInput {
   visitorName: string;
   visitorPhone: string;
-  serviceTypeId: string;
+  serviceTypeId: number;
 }
 
 export async function registerWalkIn(input: WalkInInput): Promise<CheckInResponse> {
   await delay(400);
   
-  const serviceType = mockServiceTypes.find(s => s.id === input.serviceTypeId);
+  const serviceType = mockServiceTypes.find(s => s.serviceTypeId === input.serviceTypeId);
   const prefix = serviceType?.name.charAt(0) || 'X';
   
   const queueEntry: QueueEntry = {
-    id: `q-${Date.now()}`,
-    queueNumber: `${prefix}${String(Math.floor(Math.random() * 100)).padStart(3, '0')}`,
-    visitorName: input.visitorName,
-    visitorPhone: input.visitorPhone,
+    queueTicketId: Date.now(),
+    ticketNumber: `${prefix}${String(Math.floor(Math.random() * 100)).padStart(3, '0')}`,
+    visitorNameMasked: `${input.visitorName.charAt(0)}*${input.visitorName.slice(-1)}`,
+    visitorPhoneMasked: input.visitorPhone.replace(/(\d{3})-\d{4}-(\d{4})/, '$1-****-$2'),
     serviceTypeId: input.serviceTypeId,
     visitType: 'WALK_IN',
     status: 'WAITING',
@@ -209,7 +209,7 @@ export async function registerWalkIn(input: WalkInInput): Promise<CheckInRespons
 }
 
 export async function getQueueEntries(filters?: {
-  serviceTypeId?: string;
+  serviceTypeId?: number;
   status?: QueueStatus;
 }): Promise<QueueEntry[]> {
   await delay(300);
@@ -227,12 +227,12 @@ export async function getQueueEntries(filters?: {
 }
 
 export async function updateQueueStatus(
-  queueId: string, 
+  queueTicketId: number,
   newStatus: QueueStatus
 ): Promise<{ success: boolean; error?: string }> {
   await delay(300);
   
-  const entry = mockQueueEntries.find(e => e.id === queueId);
+  const entry = mockQueueEntries.find(e => e.queueTicketId === queueTicketId);
   if (!entry) {
     return { success: false, error: '대기자를 찾을 수 없습니다.' };
   }
@@ -273,21 +273,21 @@ export async function getAllServiceTypes(): Promise<ServiceType[]> {
   return mockServiceTypes;
 }
 
-export async function createServiceType(input: Omit<ServiceType, 'id'>): Promise<{ success: boolean; serviceType?: ServiceType }> {
+export async function createServiceType(input: Omit<ServiceType, 'serviceTypeId'>): Promise<{ success: boolean; serviceType?: ServiceType }> {
   await delay(400);
   const newServiceType: ServiceType = {
     ...input,
-    id: `st-${Date.now()}`,
+    serviceTypeId: Date.now(),
   };
   return { success: true, serviceType: newServiceType };
 }
 
-export async function updateServiceType(id: string, input: Partial<ServiceType>): Promise<{ success: boolean }> {
+export async function updateServiceType(id: number, input: Partial<ServiceType>): Promise<{ success: boolean }> {
   await delay(400);
   return { success: true };
 }
 
-export async function deleteServiceType(id: string): Promise<{ success: boolean }> {
+export async function deleteServiceType(id: number): Promise<{ success: boolean }> {
   await delay(400);
   return { success: true };
 }

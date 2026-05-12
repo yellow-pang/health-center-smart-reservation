@@ -87,8 +87,8 @@ export default function ServiceTypesPage() {
     setEditingItem(item);
     setFormName(item.name);
     setFormDescription(item.description);
-    setFormMinutes(String(item.estimatedMinutes));
-    setFormIsActive(item.isActive);
+    setFormMinutes(String(item.defaultCapacity));
+    setFormIsActive(item.active);
     setIsDialogOpen(true);
   };
 
@@ -102,16 +102,16 @@ export default function ServiceTypesPage() {
     try {
       if (editingItem) {
         // Update
-        await updateServiceType(editingItem.id, {
+        await updateServiceType(editingItem.serviceTypeId, {
           name: formName,
           description: formDescription,
-          estimatedMinutes: parseInt(formMinutes) || 15,
-          isActive: formIsActive,
+          defaultCapacity: parseInt(formMinutes) || 5,
+          active: formIsActive,
         });
         setServiceTypes(prev =>
           prev.map(s =>
-            s.id === editingItem.id
-              ? { ...s, name: formName, description: formDescription, estimatedMinutes: parseInt(formMinutes) || 15, isActive: formIsActive }
+            s.serviceTypeId === editingItem.serviceTypeId
+              ? { ...s, name: formName, description: formDescription, defaultCapacity: parseInt(formMinutes) || 5, active: formIsActive }
               : s
           )
         );
@@ -119,10 +119,11 @@ export default function ServiceTypesPage() {
       } else {
         // Create
         const result = await createServiceType({
+          code: formName.toUpperCase().replace(/\s+/g, '_'),
           name: formName,
           description: formDescription,
-          estimatedMinutes: parseInt(formMinutes) || 15,
-          isActive: formIsActive,
+          defaultCapacity: parseInt(formMinutes) || 5,
+          active: formIsActive,
         });
         if (result.serviceType) {
           setServiceTypes(prev => [...prev, result.serviceType!]);
@@ -138,10 +139,10 @@ export default function ServiceTypesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: number) => {
     try {
       await deleteServiceType(id);
-      setServiceTypes(prev => prev.filter(s => s.id !== id));
+      setServiceTypes(prev => prev.filter(s => s.serviceTypeId !== id));
       toast.success('업무 유형이 삭제되었습니다.');
     } catch {
       toast.error('삭제 중 오류가 발생했습니다.');
@@ -162,26 +163,26 @@ export default function ServiceTypesPage() {
       ),
     },
     {
-      key: 'estimatedMinutes',
-      header: '예상 소요시간',
+      key: 'defaultCapacity',
+      header: '기본 정원',
       cell: (item) => (
         <div className="flex items-center gap-1 text-sm">
           <Clock className="h-3 w-3 text-muted-foreground" />
-          {item.estimatedMinutes}분
+          {item.defaultCapacity}명
         </div>
       ),
       className: 'w-32',
     },
     {
-      key: 'isActive',
+      key: 'active',
       header: '상태',
       cell: (item) => (
         <span className={`text-xs px-2 py-1 rounded-full ${
-          item.isActive 
+          item.active
             ? 'bg-green-100 text-green-700' 
             : 'bg-gray-100 text-gray-500'
         }`}>
-          {item.isActive ? '활성' : '비활성'}
+          {item.active ? '활성' : '비활성'}
         </span>
       ),
       className: 'w-20',
@@ -219,7 +220,7 @@ export default function ServiceTypesPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>취소</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDelete(item.id)}
+                  onClick={() => handleDelete(item.serviceTypeId)}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   삭제
@@ -275,7 +276,7 @@ export default function ServiceTypesPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="minutes">예상 소요시간 (분)</Label>
+                  <Label htmlFor="minutes">기본 정원</Label>
                   <Input
                     id="minutes"
                     type="number"
@@ -313,7 +314,7 @@ export default function ServiceTypesPage() {
           <DataTable
             columns={columns}
             data={serviceTypes}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => String(item.serviceTypeId)}
             emptyMessage="등록된 업무 유형이 없습니다."
           />
         )}

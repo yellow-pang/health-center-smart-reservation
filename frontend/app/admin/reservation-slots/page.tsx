@@ -70,12 +70,15 @@ export default function ReservationSlotsPage() {
     }
 
     const newSlot: ReservationSlot = {
-      id: `slot-${Date.now()}`,
-      serviceTypeId: formServiceType,
+      slotId: Date.now(),
+      serviceTypeId: Number(formServiceType),
       date: formDate,
-      time: formTime,
+      startTime: formTime,
+      endTime: formTime,
       capacity: parseInt(formCapacity) || 5,
-      reserved: 0,
+      reservedCount: 0,
+      availableCount: parseInt(formCapacity) || 5,
+      available: true,
     };
 
     setSlots(prev => [...prev, newSlot]);
@@ -89,7 +92,7 @@ export default function ReservationSlotsPage() {
 
   // Filter slots
   const filteredSlots = slots.filter(slot => {
-    if (filterServiceType !== 'all' && slot.serviceTypeId !== filterServiceType) return false;
+    if (filterServiceType !== 'all' && String(slot.serviceTypeId) !== filterServiceType) return false;
     if (filterDate && slot.date !== filterDate) return false;
     return true;
   });
@@ -101,9 +104,9 @@ export default function ReservationSlotsPage() {
       cell: (item) => format(parseISO(item.date), 'yyyy년 M월 d일 (E)', { locale: ko }),
     },
     {
-      key: 'time',
+      key: 'startTime',
       header: '시간',
-      cell: (item) => <span className="font-mono">{item.time}</span>,
+      cell: (item) => <span className="font-mono">{item.startTime}</span>,
       className: 'w-24',
     },
     {
@@ -118,10 +121,10 @@ export default function ReservationSlotsPage() {
       className: 'w-20',
     },
     {
-      key: 'reserved',
+      key: 'reservedCount',
       header: '예약됨',
       cell: (item) => {
-        const percentage = (item.reserved / item.capacity) * 100;
+        const percentage = (item.reservedCount / item.capacity) * 100;
         return (
           <div className="flex items-center gap-2">
             <div className="w-16 h-2 rounded-full bg-muted overflow-hidden">
@@ -136,7 +139,7 @@ export default function ReservationSlotsPage() {
               />
             </div>
             <span className="text-sm">
-              {item.reserved}/{item.capacity}
+              {item.reservedCount}/{item.capacity}
             </span>
           </div>
         );
@@ -147,7 +150,7 @@ export default function ReservationSlotsPage() {
       key: 'status',
       header: '상태',
       cell: (item) => {
-        const remaining = item.capacity - item.reserved;
+        const remaining = item.availableCount;
         if (remaining <= 0) {
           return <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">마감</span>;
         }
@@ -189,7 +192,7 @@ export default function ReservationSlotsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {serviceTypes.map((st) => (
-                        <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
+                        <SelectItem key={st.serviceTypeId} value={String(st.serviceTypeId)}>{st.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -252,7 +255,7 @@ export default function ReservationSlotsPage() {
                 <SelectContent>
                   <SelectItem value="all">전체 업무</SelectItem>
                   {serviceTypes.map(st => (
-                    <SelectItem key={st.id} value={st.id}>{st.name}</SelectItem>
+                    <SelectItem key={st.serviceTypeId} value={String(st.serviceTypeId)}>{st.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -287,7 +290,7 @@ export default function ReservationSlotsPage() {
           <DataTable
             columns={columns}
             data={filteredSlots}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => String(item.slotId)}
             emptyMessage="등록된 예약 슬롯이 없습니다."
           />
         )}

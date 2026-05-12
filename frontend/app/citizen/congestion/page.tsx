@@ -54,7 +54,7 @@ export default function CongestionPage() {
     switch (level) {
       case 'LOW':
         return 'bg-green-50 border-green-200';
-      case 'MEDIUM':
+      case 'NORMAL':
         return 'bg-amber-50 border-amber-200';
       case 'HIGH':
         return 'bg-red-50 border-red-200';
@@ -65,7 +65,7 @@ export default function CongestionPage() {
     switch (level) {
       case 'LOW':
         return 'text-green-600';
-      case 'MEDIUM':
+      case 'NORMAL':
         return 'text-amber-600';
       case 'HIGH':
         return 'text-red-600';
@@ -133,7 +133,7 @@ export default function CongestionPage() {
                     <div className={cn(
                       'flex h-12 w-12 items-center justify-center rounded-full shrink-0',
                       info.level === 'LOW' && 'bg-green-100',
-                      info.level === 'MEDIUM' && 'bg-amber-100',
+                      info.level === 'NORMAL' && 'bg-amber-100',
                       info.level === 'HIGH' && 'bg-red-100',
                     )}>
                       <span className={cn(

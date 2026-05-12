@@ -1,7 +1,5 @@
 import { cn } from '@/lib/utils';
-import type { QueueStatus, ReservationStatus } from '@/src/lib/mock-data';
-
-type CongestionLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+import type { CongestionLevel, QueueStatus, ReservationStatus } from '@/src/lib/mock-data';
 
 interface StatusBadgeProps {
   status: QueueStatus | ReservationStatus | CongestionLevel;
@@ -19,12 +17,12 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   CANCELED: { label: '취소', className: 'bg-gray-200 text-gray-500' },
   
   // Reservation statuses
-  PENDING: { label: '대기', className: 'bg-yellow-100 text-yellow-800' },
-  CONFIRMED: { label: '확정', className: 'bg-green-100 text-green-800' },
+  RESERVED: { label: '예약됨', className: 'bg-green-100 text-green-800' },
+  CHECKED_IN: { label: '체크인', className: 'bg-blue-100 text-blue-800' },
   
   // Congestion levels
   LOW: { label: '여유', className: 'bg-green-100 text-green-800' },
-  MEDIUM: { label: '보통', className: 'bg-amber-100 text-amber-800' },
+  NORMAL: { label: '보통', className: 'bg-amber-100 text-amber-800' },
   HIGH: { label: '혼잡', className: 'bg-red-100 text-red-800' },
 };
 
