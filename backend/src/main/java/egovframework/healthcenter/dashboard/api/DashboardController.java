@@ -1,6 +1,7 @@
 package egovframework.healthcenter.dashboard.api;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 import egovframework.healthcenter.common.response.ApiResponse;
 import egovframework.healthcenter.dashboard.application.DashboardQueryService;
 import egovframework.healthcenter.dashboard.dto.DashboardSummaryResponse;
+import egovframework.healthcenter.dashboard.dto.HourlyVisitResponse;
+import egovframework.healthcenter.dashboard.dto.NoShowRateResponse;
+import egovframework.healthcenter.dashboard.dto.ServiceWaitTimeResponse;
+import egovframework.healthcenter.dashboard.dto.VisitTypeRatioResponse;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -38,16 +43,116 @@ public class DashboardController {
 	public ResponseEntity<ApiResponse<DashboardSummaryResponse>> findSummary(
 			Authentication authentication,
 			@RequestParam(required = false) LocalDate date) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
+		MemberPrincipal principal = resolvePrincipal(authentication);
+		if (principal == null) {
+			return unauthorized();
 		}
 
 		try {
 			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findSummary(principal, date)));
 		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("DASHBOARD_INVALID_REQUEST", e.getMessage()));
+			return badRequest(e);
 		}
+	}
+
+	@GetMapping("/hourly-visits")
+	@Operation(
+		summary = "시간대별 방문자 수",
+		description = "관리자가 날짜별 시간대 방문자 수를 조회한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<List<HourlyVisitResponse>>> findHourlyVisits(
+			Authentication authentication,
+			@RequestParam(required = false) LocalDate date) {
+		MemberPrincipal principal = resolvePrincipal(authentication);
+		if (principal == null) {
+			return unauthorized();
+		}
+
+		try {
+			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findHourlyVisits(principal, date)));
+		} catch (IllegalArgumentException e) {
+			return badRequest(e);
+		}
+	}
+
+	@GetMapping("/service-wait-times")
+	@Operation(
+		summary = "업무별 평균 대기시간",
+		description = "관리자가 날짜별 업무 유형 평균 대기시간을 조회한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<List<ServiceWaitTimeResponse>>> findServiceWaitTimes(
+			Authentication authentication,
+			@RequestParam(required = false) LocalDate date) {
+		MemberPrincipal principal = resolvePrincipal(authentication);
+		if (principal == null) {
+			return unauthorized();
+		}
+
+		try {
+			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findServiceWaitTimes(principal, date)));
+		} catch (IllegalArgumentException e) {
+			return badRequest(e);
+		}
+	}
+
+	@GetMapping("/visit-type-ratio")
+	@Operation(
+		summary = "예약/현장 방문 비율",
+		description = "관리자가 날짜별 예약 방문과 현장 접수 비율을 조회한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<VisitTypeRatioResponse>> findVisitTypeRatio(
+			Authentication authentication,
+			@RequestParam(required = false) LocalDate date) {
+		MemberPrincipal principal = resolvePrincipal(authentication);
+		if (principal == null) {
+			return unauthorized();
+		}
+
+		try {
+			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findVisitTypeRatio(principal, date)));
+		} catch (IllegalArgumentException e) {
+			return badRequest(e);
+		}
+	}
+
+	@GetMapping("/no-show-rate")
+	@Operation(
+		summary = "노쇼율",
+		description = "관리자가 날짜별 취소 예약 제외 기준 노쇼율을 조회한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<NoShowRateResponse>> findNoShowRate(
+			Authentication authentication,
+			@RequestParam(required = false) LocalDate date) {
+		MemberPrincipal principal = resolvePrincipal(authentication);
+		if (principal == null) {
+			return unauthorized();
+		}
+
+		try {
+			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findNoShowRate(principal, date)));
+		} catch (IllegalArgumentException e) {
+			return badRequest(e);
+		}
+	}
+
+	private MemberPrincipal resolvePrincipal(Authentication authentication) {
+		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
+			return null;
+		}
+		return principal;
+	}
+
+	private <T> ResponseEntity<ApiResponse<T>> unauthorized() {
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+			.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
+	}
+
+	private <T> ResponseEntity<ApiResponse<T>> badRequest(IllegalArgumentException e) {
+		return ResponseEntity.badRequest()
+			.body(ApiResponse.failure("DASHBOARD_INVALID_REQUEST", e.getMessage()));
 	}
 }
