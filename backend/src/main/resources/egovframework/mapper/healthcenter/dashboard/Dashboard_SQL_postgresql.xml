@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="DashboardMapper">
+
+	<resultMap id="DashboardSummary" type="egovframework.healthcenter.dashboard.mapper.DashboardSummaryVO">
+		<result property="todayVisitCount" column="today_visit_count"/>
+		<result property="currentWaitingCount" column="current_waiting_count"/>
+		<result property="averageWaitMinutes" column="average_wait_minutes"/>
+		<result property="noShowRate" column="no_show_rate"/>
+	</resultMap>
+
+	<resultMap id="Congestion" type="egovframework.healthcenter.dashboard.mapper.CongestionVO">
+		<id property="serviceTypeId" column="service_type_id"/>
+		<result property="serviceTypeName" column="service_type_name"/>
+		<result property="waitingCount" column="waiting_count"/>
+		<result property="averageProcessingMinutes" column="average_processing_minutes"/>
+	</resultMap>
+
+	<select id="selectSummary" parameterType="map" resultMap="DashboardSummary">
+		WITH visit_stats AS (
+			SELECT COUNT(*)::integer AS today_visit_count
+			FROM visits v
+			WHERE v.health_center_id = #{healthCenterId}
+			  AND v.checked_in_at::date = #{targetDate}
+		),
+		waiting_stats AS (
+			SELECT COUNT(*)::integer AS current_waiting_count
+			FROM queue_tickets q
+			WHERE q.health_center_id = #{healthCenterId}
+			  AND q.issued_at::date = #{targetDate}
+			  AND q.status = 'WAITING'
+		),
+		wait_stats AS (
+			SELECT COALESCE(ROUND(AVG(EXTRACT(EPOCH FROM (q.called_at - q.issued_at)) / 60)), 0)::integer AS average_wait_minutes
+			FROM queue_tickets q
+			WHERE q.health_center_id = #{healthCenterId}
+			  AND q.issued_at::date = #{targetDate}
+			  AND q.called_at IS NOT NULL
+		),
+		reservation_stats AS (
+			SELECT
+				COUNT(*) FILTER (WHERE r.status != 'CANCELED') AS target_count,
+				COUNT(*) FILTER (WHERE r.status = 'NO_SHOW') AS no_show_count
+			FROM reservations r
+			WHERE r.health_center_id = #{healthCenterId}
+			  AND r.reserved_at::date = #{targetDate}
+		)
+		SELECT
+			visit_stats.today_visit_count,
+			waiting_stats.current_waiting_count,
+			wait_stats.average_wait_minutes,
+			CASE
+				WHEN reservation_stats.target_count = 0 THEN 0.0
+				ELSE ROUND((reservation_stats.no_show_count::numeric / reservation_stats.target_count::numeric) * 100, 1)
+			END AS no_show_rate
+		FROM visit_stats
+		CROSS JOIN waiting_stats
+		CROSS JOIN wait_stats
+		CROSS JOIN reservation_stats
+	</select>
+
+	<select id="selectCurrentCongestion" parameterType="long" resultMap="Congestion">
+		SELECT
+			st.id AS service_type_id,
+			st.name AS service_type_name,
+			COUNT(q.id) FILTER (WHERE q.status = 'WAITING')::integer AS waiting_count,
+			COALESCE(
+				ROUND(AVG(EXTRACT(EPOCH FROM (q.completed_at - q.started_at)) / 60)
+					FILTER (WHERE q.started_at IS NOT NULL AND q.completed_at IS NOT NULL)),
+				5
+			)::integer AS average_processing_minutes
+		FROM service_types st
+		LEFT JOIN queue_tickets q
+			ON q.service_type_id = st.id
+		   AND q.health_center_id = st.health_center_id
+		   AND q.issued_at::date = CURRENT_DATE
+		WHERE st.health_center_id = #{healthCenterId}
+		  AND st.active = true
+		GROUP BY st.id, st.name
+		ORDER BY st.id
+	</select>
+
+</mapper>

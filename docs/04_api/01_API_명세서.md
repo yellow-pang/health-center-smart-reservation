@@ -731,6 +731,19 @@ Response:
 
 `GET /api/dashboard/summary?date=2026-05-10`
 
+권한:
+
+- `ADMIN`
+
+정책:
+
+- `date`를 생략하면 오늘 날짜 기준으로 조회한다.
+- 로그인한 관리자의 `healthCenterId` 기준으로 집계한다.
+- 오늘 방문자 수는 `visits.checked_in_at` 기준이다.
+- 현재 대기 인원은 해당 날짜에 발급된 `WAITING` 대기표 수 기준이다.
+- 평균 대기시간은 `called_at - issued_at` 평균값이다.
+- 노쇼율은 취소 예약을 제외한 예약 중 `NO_SHOW` 비율이다.
+
 Response:
 
 ```json
@@ -748,7 +761,15 @@ Response:
 
 ### 4.11 현재 혼잡도
 
-`GET /api/congestion/current`
+`GET /api/congestion/current?healthCenterId=1`
+
+정책:
+
+- `healthCenterId`를 생략하면 기본 보건소 `1` 기준으로 조회한다.
+- 활성 업무 유형별 현재 `WAITING` 대기 인원과 예상 대기시간을 조회한다.
+- 예상 대기시간은 `현재 대기 인원 * 평균 처리시간`이다.
+- 평균 처리시간은 오늘 완료된 대기표의 `completed_at - started_at` 평균값이며, 완료 데이터가 없으면 5분을 사용한다.
+- 혼잡도는 대기 인원 기준과 예상 대기시간 기준 중 더 높은 수준을 사용한다.
 
 Response:
 
