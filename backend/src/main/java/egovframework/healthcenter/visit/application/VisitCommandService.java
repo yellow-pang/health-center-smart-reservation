@@ -1,8 +1,11 @@
 package egovframework.healthcenter.visit.application;
 
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.logging.AuditLogSupport;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.office.mapper.OfficeMapper;
 import egovframework.healthcenter.office.mapper.ServiceTypeVO;
@@ -20,6 +23,8 @@ import egovframework.healthcenter.visit.policy.VisitWalkInPolicy;
 
 @Service
 public class VisitCommandService {
+
+	private static final Logger log = LoggerFactory.getLogger(VisitCommandService.class);
 
 	private final ReservationMapper reservationMapper;
 	private final OfficeMapper officeMapper;
@@ -61,6 +66,19 @@ public class VisitCommandService {
 			visitId,
 			reservation.getServiceTypeId()
 		);
+		log.info(
+			"event=visit.checked_in traceId={} memberId={} role={} healthCenterId={} reservationId={} visitId={} queueTicketId={} serviceTypeId={} ticketNumber={} queueStatus={}",
+			AuditLogSupport.traceId(),
+			AuditLogSupport.memberId(principal),
+			AuditLogSupport.role(principal),
+			AuditLogSupport.healthCenterId(principal),
+			reservation.getId(),
+			visitId,
+			ticket.getId(),
+			reservation.getServiceTypeId(),
+			ticket.getTicketNumber(),
+			ticket.getStatus()
+		);
 
 		return new VisitCheckInResponse(
 			visitId,
@@ -89,6 +107,18 @@ public class VisitCommandService {
 			principal.healthCenterId(),
 			visitId,
 			serviceType.getId()
+		);
+		log.info(
+			"event=visit.walk_in_created traceId={} memberId={} role={} healthCenterId={} visitId={} queueTicketId={} serviceTypeId={} ticketNumber={} queueStatus={}",
+			AuditLogSupport.traceId(),
+			AuditLogSupport.memberId(principal),
+			AuditLogSupport.role(principal),
+			AuditLogSupport.healthCenterId(principal),
+			visitId,
+			ticket.getId(),
+			serviceType.getId(),
+			ticket.getTicketNumber(),
+			ticket.getStatus()
 		);
 
 		return new VisitWalkInResponse(

@@ -6,9 +6,12 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 import org.springframework.dao.DuplicateKeyException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.logging.AuditLogSupport;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.reservation.dto.ReservationCreateRequest;
 import egovframework.healthcenter.reservation.dto.ReservationCreateResponse;
@@ -21,6 +24,7 @@ import egovframework.healthcenter.reservation.policy.ReservationCancelPolicy;
 @Service
 public class ReservationCommandService {
 
+	private static final Logger log = LoggerFactory.getLogger(ReservationCommandService.class);
 	private static final DateTimeFormatter RESERVATION_NO_DATE_FORMAT = DateTimeFormatter.BASIC_ISO_DATE;
 
 	private final ReservationMapper reservationMapper;
@@ -58,6 +62,17 @@ public class ReservationCommandService {
 		}
 
 		ReservationVO reservation = reservationMapper.selectReservationByNo(reservationNo);
+		log.info(
+			"event=reservation.created traceId={} memberId={} role={} healthCenterId={} reservationId={} reservationSlotId={} serviceTypeId={} status={}",
+			AuditLogSupport.traceId(),
+			AuditLogSupport.memberId(principal),
+			AuditLogSupport.role(principal),
+			AuditLogSupport.healthCenterId(principal),
+			reservation.getId(),
+			reservation.getReservationSlotId(),
+			reservation.getServiceTypeId(),
+			reservation.getStatus()
+		);
 		return ReservationCreateResponse.from(reservation);
 	}
 
@@ -79,6 +94,16 @@ public class ReservationCommandService {
 		if (decreased == 0) {
 			throw new IllegalArgumentException("예약 슬롯 예약 수를 복구할 수 없습니다.");
 		}
+		log.info(
+			"event=reservation.canceled traceId={} memberId={} role={} healthCenterId={} reservationId={} reservationSlotId={} previousStatus={} status=CANCELED",
+			AuditLogSupport.traceId(),
+			AuditLogSupport.memberId(principal),
+			AuditLogSupport.role(principal),
+			AuditLogSupport.healthCenterId(principal),
+			reservationId,
+			reservation.getReservationSlotId(),
+			reservation.getStatus()
+		);
 	}
 
 	private void validatePrincipal(MemberPrincipal principal) {
