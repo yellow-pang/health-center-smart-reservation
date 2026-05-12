@@ -53,4 +53,18 @@ public class QueueTicketPolicy {
 			throw new IllegalArgumentException("보류할 수 없는 대기 상태입니다.");
 		}
 	}
+
+	public void validateNoShow(QueueTicketVO ticket) {
+		if (!"HOLD".equals(ticket.getStatus())) {
+			throw new IllegalArgumentException("최종 미응답 처리할 수 없는 대기 상태입니다.");
+		}
+	}
+
+	public void validateCancel(QueueTicketVO ticket) {
+		if (!"WAITING".equals(ticket.getStatus())
+				&& !"CALLED".equals(ticket.getStatus())
+				&& !"HOLD".equals(ticket.getStatus())) {
+			throw new IllegalArgumentException("취소할 수 없는 대기 상태입니다.");
+		}
+	}
 }

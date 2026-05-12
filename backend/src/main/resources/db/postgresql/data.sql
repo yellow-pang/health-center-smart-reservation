@@ -246,14 +246,14 @@ DELETE FROM queue_tickets
 WHERE visit_id IN (
     SELECT id
     FROM visits
-    WHERE visitor_name = 'Swagger대기열'
-      AND visitor_phone = '010-5678-9012'
+    WHERE visitor_name IN ('Swagger대기열', 'Swagger대기취소')
+      AND visitor_phone IN ('010-5678-9012', '010-6789-0123')
       AND visit_type = 'WALK_IN'
 );
 
 DELETE FROM visits
-WHERE visitor_name = 'Swagger대기열'
-  AND visitor_phone = '010-5678-9012'
+WHERE visitor_name IN ('Swagger대기열', 'Swagger대기취소')
+  AND visitor_phone IN ('010-5678-9012', '010-6789-0123')
   AND visit_type = 'WALK_IN';
 
 WITH swagger_queue_service_type AS (
@@ -264,6 +264,13 @@ WITH swagger_queue_service_type AS (
       AND code = 'VACCINATION'
       AND active = true
     LIMIT 1
+),
+swagger_queue_targets AS (
+    SELECT 'Swagger대기열' AS visitor_name,
+           '010-5678-9012' AS visitor_phone
+    UNION ALL
+    SELECT 'Swagger대기취소',
+           '010-6789-0123'
 ),
 swagger_queue_visit AS (
     INSERT INTO visits (
@@ -281,15 +288,16 @@ swagger_queue_visit AS (
         service_type.health_center_id,
         service_type.service_type_id,
         staff.id,
-        'Swagger대기열',
-        '010-5678-9012',
+        target.visitor_name,
+        target.visitor_phone,
         'WALK_IN',
         'WAITING',
         CURRENT_TIMESTAMP,
         CURRENT_TIMESTAMP
     FROM swagger_queue_service_type service_type
     INNER JOIN members staff ON staff.email = 'staff@test.com'
-    RETURNING id, health_center_id, service_type_id
+    CROSS JOIN swagger_queue_targets target
+    RETURNING id, health_center_id, service_type_id, visitor_name
 )
 INSERT INTO queue_tickets (
     health_center_id,
@@ -306,6 +314,7 @@ SELECT
     visit.service_type_id,
     (
         SELECT COALESCE(MAX(q.ticket_number), 0) + 1
+               + CASE WHEN visit.visitor_name = 'Swagger대기취소' THEN 1 ELSE 0 END
         FROM queue_tickets q
         WHERE q.health_center_id = visit.health_center_id
           AND q.service_type_id = visit.service_type_id

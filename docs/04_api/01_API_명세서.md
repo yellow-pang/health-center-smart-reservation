@@ -49,7 +49,7 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | Office API | 보건소, 업무 유형, 창구 |
 | Reservation API | 예약 가능 시간, 예약 신청, 예약 조회, 예약 취소 |
 | Visit API | 체크인, 현장 접수 |
-| Queue API | 대기번호, 대기열, 호출, 처리 |
+| Queue API | 대기번호, 대기열, 호출, 보류, 최종 미응답, 취소, 처리 |
 | Dashboard API | 관리자 대시보드 |
 | Congestion API | 사용자용 혼잡도 |
 | Admin API | 관리자 기준정보 관리 |
@@ -76,6 +76,8 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | POST | /api/queues/{id}/start | 처리 시작 | STAFF, ADMIN |
 | POST | /api/queues/{id}/complete | 처리 완료 | STAFF, ADMIN |
 | POST | /api/queues/{id}/hold | 보류 처리 | STAFF, ADMIN |
+| POST | /api/queues/{id}/no-show | 최종 미응답 처리 | STAFF, ADMIN |
+| POST | /api/queues/{id}/cancel | 방문/대기 취소 | STAFF, ADMIN |
 | GET | /api/dashboard/summary | 대시보드 요약 | ADMIN |
 | GET | /api/dashboard/hourly-visits | 시간대별 방문자 수 | ADMIN |
 | GET | /api/dashboard/service-wait-times | 업무별 평균 대기시간 | ADMIN |
@@ -679,7 +681,29 @@ Response:
 - 성공 시 대기표 상태는 `HOLD`가 되고 `holdAt`이 기록된다.
 - `HOLD` 상태 대기표는 `POST /api/queues/{queueTicketId}/call`로 재호출할 수 있다.
 
-#### 4.9.5 처리 완료
+#### 4.9.5 최종 미응답 처리
+
+`POST /api/queues/{queueTicketId}/no-show`
+
+정책:
+
+- `HOLD` 상태만 최종 미응답 처리할 수 있다.
+- 성공 시 대기표 상태는 `NO_SHOW`가 되고 Visit 상태도 `NO_SHOW`가 된다.
+- 예약 기반 방문이면 `CHECKED_IN` 상태 예약도 `NO_SHOW`로 변경된다.
+
+#### 4.9.6 방문/대기 취소
+
+`POST /api/queues/{queueTicketId}/cancel`
+
+정책:
+
+- `WAITING`, `CALLED`, `HOLD` 상태만 취소할 수 있다.
+- 성공 시 대기표 상태는 `CANCELED`가 되고 Visit 상태도 `CANCELED`가 된다.
+- 예약 기반 방문이면 `CHECKED_IN` 상태 예약도 `CANCELED`로 변경한다.
+- 처리 시작 이후(`IN_PROGRESS`, `COMPLETED`)와 이미 종료된 `NO_SHOW`, `CANCELED` 상태는 취소할 수 없다.
+- Swagger 테스트용 seed 방문자 이름은 `Swagger대기취소`이며, 조회 결과에서 `queueTicketId`를 확인해 취소에 사용한다.
+
+#### 4.9.7 처리 완료
 
 `POST /api/queues/{queueTicketId}/complete`
 
