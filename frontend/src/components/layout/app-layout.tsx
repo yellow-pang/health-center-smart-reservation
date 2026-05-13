@@ -11,15 +11,15 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && !user) {
       redirect('/login');
     }
-  }, [user]);
+  }, [isLoading, user]);
 
-  if (!user) {
+  if (isLoading || !user) {
     return null;
   }
 

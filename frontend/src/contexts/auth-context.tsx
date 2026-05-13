@@ -1,14 +1,21 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { User, UserRole } from '@/src/lib/mock-data';
-import { login as loginService, loginWithRole as loginWithRoleService, logout as logoutService } from '@/src/lib/mock-services';
+import { getAccessToken } from '@/src/lib/api-client';
+import {
+  type AuthResult,
+  getCurrentUser,
+  login as loginService,
+  loginWithRole as loginWithRoleService,
+  logout as logoutService,
+} from '@/src/lib/auth-api';
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginWithRole: (role: UserRole) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<AuthResult>;
+  loginWithRole: (role: UserRole) => Promise<AuthResult>;
   logout: () => Promise<void>;
 }
 
@@ -16,7 +23,30 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function hydrateUser() {
+      if (!getAccessToken()) {
+        setIsLoading(false);
+        return;
+      }
+
+      const currentUser = await getCurrentUser();
+      if (active) {
+        setUser(currentUser);
+        setIsLoading(false);
+      }
+    }
+
+    hydrateUser();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
@@ -24,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await loginService({ email, password });
       if (result.success && result.user) {
         setUser(result.user);
-        return { success: true };
+        return result;
       }
       return { success: false, error: result.error };
     } finally {
@@ -38,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await loginWithRoleService(role);
       if (result.success && result.user) {
         setUser(result.user);
-        return { success: true };
+        return result;
       }
       return { success: false, error: result.error };
     } finally {
