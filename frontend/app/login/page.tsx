@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Building2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -102,6 +103,18 @@ export default function LoginPage() {
               </Button>
             </form>
 
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm">
+              <Link href="/register" className="font-medium text-primary hover:underline">
+                회원가입
+              </Link>
+              <Link href="/find-id" className="text-muted-foreground hover:text-foreground hover:underline">
+                아이디 찾기
+              </Link>
+              <Link href="/reset-password" className="text-muted-foreground hover:text-foreground hover:underline">
+                비밀번호 찾기
+              </Link>
+            </div>
+
             <div className="relative my-6">
               <Separator />
               <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
@@ -110,6 +123,19 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
+              <Button
+                asChild
+                variant="secondary"
+                className="w-full justify-start h-auto py-3"
+                disabled={isLoading}
+              >
+                <Link href="/social-login">
+                  <div className="text-left">
+                    <p className="font-medium">소셜 로그인</p>
+                    <p className="text-xs text-muted-foreground">간편 인증 진입 화면</p>
+                  </div>
+                </Link>
+              </Button>
               {testAccounts.map((account) => (
                 <Button
                   key={account.role}
