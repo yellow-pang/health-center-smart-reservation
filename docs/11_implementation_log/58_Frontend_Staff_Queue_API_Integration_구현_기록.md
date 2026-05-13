@@ -16,6 +16,7 @@
 - [x] 대기열 조회 API 연동
 - [x] 대기열 상태 변경 API 연동
 - [x] 백엔드 상태 전이 정책에 맞게 버튼 조정
+- [x] 대기열 완료/취소/미응답/전체 내역 조회 탭 추가
 - [x] TypeScript 정적 검증
 - [x] Next build 검증
 - [x] 브라우저에서 직원 체크인 흐름 확인
@@ -110,6 +111,8 @@ HIGH/CRITICAL 경고는 GitNexus CLI 실패로 확인하지 못했다. 대신 Ty
   - 요약 카드를 실제 조회 데이터 기준으로 계산
   - 상태 변경 성공 시 서버 응답의 최신 대기표로 row 갱신
   - 백엔드 정책에 맞춰 액션 버튼을 조정
+  - 기본 조회는 진행 중 상태만 표시하고, 완료/취소/미응답/전체 내역은 조회 탭으로 분리
+  - 상태 변경 후 현재 탭 범위에서 벗어난 항목은 화면에서 제거
 
 상태 버튼 기준:
 
@@ -120,11 +123,21 @@ HIGH/CRITICAL 경고는 GitNexus CLI 실패로 확인하지 못했다. 대신 Ty
 | `IN_PROGRESS` | 완료 |
 | `HOLD` | 재호출, 미응답, 취소 |
 
+조회 탭 기준:
+
+| 탭 | API 조회 방식 | 표시 목적 |
+|---|---|---|
+| 진행 중 | `GET /api/queues` | `WAITING`, `CALLED`, `IN_PROGRESS`, `HOLD` 기본 운영 화면 |
+| 완료 | `GET /api/queues?status=COMPLETED` | 처리 완료 내역 확인 |
+| 취소 | `GET /api/queues?status=CANCELED` | 취소 내역 확인 |
+| 미응답 | `GET /api/queues?status=NO_SHOW` | 최종 미응답 내역 확인 |
+| 전체 | 상태별 `GET /api/queues?status={status}` 호출 후 병합 | 오늘 전체 대기 이력 확인 |
+
 ## 7. 검증 결과
 
 | 검증 | 결과 |
 |---|---|
-| `npm.cmd exec -- tsc --noEmit` | 통과 |
+| `npm.cmd exec -- tsc --noEmit` | 통과. 대기열 내역 탭 추가 후 재확인 |
 | `npm.cmd run build` | 통과 |
 | `git diff --check` | 공백 오류 없음 |
 | `npm.cmd run lint` | 실패. `eslint` 실행 파일 없음 |
@@ -154,6 +167,7 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 4. `/staff/check-in`에서 `RSV-SWAGGER-CHECKIN-001`로 체크인한다.
 5. `/staff/walk-in`에서 업무 유형을 선택하고 현장 접수를 등록한다.
 6. `/staff/queues`에서 대기열 조회와 호출/시작/완료/보류/미응답/취소 흐름을 확인한다.
+7. `/staff/queues`에서 완료/취소/미응답/전체 탭을 눌러 종료된 대기표가 조회되는지 확인한다.
 
 Swagger 대표 예시:
 
@@ -180,6 +194,7 @@ Swagger 대표 예시:
 |---|---|---|---|
 | 직원 API 연동 중 | 체크인 응답 상세화 검토 | 체크인 응답이 최소 필드라 방문자/업무명은 대기열 상세 조회 전까지 제한적으로 표시됨 | 후속 검토 |
 | 대기열 연동 중 | 상태 전이 버튼 정책 정리 | 기존 mock 화면의 보류/미응답 흐름이 백엔드 정책과 일부 달랐음 | 이번 수정 반영 |
+| 대기열 화면 확인 중 | 완료/취소/미응답 내역 조회 탭 | 기본 `GET /api/queues`는 진행 중 상태만 반환해 종료 내역을 화면에서 볼 수 없었음 | 이번 수정 반영 |
 | 검증 중 | ESLint 실행 기준 정리 | `eslint` 실행 파일 없음 | 후속 |
 | 검증 중 | 패키지 매니저 기준 정리 | root `package-lock.json`과 frontend `pnpm-lock.yaml` 공존으로 Next 경고 발생 | 후속 |
 
@@ -193,6 +208,7 @@ Swagger 대표 예시:
 - [ ] 브라우저 직원 체크인 화면 확인
 - [ ] 브라우저 현장 접수 화면 확인
 - [ ] 브라우저 대기열 관리 화면 확인
+- [ ] 브라우저 대기열 완료/취소/미응답/전체 탭 확인
 - [ ] Swagger 대표 예시 확인
 
 ## 11. 커밋 메시지 초안
@@ -204,4 +220,5 @@ feat: integrate staff queue APIs
 - 현장 접수 API 연동
 - 대기열 조회와 상태 변경 API 연동
 - 백엔드 대기 상태 전이 정책에 맞게 액션 버튼 조정
+- 완료/취소/미응답/전체 대기열 내역 조회 탭 추가
 ```
