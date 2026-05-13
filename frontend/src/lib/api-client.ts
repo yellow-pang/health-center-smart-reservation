@@ -56,6 +56,14 @@ export function getAccessToken(): string | null {
   return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
+export function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  return window.localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+}
+
 export function setAuthTokens(accessToken: string, refreshToken?: string): void {
   if (typeof window === 'undefined') {
     return;

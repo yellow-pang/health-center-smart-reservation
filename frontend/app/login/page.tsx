@@ -34,11 +34,9 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await login(email, password);
-    if (result.success) {
+    if (result.success && result.user) {
       toast.success('로그인 성공');
-      // Determine redirect based on email domain or role
-      const user = testAccounts.find(a => email.includes(a.role.toLowerCase()));
-      router.push(user ? roleRedirects[user.role] : '/citizen/reservations/new');
+      router.push(roleRedirects[result.user.role]);
     } else {
       toast.error(result.error || '로그인 실패');
     }
@@ -46,9 +44,9 @@ export default function LoginPage() {
 
   const handleTestLogin = async (role: UserRole) => {
     const result = await loginWithRole(role);
-    if (result.success) {
+    if (result.success && result.user) {
       toast.success('로그인 성공');
-      router.push(roleRedirects[role]);
+      router.push(roleRedirects[result.user.role]);
     } else {
       toast.error(result.error || '로그인 실패');
     }
@@ -80,7 +78,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="email@example.com"
+                  placeholder="staff@test.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
@@ -155,7 +153,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          이 시스템은 MVP 데모 버전입니다. 실제 인증은 구현되어 있지 않습니다.
+          테스트 계정 비밀번호는 password1234입니다.
         </p>
       </div>
     </div>
