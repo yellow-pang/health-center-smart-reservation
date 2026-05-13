@@ -46,13 +46,13 @@ feat: 프론트엔드 로그인 API 연동
 - [x] `npm.cmd exec -- tsc --noEmit`
 - [x] `npm.cmd run build`
 - [x] `git diff --check`
-- [ ] `npm.cmd run lint`
-- [ ] Swagger `POST /api/auth/login` 대표 예시 확인
-- [ ] 브라우저 `/login`에서 실제 로그인 확인
-- [ ] 로그인 후 새로고침 시 `/api/members/me` 기반 세션 복원 확인
-- [ ] 로그아웃 후 token 삭제와 `/login` 이동 확인
-- [ ] 모바일 브라우저 화면 확인
-- [ ] 데스크톱 브라우저 화면 확인
+- [x] `npm.cmd run lint`
+- [x] Swagger `POST /api/auth/login` 대표 예시 확인
+- [x] 브라우저 `/login`에서 실제 로그인 확인
+- [x] 로그인 후 새로고침 시 `/api/members/me` 기반 세션 복원 확인
+- [x] 로그아웃 후 token 삭제와 `/login` 이동 확인
+- [x] 모바일 브라우저 화면 확인
+- [x] 데스크톱 브라우저 화면 확인
 
 ## Swagger 대표 예시
 
@@ -73,13 +73,13 @@ feat: 프론트엔드 로그인 API 연동
 
 ## 추가 테스트 체크리스트
 
-- [ ] Happy: `citizen@test.com / password1234` 로그인 후 시민 예약 화면 이동
-- [ ] Happy: `staff@test.com / password1234` 로그인 후 직원 체크인 화면 이동
-- [ ] Happy: `admin@test.com / password1234` 로그인 후 관리자 대시보드 이동
-- [ ] Edge: 새로고침 후 현재 사용자 정보 복원
-- [ ] Edge: refresh token이 없는 상태에서 로그아웃
-- [ ] Bad: 잘못된 비밀번호 입력 시 오류 toast 표시
-- [ ] Bad: 만료/잘못된 access token 저장 상태에서 `/login` 이동
+- [x] Happy: `citizen@test.com / password1234` 로그인 후 시민 예약 화면 이동
+- [x] Happy: `staff@test.com / password1234` 로그인 후 직원 체크인 화면 이동
+- [x] Happy: `admin@test.com / password1234` 로그인 후 관리자 대시보드 이동
+- [x] Edge: 새로고침 후 현재 사용자 정보 복원
+- [x] Edge: refresh token이 없는 상태에서 로그아웃
+- [x] Bad: 잘못된 비밀번호 입력 시 오류 toast 표시
+- [x] Bad: 만료/잘못된 access token 저장 상태에서 `/login` 이동
 
 ## 미검증 사유
 
