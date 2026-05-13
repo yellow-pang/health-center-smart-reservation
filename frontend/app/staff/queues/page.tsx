@@ -18,8 +18,8 @@ import {
   getQueueEntries, 
   getServiceTypes, 
   updateQueueStatus 
-} from '@/src/lib/mock-services';
-import { getServiceTypeName, getQueueSummary } from '@/src/lib/mock-data';
+} from '@/src/lib/staff-api';
+import { getServiceTypeName } from '@/src/lib/mock-data';
 import type { QueueEntry, QueueStatus, ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -71,7 +71,7 @@ export default function QueuesPage() {
       const result = await updateQueueStatus(entryId, newStatus);
       if (result.success) {
         setEntries(prev =>
-          prev.map(e => e.queueTicketId === entryId ? { ...e, status: newStatus } : e)
+          prev.map(e => e.queueTicketId === entryId ? (result.queueEntry || { ...e, status: newStatus }) : e)
         );
         toast.success('상태가 변경되었습니다.');
       } else {
@@ -92,7 +92,16 @@ export default function QueuesPage() {
   });
 
   // Summary counts
-  const summary = getQueueSummary();
+  const summary = {
+    waiting: entries.filter(entry => entry.status === 'WAITING').length,
+    called: entries.filter(entry => entry.status === 'CALLED').length,
+    inProgress: entries.filter(entry => entry.status === 'IN_PROGRESS').length,
+    hold: entries.filter(entry => entry.status === 'HOLD').length,
+  };
+
+  const getEntryServiceName = (entry: QueueEntry) => {
+    return entry.serviceTypeName || getServiceTypeName(entry.serviceTypeId);
+  };
 
   // Get available actions for each status
   const getAvailableActions = (entry: QueueEntry) => {
@@ -105,14 +114,14 @@ export default function QueuesPage() {
         break;
       case 'CALLED':
         actions.push({ status: 'IN_PROGRESS', label: '시작', icon: PlayCircle, variant: 'default' });
-        actions.push({ status: 'NO_SHOW', label: '미응답', icon: XCircle, variant: 'destructive' });
+        actions.push({ status: 'HOLD', label: '보류', icon: PauseCircle, variant: 'outline' });
         break;
       case 'IN_PROGRESS':
         actions.push({ status: 'COMPLETED', label: '완료', icon: CheckCircle, variant: 'default' });
-        actions.push({ status: 'HOLD', label: '보류', icon: PauseCircle, variant: 'outline' });
         break;
       case 'HOLD':
-        actions.push({ status: 'IN_PROGRESS', label: '재개', icon: PlayCircle, variant: 'default' });
+        actions.push({ status: 'CALLED', label: '재호출', icon: Bell, variant: 'default' });
+        actions.push({ status: 'NO_SHOW', label: '미응답', icon: XCircle, variant: 'destructive' });
         actions.push({ status: 'CANCELED', label: '취소', icon: XCircle, variant: 'destructive' });
         break;
     }
@@ -147,7 +156,7 @@ export default function QueuesPage() {
     {
       key: 'serviceType',
       header: '업무',
-      cell: (entry) => getServiceTypeName(entry.serviceTypeId),
+      cell: (entry) => getEntryServiceName(entry),
     },
     {
       key: 'visitType',

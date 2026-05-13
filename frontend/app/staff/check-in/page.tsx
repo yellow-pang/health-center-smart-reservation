@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/src/components/common/page-header';
-import { checkInByReservationNumber } from '@/src/lib/mock-services';
+import { checkInByReservationNumber } from '@/src/lib/staff-api';
 import { getServiceTypeName } from '@/src/lib/mock-data';
 import type { QueueEntry } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
@@ -53,6 +53,10 @@ export default function CheckInPage() {
     setState('idle');
     setQueueEntry(null);
     setErrorMessage('');
+  };
+
+  const getEntryServiceName = (entry: QueueEntry) => {
+    return entry.serviceTypeName || getServiceTypeName(entry.serviceTypeId);
   };
 
   return (
@@ -127,7 +131,7 @@ export default function CheckInPage() {
                 </p>
                 <p className="flex justify-between">
                   <span className="text-muted-foreground">업무</span>
-                  <span>{getServiceTypeName(queueEntry.serviceTypeId)}</span>
+                  <span>{getEntryServiceName(queueEntry)}</span>
                 </p>
                 <p className="flex justify-between">
                   <span className="text-muted-foreground">접수 유형</span>
@@ -149,7 +153,7 @@ export default function CheckInPage() {
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground">
             <span className="font-medium text-foreground">테스트 예약번호:</span>{' '}
-            RSV-20260513-0001, RSV-20260514-0002
+            RSV-SWAGGER-CHECKIN-001
           </p>
         </CardContent>
       </Card>

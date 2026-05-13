@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PageHeader } from '@/src/components/common/page-header';
 import { LoadingState } from '@/src/components/common/loading-state';
-import { registerWalkIn, getServiceTypes } from '@/src/lib/mock-services';
+import { registerWalkIn, getServiceTypes } from '@/src/lib/staff-api';
 import { getServiceTypeName } from '@/src/lib/mock-data';
 import type { QueueEntry, ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
@@ -58,10 +58,12 @@ export default function WalkInPage() {
     setState('loading');
     
     try {
+      const selectedServiceType = serviceTypes.find(service => service.serviceTypeId === Number(serviceTypeId));
       const result = await registerWalkIn({
         visitorName: visitorName.trim(),
         visitorPhone: visitorPhone.trim(),
         serviceTypeId: Number(serviceTypeId),
+        serviceTypeName: selectedServiceType?.name,
       });
       
       if (result.success && result.queueEntry) {
@@ -91,6 +93,10 @@ export default function WalkInPage() {
     setServiceTypeId('');
     setState('idle');
     setQueueEntry(null);
+  };
+
+  const getEntryServiceName = (entry: QueueEntry) => {
+    return entry.serviceTypeName || getServiceTypeName(entry.serviceTypeId);
   };
 
   if (isLoadingServices) {
@@ -199,7 +205,7 @@ export default function WalkInPage() {
                   </p>
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">업무</span>
-                    <span>{getServiceTypeName(queueEntry.serviceTypeId)}</span>
+                    <span>{getEntryServiceName(queueEntry)}</span>
                   </p>
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">접수 유형</span>
@@ -247,7 +253,7 @@ export default function WalkInPage() {
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground">
-                        {getServiceTypeName(entry.queueEntry.serviceTypeId)}
+                        {getEntryServiceName(entry.queueEntry)}
                       </p>
                     </div>
                     <span className="text-xs text-muted-foreground shrink-0 ml-2">
