@@ -54,7 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await loginService({ email, password });
       if (result.success && result.user) {
         setUser(result.user);
-        return { success: true };
+        return result;
       }
       return { success: false, error: result.error };
     } finally {
@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await loginWithRoleService(role);
       if (result.success && result.user) {
         setUser(result.user);
-        return { success: true };
+        return result;
       }
       return { success: false, error: result.error };
     } finally {

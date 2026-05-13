@@ -136,6 +136,12 @@ HIGH/CRITICAL 경고는 GitNexus에서 확인하지 못했다. 다만 인증 흐
 - 인증 상태 복원 중에는 `/login`으로 즉시 redirect하지 않도록 `isLoading`을 확인
 - 인증 복원 완료 후 사용자 정보가 없을 때만 `/login`으로 이동
 
+### 7.5 사용자 런타임 확인 중 로그인 실패 수정
+
+- 백엔드 `POST /api/auth/login`은 200 OK와 `member.role`을 정상 반환했지만 프론트에서 실패 toast가 표시되는 문제가 있었다.
+- 원인은 `AuthContext.login()`과 `AuthContext.loginWithRole()`이 `auth-api.ts`의 성공 결과에서 `user`를 제거한 채 `{ success: true }`만 반환한 것이었다.
+- 로그인 페이지는 `result.success && result.user`를 기준으로 성공 분기와 role redirect를 수행하므로, 컨텍스트에서 원래 `AuthResult`를 그대로 반환하도록 수정했다.
+
 ## 8. 검증 결과
 
 | 검증 | 결과 |
@@ -147,6 +153,7 @@ HIGH/CRITICAL 경고는 GitNexus에서 확인하지 못했다. 다만 인증 흐
 | GitNexus impact | CLI 오류로 완료하지 못함. `rg` 기반 대체 확인 |
 | 브라우저 화면 확인 | 미수행. 사용자가 직접 확인 필요 |
 | API 런타임 확인 | 미수행. 사용자가 Swagger 또는 브라우저로 직접 확인 필요 |
+| 사용자 런타임 제보 기반 재검증 | 로그인 200 OK 후 프론트 실패 toast 원인 확인 및 수정, TypeScript/Next build 재통과 |
 
 빌드 참고:
 
@@ -194,6 +201,7 @@ Swagger 대표 예시:
 | 검증 중 | ESLint 실행 기준 정리 | `eslint` 실행 파일 없음 | 후속 |
 | 검증 중 | 패키지 매니저 기준 정리 | root `package-lock.json`과 frontend `pnpm-lock.yaml` 공존으로 Next 경고 발생 | 후속 |
 | 검증 중 | GitNexus CLI 재점검 | impact/detect-changes가 exit 1로 실패 | 후속 |
+| 사용자 런타임 확인 중 | 로그인 성공 결과의 `user` 반환 누락 수정 | 백엔드 200 OK 응답에도 로그인 페이지가 실패로 분기함 | 이번 수정 반영 |
 
 ## 11. 브랜치 종료 전 체크리스트
 
