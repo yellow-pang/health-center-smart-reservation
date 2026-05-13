@@ -68,17 +68,21 @@ export interface Reservation {
 
 export interface QueueEntry {
   queueTicketId: number;
+  visitId?: number;
   ticketNumber: string;
   visitorNameMasked: string;
   visitorPhoneMasked: string;
   serviceTypeId: number;
+  serviceTypeName?: string;
   visitType: VisitType;
   status: QueueStatus;
   reservationId?: number;
   windowId?: string;
+  issuedAt?: string;
   calledAt?: string;
   startedAt?: string;
   completedAt?: string;
+  holdAt?: string;
   createdAt: string;
 }
 

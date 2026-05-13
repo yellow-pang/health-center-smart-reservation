@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PageHeader } from '@/src/components/common/page-header';
 import { MetricCard } from '@/src/components/common/metric-card';
 import { StatusBadge } from '@/src/components/common/status-badge';
@@ -18,13 +19,26 @@ import {
   getQueueEntries, 
   getServiceTypes, 
   updateQueueStatus 
-} from '@/src/lib/mock-services';
-import { getServiceTypeName, getQueueSummary } from '@/src/lib/mock-data';
+} from '@/src/lib/staff-api';
+import { getServiceTypeName } from '@/src/lib/mock-data';
 import type { QueueEntry, QueueStatus, ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 type LoadState = 'loading' | 'success' | 'error';
+type QueueView = 'active' | 'completed' | 'canceled' | 'no-show' | 'all';
+
+const ALL_QUEUE_STATUSES: QueueStatus[] = [
+  'WAITING',
+  'CALLED',
+  'IN_PROGRESS',
+  'HOLD',
+  'COMPLETED',
+  'NO_SHOW',
+  'CANCELED',
+];
+
+const ACTIVE_QUEUE_STATUSES: QueueStatus[] = ['WAITING', 'CALLED', 'IN_PROGRESS', 'HOLD'];
 
 export default function QueuesPage() {
   const [entries, setEntries] = useState<QueueEntry[]>([]);
@@ -34,12 +48,12 @@ export default function QueuesPage() {
   
   // Filters
   const [filterServiceType, setFilterServiceType] = useState<string>('all');
-  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [queueView, setQueueView] = useState<QueueView>('active');
   
   // Action loading states
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const loadData = async (showRefreshing = false) => {
+  const loadData = async (showRefreshing = false, view: QueueView = queueView) => {
     if (showRefreshing) {
       setIsRefreshing(true);
     } else {
@@ -48,7 +62,7 @@ export default function QueuesPage() {
 
     try {
       const [queueData, serviceData] = await Promise.all([
-        getQueueEntries(),
+        loadQueueEntries(view),
         getServiceTypes(),
       ]);
       setEntries(queueData);
@@ -63,16 +77,21 @@ export default function QueuesPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [queueView]);
 
   const handleStatusChange = async (entryId: number, newStatus: QueueStatus) => {
     setActionLoading(String(entryId));
     try {
       const result = await updateQueueStatus(entryId, newStatus);
       if (result.success) {
-        setEntries(prev =>
-          prev.map(e => e.queueTicketId === entryId ? { ...e, status: newStatus } : e)
-        );
+        setEntries(prev => {
+          const nextEntry = result.queueEntry;
+          if (nextEntry && !isEntryVisibleInView(nextEntry, queueView)) {
+            return prev.filter(e => e.queueTicketId !== entryId);
+          }
+
+          return prev.map(e => e.queueTicketId === entryId ? (nextEntry || { ...e, status: newStatus }) : e);
+        });
         toast.success('상태가 변경되었습니다.');
       } else {
         toast.error(result.error || '상태 변경에 실패했습니다.');
@@ -87,12 +106,20 @@ export default function QueuesPage() {
   // Filter entries
   const filteredEntries = entries.filter(entry => {
     if (filterServiceType !== 'all' && String(entry.serviceTypeId) !== filterServiceType) return false;
-    if (filterStatus !== 'all' && entry.status !== filterStatus) return false;
     return true;
   });
 
   // Summary counts
-  const summary = getQueueSummary();
+  const summary = {
+    waiting: entries.filter(entry => entry.status === 'WAITING').length,
+    called: entries.filter(entry => entry.status === 'CALLED').length,
+    inProgress: entries.filter(entry => entry.status === 'IN_PROGRESS').length,
+    hold: entries.filter(entry => entry.status === 'HOLD').length,
+  };
+
+  const getEntryServiceName = (entry: QueueEntry) => {
+    return entry.serviceTypeName || getServiceTypeName(entry.serviceTypeId);
+  };
 
   // Get available actions for each status
   const getAvailableActions = (entry: QueueEntry) => {
@@ -105,14 +132,14 @@ export default function QueuesPage() {
         break;
       case 'CALLED':
         actions.push({ status: 'IN_PROGRESS', label: '시작', icon: PlayCircle, variant: 'default' });
-        actions.push({ status: 'NO_SHOW', label: '미응답', icon: XCircle, variant: 'destructive' });
+        actions.push({ status: 'HOLD', label: '보류', icon: PauseCircle, variant: 'outline' });
         break;
       case 'IN_PROGRESS':
         actions.push({ status: 'COMPLETED', label: '완료', icon: CheckCircle, variant: 'default' });
-        actions.push({ status: 'HOLD', label: '보류', icon: PauseCircle, variant: 'outline' });
         break;
       case 'HOLD':
-        actions.push({ status: 'IN_PROGRESS', label: '재개', icon: PlayCircle, variant: 'default' });
+        actions.push({ status: 'CALLED', label: '재호출', icon: Bell, variant: 'default' });
+        actions.push({ status: 'NO_SHOW', label: '미응답', icon: XCircle, variant: 'destructive' });
         actions.push({ status: 'CANCELED', label: '취소', icon: XCircle, variant: 'destructive' });
         break;
     }
@@ -147,7 +174,7 @@ export default function QueuesPage() {
     {
       key: 'serviceType',
       header: '업무',
-      cell: (entry) => getServiceTypeName(entry.serviceTypeId),
+      cell: (entry) => getEntryServiceName(entry),
     },
     {
       key: 'visitType',
@@ -251,11 +278,20 @@ export default function QueuesPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <Filter className="h-4 w-4" />
-                필터
+                조회 범위
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-col gap-4">
+                <Tabs value={queueView} onValueChange={(value) => setQueueView(value as QueueView)}>
+                  <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
+                    <TabsTrigger value="active">진행 중</TabsTrigger>
+                    <TabsTrigger value="completed">완료</TabsTrigger>
+                    <TabsTrigger value="canceled">취소</TabsTrigger>
+                    <TabsTrigger value="no-show">미응답</TabsTrigger>
+                    <TabsTrigger value="all">전체</TabsTrigger>
+                  </TabsList>
+                </Tabs>
                 <div className="w-full sm:w-48">
                   <Select value={filterServiceType} onValueChange={setFilterServiceType}>
                     <SelectTrigger>
@@ -269,20 +305,6 @@ export default function QueuesPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="w-full sm:w-48">
-                  <Select value={filterStatus} onValueChange={setFilterStatus}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="상태" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">전체 상태</SelectItem>
-                      <SelectItem value="WAITING">대기 중</SelectItem>
-                      <SelectItem value="CALLED">호출 중</SelectItem>
-                      <SelectItem value="IN_PROGRESS">처리 중</SelectItem>
-                      <SelectItem value="HOLD">보류</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
               </div>
             </CardContent>
           </Card>
@@ -293,11 +315,66 @@ export default function QueuesPage() {
               columns={columns}
               data={filteredEntries}
               keyExtractor={(entry) => String(entry.queueTicketId)}
-              emptyMessage="대기 중인 방문자가 없습니다."
+              emptyMessage={getEmptyMessage(queueView)}
             />
           </div>
         </>
       )}
     </div>
   );
+}
+
+async function loadQueueEntries(view: QueueView): Promise<QueueEntry[]> {
+  switch (view) {
+    case 'active':
+      return getQueueEntries();
+    case 'completed':
+      return getQueueEntries({ status: 'COMPLETED' });
+    case 'canceled':
+      return getQueueEntries({ status: 'CANCELED' });
+    case 'no-show':
+      return getQueueEntries({ status: 'NO_SHOW' });
+    case 'all': {
+      const results = await Promise.all(
+        ALL_QUEUE_STATUSES.map(status => getQueueEntries({ status })),
+      );
+      return dedupeQueueEntries(results.flat());
+    }
+  }
+}
+
+function dedupeQueueEntries(entries: QueueEntry[]): QueueEntry[] {
+  return Array.from(
+    new Map(entries.map(entry => [entry.queueTicketId, entry])).values(),
+  );
+}
+
+function isEntryVisibleInView(entry: QueueEntry, view: QueueView): boolean {
+  switch (view) {
+    case 'active':
+      return ACTIVE_QUEUE_STATUSES.includes(entry.status);
+    case 'completed':
+      return entry.status === 'COMPLETED';
+    case 'canceled':
+      return entry.status === 'CANCELED';
+    case 'no-show':
+      return entry.status === 'NO_SHOW';
+    case 'all':
+      return true;
+  }
+}
+
+function getEmptyMessage(view: QueueView): string {
+  switch (view) {
+    case 'active':
+      return '진행 중인 방문자가 없습니다.';
+    case 'completed':
+      return '완료된 방문자가 없습니다.';
+    case 'canceled':
+      return '취소된 방문자가 없습니다.';
+    case 'no-show':
+      return '미응답 방문자가 없습니다.';
+    case 'all':
+      return '대기열 내역이 없습니다.';
+  }
 }
