@@ -15,7 +15,7 @@ import {
   getServiceTypes, 
   getReservationSlots, 
   createReservation 
-} from '@/src/lib/mock-services';
+} from '@/src/lib/reservation-api';
 import type { ServiceType, ReservationSlot, Reservation } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -97,8 +97,10 @@ export default function NewReservationPage() {
     try {
       const result = await createReservation({
         serviceTypeId: selectedService.serviceTypeId,
+        reservationSlotId: selectedSlot.slotId,
         date: format(selectedDate, 'yyyy-MM-dd'),
         startTime: selectedSlot.startTime,
+        endTime: selectedSlot.endTime,
         visitorName,
         visitorPhone,
       });
@@ -108,7 +110,7 @@ export default function NewReservationPage() {
         setStep('complete');
         toast.success('예약이 완료되었습니다!');
       } else {
-        toast.error('예약 중 오류가 발생했습니다.');
+        toast.error(result.error || '예약 중 오류가 발생했습니다.');
       }
     } finally {
       setIsSubmitting(false);

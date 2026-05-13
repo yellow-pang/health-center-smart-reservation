@@ -21,7 +21,7 @@ import { StatusBadge } from '@/src/components/common/status-badge';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { EmptyState } from '@/src/components/common/empty-state';
 import { ErrorState } from '@/src/components/common/error-state';
-import { getUserReservations, cancelReservation } from '@/src/lib/mock-services';
+import { getUserReservations, cancelReservation } from '@/src/lib/reservation-api';
 import { getServiceTypeName } from '@/src/lib/mock-data';
 import type { Reservation } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
@@ -71,6 +71,10 @@ export default function MyReservationsPage() {
 
   const canCancel = (status: Reservation['status']) => {
     return status === 'RESERVED';
+  };
+
+  const getReservationServiceName = (reservation: Reservation) => {
+    return reservation.serviceTypeName || getServiceTypeName(reservation.serviceTypeId);
   };
 
   // Sort reservations: upcoming first, then by date
@@ -135,7 +139,7 @@ export default function MyReservationsPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-medium truncate">
-                                {getServiceTypeName(reservation.serviceTypeId)}
+                                {getReservationServiceName(reservation)}
                               </h3>
                               <StatusBadge status={reservation.status} />
                             </div>
@@ -163,7 +167,7 @@ export default function MyReservationsPage() {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>예약을 취소하시겠습니까?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    {getServiceTypeName(reservation.serviceTypeId)} - {format(parseISO(reservation.date), 'yyyy년 M월 d일', { locale: ko })} {reservation.startTime}
+                                    {getReservationServiceName(reservation)} - {format(parseISO(reservation.date), 'yyyy년 M월 d일', { locale: ko })} {reservation.startTime}
                                     <br />
                                     취소 후에는 되돌릴 수 없습니다.
                                   </AlertDialogDescription>
@@ -200,7 +204,7 @@ export default function MyReservationsPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-medium truncate">
-                                {getServiceTypeName(reservation.serviceTypeId)}
+                                {getReservationServiceName(reservation)}
                               </h3>
                               <StatusBadge status={reservation.status} />
                             </div>

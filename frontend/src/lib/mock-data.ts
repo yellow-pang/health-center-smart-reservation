@@ -29,6 +29,7 @@ export interface User {
 
 export interface ServiceType {
   serviceTypeId: number;
+  healthCenterId?: number | null;
   code: string;
   name: string;
   description: string;
@@ -51,14 +52,18 @@ export interface ReservationSlot {
 export interface Reservation {
   reservationId: number;
   reservationNo: string;
-  userId: string;
+  userId?: string;
   serviceTypeId: number;
+  serviceTypeName?: string;
+  reservationSlotId?: number;
   visitorName: string;
   visitorPhone: string;
   date: string;
   startTime: string;
+  endTime?: string;
   status: ReservationStatus;
-  createdAt: string;
+  createdAt?: string;
+  reservedAt?: string;
 }
 
 export interface QueueEntry {
