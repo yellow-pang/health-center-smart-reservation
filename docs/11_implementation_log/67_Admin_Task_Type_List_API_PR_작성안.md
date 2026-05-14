@@ -50,11 +50,11 @@ feat: 관리자 업무 유형 전체 조회와 재활성화 구현
 - [x] `mvn.cmd -q -DskipTests compile`
 - [x] `mvn.cmd -q test-compile`
 - [x] `git diff --check`
-- [ ] Swagger `GET /api/admin/service-types` 확인
-- [ ] Swagger `PATCH /api/admin/service-types/{id}/activate` 확인
-- [ ] 브라우저 `/admin/service-types` 활성/비활성 탭 확인
-- [ ] 브라우저 비활성화 후 비활성 탭 이동 확인
-- [ ] 브라우저 재활성화 후 활성 탭 이동 확인
+- [x] Swagger `GET /api/admin/service-types` 확인
+- [x] Swagger `PATCH /api/admin/service-types/{id}/activate` 확인
+- [x] 브라우저 `/admin/service-types` 활성/비활성 탭 확인
+- [x] 브라우저 비활성화 후 비활성 탭 이동 확인
+- [x] 브라우저 재활성화 후 활성 탭 이동 확인
 
 ## Swagger 대표 예시
 
@@ -73,12 +73,12 @@ feat: 관리자 업무 유형 전체 조회와 재활성화 구현
 
 ## 추가 테스트 체크리스트
 
-- [ ] Happy: 관리자 계정으로 전체 업무 유형 조회 성공
-- [ ] Happy: 활성 탭에 `active: true` 항목만 표시
-- [ ] Happy: 비활성 탭에 `active: false` 항목만 표시
-- [ ] Happy: 활성 업무 비활성화 후 비활성 탭으로 자동 이동
-- [ ] Happy: 비활성 업무 재활성화 후 활성 탭으로 자동 이동
-- [ ] Edge: 비활성 업무가 없는 경우 빈 상태 표시
+- [x] Happy: 관리자 계정으로 전체 업무 유형 조회 성공
+- [x] Happy: 활성 탭에 `active: true` 항목만 표시
+- [x] Happy: 비활성 탭에 `active: false` 항목만 표시
+- [x] Happy: 활성 업무 비활성화 후 비활성 탭으로 자동 이동
+- [x] Happy: 비활성 업무 재활성화 후 활성 탭으로 자동 이동
+- [x] Edge: 비활성 업무가 없는 경우 빈 상태 표시
 - [ ] Bad: 직원/시민 계정으로 관리자 전체 조회 API 호출 시 403 확인
 - [ ] Bad: 존재하지 않는 업무 유형 ID 재활성화 시 오류 응답 확인
 
