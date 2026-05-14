@@ -325,6 +325,200 @@ SELECT
     CURRENT_TIMESTAMP
 FROM swagger_queue_visit visit;
 
+DELETE FROM queue_tickets
+WHERE visit_id IN (
+    SELECT id
+    FROM visits
+    WHERE visitor_name LIKE 'Dashboard%'
+      AND visitor_phone LIKE '010-77%'
+);
+
+DELETE FROM visits
+WHERE visitor_name LIKE 'Dashboard%'
+  AND visitor_phone LIKE '010-77%';
+
+DELETE FROM reservations
+WHERE reservation_no LIKE 'RSV-DASHBOARD-%';
+
+WITH dashboard_reservation_seed AS (
+    SELECT *
+    FROM (
+        VALUES
+            ('RSV-DASHBOARD-001', 'VACCINATION', TIME '09:00', 'Dashboard예약01', '010-7700-0001', 'COMPLETED'),
+            ('RSV-DASHBOARD-002', 'VACCINATION', TIME '09:30', 'Dashboard예약02', '010-7700-0002', 'COMPLETED'),
+            ('RSV-DASHBOARD-003', 'HEALTH_CHECK', TIME '10:00', 'Dashboard예약03', '010-7700-0003', 'COMPLETED'),
+            ('RSV-DASHBOARD-004', 'HEALTH_CHECK', TIME '10:30', 'Dashboard예약04', '010-7700-0004', 'NO_SHOW'),
+            ('RSV-DASHBOARD-005', 'HEALTH_CONSULT', TIME '11:00', 'Dashboard예약05', '010-7700-0005', 'RESERVED'),
+            ('RSV-DASHBOARD-006', 'VACCINATION', TIME '13:00', 'Dashboard예약06', '010-7700-0006', 'RESERVED')
+    ) AS seed(reservation_no, service_code, start_time, visitor_name, visitor_phone, status)
+),
+dashboard_member AS (
+    SELECT id AS member_id
+    FROM members
+    WHERE email = 'citizen@test.com'
+),
+dashboard_target_reservation AS (
+    SELECT seed.reservation_no,
+           rs.health_center_id,
+           dashboard_member.member_id,
+           rs.service_type_id,
+           rs.id AS reservation_slot_id,
+           seed.visitor_name,
+           seed.visitor_phone,
+           seed.status
+    FROM dashboard_reservation_seed seed
+    INNER JOIN service_types st
+        ON st.code = seed.service_code
+       AND st.health_center_id = 1
+    INNER JOIN reservation_slots rs
+        ON rs.service_type_id = st.id
+       AND rs.slot_date = CURRENT_DATE
+       AND rs.start_time = seed.start_time
+    CROSS JOIN dashboard_member
+)
+INSERT INTO reservations (
+    reservation_no,
+    health_center_id,
+    member_id,
+    service_type_id,
+    reservation_slot_id,
+    visitor_name,
+    visitor_phone,
+    status,
+    reserved_at,
+    checked_in_at,
+    created_at,
+    updated_at
+)
+SELECT
+    reservation_no,
+    health_center_id,
+    member_id,
+    service_type_id,
+    reservation_slot_id,
+    visitor_name,
+    visitor_phone,
+    status,
+    CURRENT_DATE + TIME '08:30',
+    CASE WHEN status IN ('COMPLETED', 'NO_SHOW') THEN CURRENT_DATE + TIME '09:00' ELSE NULL END,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM dashboard_target_reservation
+ON CONFLICT (reservation_no) DO UPDATE
+SET health_center_id = EXCLUDED.health_center_id,
+    member_id = EXCLUDED.member_id,
+    service_type_id = EXCLUDED.service_type_id,
+    reservation_slot_id = EXCLUDED.reservation_slot_id,
+    visitor_name = EXCLUDED.visitor_name,
+    visitor_phone = EXCLUDED.visitor_phone,
+    status = EXCLUDED.status,
+    reserved_at = EXCLUDED.reserved_at,
+    checked_in_at = EXCLUDED.checked_in_at,
+    updated_at = CURRENT_TIMESTAMP;
+
+WITH dashboard_visit_seed AS (
+    SELECT *
+    FROM (
+        VALUES
+            ('Dashboard예약01', '010-7700-0001', 'VACCINATION', 'RESERVED', 'COMPLETED', 'RSV-DASHBOARD-001', TIME '09:05', 1, 'COMPLETED', 8, 18),
+            ('Dashboard예약02', '010-7700-0002', 'VACCINATION', 'RESERVED', 'COMPLETED', 'RSV-DASHBOARD-002', TIME '09:35', 2, 'COMPLETED', 12, 24),
+            ('Dashboard현장01', '010-7700-1001', 'VACCINATION', 'WALK_IN', 'WAITING', NULL, TIME '10:10', 3, 'WAITING', NULL, NULL),
+            ('Dashboard현장02', '010-7700-1002', 'HEALTH_CHECK', 'WALK_IN', 'COMPLETED', NULL, TIME '10:40', 1, 'COMPLETED', 18, 33),
+            ('Dashboard예약03', '010-7700-0003', 'HEALTH_CHECK', 'RESERVED', 'COMPLETED', 'RSV-DASHBOARD-003', TIME '11:20', 2, 'COMPLETED', 22, 37),
+            ('Dashboard현장03', '010-7700-1003', 'HEALTH_CHECK', 'WALK_IN', 'CALLED', NULL, TIME '13:05', 3, 'CALLED', 16, NULL),
+            ('Dashboard현장04', '010-7700-1004', 'HEALTH_CONSULT', 'WALK_IN', 'IN_PROGRESS', NULL, TIME '14:15', 1, 'IN_PROGRESS', 7, NULL),
+            ('Dashboard현장05', '010-7700-1005', 'HEALTH_CONSULT', 'WALK_IN', 'WAITING', NULL, TIME '15:00', 2, 'WAITING', NULL, NULL),
+            ('Dashboard현장06', '010-7700-1006', 'VACCINATION', 'WALK_IN', 'HOLD', NULL, TIME '15:40', 4, 'HOLD', 14, NULL),
+            ('Dashboard현장07', '010-7700-1007', 'HEALTH_CHECK', 'WALK_IN', 'WAITING', NULL, TIME '16:05', 4, 'WAITING', NULL, NULL),
+            ('Dashboard현장08', '010-7700-1008', 'VACCINATION', 'WALK_IN', 'WAITING', NULL, TIME '16:20', 5, 'WAITING', NULL, NULL),
+            ('Dashboard현장09', '010-7700-1009', 'HEALTH_CONSULT', 'WALK_IN', 'COMPLETED', NULL, TIME '16:45', 3, 'COMPLETED', 5, 16)
+    ) AS seed(visitor_name, visitor_phone, service_code, visit_type, visit_status, reservation_no, checked_in_time, ticket_offset, queue_status, called_after_minutes, completed_after_minutes)
+),
+dashboard_visit_source AS (
+    SELECT st.health_center_id,
+           st.id AS service_type_id,
+           staff.id AS staff_id,
+           reservation.id AS reservation_id,
+           seed.visitor_name,
+           seed.visitor_phone,
+           seed.visit_type,
+           seed.visit_status,
+           seed.checked_in_time,
+           seed.ticket_offset,
+           seed.queue_status,
+           seed.called_after_minutes,
+           seed.completed_after_minutes
+    FROM dashboard_visit_seed seed
+    INNER JOIN service_types st
+        ON st.code = seed.service_code
+       AND st.health_center_id = 1
+    INNER JOIN members staff
+        ON staff.email = 'staff@test.com'
+    LEFT JOIN reservations reservation
+        ON reservation.reservation_no = seed.reservation_no
+),
+dashboard_visit AS (
+    INSERT INTO visits (
+        health_center_id,
+        reservation_id,
+        service_type_id,
+        member_id,
+        registered_by,
+        visitor_name,
+        visitor_phone,
+        visit_type,
+        status,
+        checked_in_at,
+        created_at,
+        updated_at
+    )
+    SELECT
+        health_center_id,
+        reservation_id,
+        service_type_id,
+        NULL,
+        staff_id,
+        visitor_name,
+        visitor_phone,
+        visit_type,
+        visit_status,
+        CURRENT_DATE + checked_in_time,
+        CURRENT_TIMESTAMP,
+        CURRENT_TIMESTAMP
+    FROM dashboard_visit_source
+    RETURNING id, health_center_id, service_type_id, visitor_name, checked_in_at
+)
+INSERT INTO queue_tickets (
+    health_center_id,
+    visit_id,
+    service_type_id,
+    ticket_number,
+    status,
+    issued_at,
+    called_at,
+    started_at,
+    completed_at,
+    hold_at,
+    created_at,
+    updated_at
+)
+SELECT
+    visit.health_center_id,
+    visit.id,
+    visit.service_type_id,
+    700 + seed.ticket_offset,
+    seed.queue_status,
+    visit.checked_in_at,
+    CASE WHEN seed.called_after_minutes IS NOT NULL THEN visit.checked_in_at + (seed.called_after_minutes || ' minutes')::interval ELSE NULL END,
+    CASE WHEN seed.queue_status IN ('IN_PROGRESS', 'COMPLETED') THEN visit.checked_in_at + ((seed.called_after_minutes + 1) || ' minutes')::interval ELSE NULL END,
+    CASE WHEN seed.completed_after_minutes IS NOT NULL THEN visit.checked_in_at + (seed.completed_after_minutes || ' minutes')::interval ELSE NULL END,
+    CASE WHEN seed.queue_status = 'HOLD' THEN visit.checked_in_at + ((seed.called_after_minutes + 3) || ' minutes')::interval ELSE NULL END,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP
+FROM dashboard_visit visit
+INNER JOIN dashboard_visit_seed seed
+    ON seed.visitor_name = visit.visitor_name;
+
 INSERT INTO queue_ticket_counters (
     health_center_id,
     service_type_id,
