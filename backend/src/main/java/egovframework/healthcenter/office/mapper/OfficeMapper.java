@@ -17,6 +17,10 @@ public class OfficeMapper extends EgovAbstractMapper {
 		return selectList("OfficeMapper.selectActiveServiceTypes");
 	}
 
+	public List<ServiceTypeVO> selectAllServiceTypes() {
+		return selectList("OfficeMapper.selectAllServiceTypes");
+	}
+
 	public ServiceTypeVO selectServiceTypeById(Long serviceTypeId) {
 		return selectOne("OfficeMapper.selectServiceTypeById", serviceTypeId);
 	}
@@ -43,6 +47,10 @@ public class OfficeMapper extends EgovAbstractMapper {
 
 	public int deactivateServiceType(Long serviceTypeId) {
 		return update("OfficeMapper.deactivateServiceType", serviceTypeId);
+	}
+
+	public int activateServiceType(Long serviceTypeId) {
+		return update("OfficeMapper.activateServiceType", serviceTypeId);
 	}
 
 	public List<StaffVO> selectActiveStaff() {

@@ -58,9 +58,7 @@ export interface ReservationSlotCreateInput {
 }
 
 export async function getAdminServiceTypes(): Promise<ServiceType[]> {
-  const serviceTypes = await apiRequest<ServiceTypeApiResponse[]>('/api/service-types', {
-    auth: false,
-  });
+  const serviceTypes = await apiRequest<ServiceTypeApiResponse[]>('/api/admin/service-types');
 
   return serviceTypes.map(toServiceType);
 }
@@ -99,6 +97,15 @@ export async function updateAdminServiceType(
 export async function deactivateAdminServiceType(serviceTypeId: number): Promise<ServiceType> {
   const serviceType = await apiRequest<ServiceTypeApiResponse>(
     `/api/admin/service-types/${serviceTypeId}/deactivate`,
+    { method: 'PATCH' },
+  );
+
+  return toServiceType(serviceType);
+}
+
+export async function activateAdminServiceType(serviceTypeId: number): Promise<ServiceType> {
+  const serviceType = await apiRequest<ServiceTypeApiResponse>(
+    `/api/admin/service-types/${serviceTypeId}/activate`,
     { method: 'PATCH' },
   );
 

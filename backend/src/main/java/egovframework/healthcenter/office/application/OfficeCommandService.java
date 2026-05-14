@@ -59,8 +59,20 @@ public class OfficeCommandService {
 		return ServiceTypeResponse.from(officeMapper.selectServiceTypeById(serviceTypeId));
 	}
 
+	@Transactional
+	public ServiceTypeResponse activateServiceType(Long serviceTypeId) {
+		validateServiceTypeId(serviceTypeId);
+
+		int updated = officeMapper.activateServiceType(serviceTypeId);
+		if (updated == 0) {
+			throw new IllegalArgumentException("업무 유형을 찾을 수 없습니다.");
+		}
+
+		return ServiceTypeResponse.from(officeMapper.selectServiceTypeById(serviceTypeId));
+	}
+
 	private Long selectCreatedServiceTypeId(String code) {
-		return officeMapper.selectActiveServiceTypes()
+		return officeMapper.selectAllServiceTypes()
 			.stream()
 			.filter(serviceType -> code.equals(serviceType.getCode()))
 			.findFirst()

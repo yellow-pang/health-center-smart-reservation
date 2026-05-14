@@ -31,6 +31,13 @@ public class OfficeQueryService {
 			.toList();
 	}
 
+	public List<ServiceTypeResponse> findAllServiceTypes() {
+		return officeMapper.selectAllServiceTypes()
+			.stream()
+			.map(ServiceTypeResponse::from)
+			.toList();
+	}
+
 	public List<StaffResponse> findActiveStaff() {
 		return officeMapper.selectActiveStaff()
 			.stream()

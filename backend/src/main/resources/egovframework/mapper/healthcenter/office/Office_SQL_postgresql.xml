@@ -52,6 +52,19 @@
 		ORDER BY id
 	</select>
 
+	<select id="selectAllServiceTypes" resultMap="ServiceType">
+		SELECT
+			id,
+			health_center_id,
+			code,
+			name,
+			description,
+			default_capacity,
+			active
+		FROM service_types
+		ORDER BY active DESC, id
+	</select>
+
 	<select id="selectServiceTypeById" parameterType="long" resultMap="ServiceType">
 		SELECT
 			id,
@@ -101,6 +114,14 @@
 			updated_at = CURRENT_TIMESTAMP
 		WHERE id = #{serviceTypeId}
 		  AND active = true
+	</update>
+
+	<update id="activateServiceType" parameterType="long">
+		UPDATE service_types
+		SET active = true,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{serviceTypeId}
+		  AND active = false
 	</update>
 
 	<select id="selectActiveStaff" resultMap="Staff">

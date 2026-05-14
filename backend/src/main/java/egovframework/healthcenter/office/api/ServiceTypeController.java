@@ -41,6 +41,16 @@ public class ServiceTypeController {
 		return ApiResponse.success(officeQueryService.findActiveServiceTypes());
 	}
 
+	@GetMapping("/api/admin/service-types")
+	@Operation(
+		summary = "관리자 업무 유형 전체 조회",
+		description = "관리자가 활성/비활성 업무 유형을 모두 조회한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ApiResponse<List<ServiceTypeResponse>> findAllServiceTypes() {
+		return ApiResponse.success(officeQueryService.findAllServiceTypes());
+	}
+
 	@PostMapping("/api/admin/service-types")
 	@Operation(
 		summary = "업무 유형 생성",
@@ -84,6 +94,21 @@ public class ServiceTypeController {
 	public ResponseEntity<ApiResponse<ServiceTypeResponse>> deactivateServiceType(@PathVariable Long id) {
 		try {
 			return ResponseEntity.ok(ApiResponse.success(officeCommandService.deactivateServiceType(id)));
+		} catch (IllegalArgumentException e) {
+			return ResponseEntity.badRequest()
+				.body(ApiResponse.failure("SERVICE_TYPE_INVALID_REQUEST", e.getMessage()));
+		}
+	}
+
+	@PatchMapping("/api/admin/service-types/{id}/activate")
+	@Operation(
+		summary = "업무 유형 재활성화",
+		description = "관리자가 비활성화된 업무 유형을 다시 활성화한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<ServiceTypeResponse>> activateServiceType(@PathVariable Long id) {
+		try {
+			return ResponseEntity.ok(ApiResponse.success(officeCommandService.activateServiceType(id)));
 		} catch (IllegalArgumentException e) {
 			return ResponseEntity.badRequest()
 				.body(ApiResponse.failure("SERVICE_TYPE_INVALID_REQUEST", e.getMessage()));

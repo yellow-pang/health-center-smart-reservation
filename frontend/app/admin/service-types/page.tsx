@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Pencil, Trash2, Clock, Check, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Clock, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -32,6 +32,7 @@ import { DataTable, type Column } from '@/src/components/common/data-table';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
 import {
+  activateAdminServiceType,
   createAdminServiceType,
   deactivateAdminServiceType,
   getAdminServiceTypes,
@@ -41,10 +42,12 @@ import type { ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 
 type LoadState = 'loading' | 'success' | 'error';
+type ServiceTypeFilter = 'active' | 'inactive';
 
 export default function ServiceTypesPage() {
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
+  const [filter, setFilter] = useState<ServiceTypeFilter>('active');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ServiceType | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -134,13 +137,35 @@ export default function ServiceTypesPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      await deactivateAdminServiceType(id);
-      setServiceTypes(prev => prev.filter(s => s.serviceTypeId !== id));
+      const updatedServiceType = await deactivateAdminServiceType(id);
+      setServiceTypes(prev =>
+        prev.map(s => s.serviceTypeId === id ? updatedServiceType : s)
+      );
+      setFilter('inactive');
       toast.success('업무 유형이 비활성화되었습니다.');
     } catch {
       toast.error('비활성화 중 오류가 발생했습니다.');
     }
   };
+
+  const handleActivate = async (id: number) => {
+    try {
+      const updatedServiceType = await activateAdminServiceType(id);
+      setServiceTypes(prev =>
+        prev.map(s => s.serviceTypeId === id ? updatedServiceType : s)
+      );
+      setFilter('active');
+      toast.success('업무 유형이 재활성화되었습니다.');
+    } catch {
+      toast.error('재활성화 중 오류가 발생했습니다.');
+    }
+  };
+
+  const filteredServiceTypes = serviceTypes.filter(serviceType =>
+    filter === 'active' ? serviceType.active : !serviceType.active
+  );
+  const activeCount = serviceTypes.filter(serviceType => serviceType.active).length;
+  const inactiveCount = serviceTypes.length - activeCount;
 
   const columns: Column<ServiceType>[] = [
     {
@@ -193,34 +218,62 @@ export default function ServiceTypesPage() {
           >
             <Pencil className="h-4 w-4" />
           </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>업무 유형 삭제</AlertDialogTitle>
-                <AlertDialogDescription>
-                  &quot;{item.name}&quot; 업무 유형을 비활성화하시겠습니까? 비활성화된 업무는 예약 선택 목록에서 제외됩니다.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>취소</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => handleDelete(item.serviceTypeId)}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          {item.active ? (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-destructive hover:text-destructive"
                 >
-                  비활성화
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>업무 유형 비활성화</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    &quot;{item.name}&quot; 업무 유형을 비활성화하시겠습니까? 비활성화된 업무는 예약 선택 목록에서 제외됩니다.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => handleDelete(item.serviceTypeId)}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    비활성화
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          ) : (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-primary hover:text-primary"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>업무 유형 재활성화</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    &quot;{item.name}&quot; 업무 유형을 다시 활성화하시겠습니까? 활성화 후 예약과 현장 접수에서 선택할 수 있습니다.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>취소</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => handleActivate(item.serviceTypeId)}>
+                    재활성화
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
         </div>
       ),
       className: 'w-24',
@@ -301,14 +354,30 @@ export default function ServiceTypesPage() {
       />
 
       <div className="mt-6">
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant={filter === 'active' ? 'default' : 'outline'}
+            onClick={() => setFilter('active')}
+          >
+            활성 업무 {activeCount}
+          </Button>
+          <Button
+            type="button"
+            variant={filter === 'inactive' ? 'default' : 'outline'}
+            onClick={() => setFilter('inactive')}
+          >
+            비활성 업무 {inactiveCount}
+          </Button>
+        </div>
         {loadState === 'loading' && <LoadingState />}
         {loadState === 'error' && <ErrorState onRetry={loadData} />}
         {loadState === 'success' && (
           <DataTable
             columns={columns}
-            data={serviceTypes}
+            data={filteredServiceTypes}
             keyExtractor={(item) => String(item.serviceTypeId)}
-            emptyMessage="등록된 업무 유형이 없습니다."
+            emptyMessage={filter === 'active' ? '등록된 활성 업무 유형이 없습니다.' : '등록된 비활성 업무 유형이 없습니다.'}
           />
         )}
       </div>
