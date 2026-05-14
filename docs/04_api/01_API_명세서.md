@@ -84,9 +84,11 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | GET | /api/dashboard/visit-type-ratio | 예약/현장 비율 | ADMIN |
 | GET | /api/dashboard/no-show-rate | 노쇼율 | ADMIN |
 | GET | /api/congestion/current | 현재 혼잡도 | PUBLIC |
+| GET | /api/admin/service-types | 관리자 업무 유형 전체 조회 | ADMIN |
 | POST | /api/admin/service-types | 업무 유형 생성 | ADMIN |
 | PUT | /api/admin/service-types/{id} | 업무 유형 수정 | ADMIN |
 | PATCH | /api/admin/service-types/{id}/deactivate | 업무 유형 비활성화 | ADMIN |
+| PATCH | /api/admin/service-types/{id}/activate | 업무 유형 재활성화 | ADMIN |
 | POST | /api/admin/reservation-slots | 예약 슬롯 생성 | ADMIN |
 | GET | /api/admin/staff | 직원 목록 조회 | ADMIN |
 | GET | /api/admin/service-windows | 창구 업무 매핑 조회 | ADMIN |
@@ -286,7 +288,40 @@ Response:
 }
 ```
 
-### 4.5.2 관리자 업무 유형 생성
+### 4.5.2 관리자 업무 유형 전체 조회
+
+`GET /api/admin/service-types`
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "healthCenterId": 1,
+      "code": "VACCINATION",
+      "name": "예방접종",
+      "description": "예방접종 예약 및 현장 접수",
+      "defaultCapacity": 5,
+      "active": true
+    },
+    {
+      "id": 4,
+      "healthCenterId": 1,
+      "code": "MATERNAL_HEALTH",
+      "name": "모자보건",
+      "description": "모자보건 상담 및 접수",
+      "defaultCapacity": 5,
+      "active": false
+    }
+  ],
+  "error": null
+}
+```
+
+### 4.5.3 관리자 업무 유형 생성
 
 `POST /api/admin/service-types`
 
@@ -319,7 +354,29 @@ Response:
 }
 ```
 
-### 4.5.3 관리자 직원 목록 조회
+### 4.5.4 관리자 업무 유형 재활성화
+
+`PATCH /api/admin/service-types/{id}/activate`
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 4,
+    "healthCenterId": 1,
+    "code": "MATERNAL_HEALTH",
+    "name": "모자보건",
+    "description": "모자보건 상담 및 접수",
+    "defaultCapacity": 5,
+    "active": true
+  },
+  "error": null
+}
+```
+
+### 4.5.5 관리자 직원 목록 조회
 
 `GET /api/admin/staff`
 
