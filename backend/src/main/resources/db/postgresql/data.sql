@@ -542,15 +542,26 @@ ON CONFLICT (health_center_id, service_type_id, issued_date) DO UPDATE
 SET last_ticket_number = GREATEST(queue_ticket_counters.last_ticket_number, EXCLUDED.last_ticket_number),
     updated_at = CURRENT_TIMESTAMP;
 
-INSERT INTO service_windows (health_center_id, window_number, name, status, active)
-VALUES
-    (1, 1, '1번 창구', 'OPEN', true),
-    (1, 2, '2번 창구', 'OPEN', true),
-    (1, 3, '상담 창구', 'OPEN', true)
+INSERT INTO service_windows (health_center_id, window_number, name, status, active, staff_id)
+SELECT seed.health_center_id,
+       seed.window_number,
+       seed.name,
+       seed.status,
+       seed.active,
+       staff.id
+FROM (
+    VALUES
+        (1, 1, '1번 창구', 'OPEN', true, 'staff@test.com'),
+        (1, 2, '2번 창구', 'OPEN', true, NULL),
+        (1, 3, '상담 창구', 'OPEN', true, NULL)
+) AS seed(health_center_id, window_number, name, status, active, staff_email)
+LEFT JOIN members staff
+    ON staff.email = seed.staff_email
 ON CONFLICT (health_center_id, window_number) DO UPDATE
 SET name = EXCLUDED.name,
     status = EXCLUDED.status,
     active = EXCLUDED.active,
+    staff_id = EXCLUDED.staff_id,
     updated_at = CURRENT_TIMESTAMP;
 
 INSERT INTO service_window_service_types (service_window_id, service_type_id, active)

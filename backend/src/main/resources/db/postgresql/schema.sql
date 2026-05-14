@@ -193,6 +193,9 @@ CREATE TABLE IF NOT EXISTS service_windows (
 CREATE INDEX IF NOT EXISTS idx_service_windows_health_center_active
     ON service_windows (health_center_id, active, window_number);
 
+ALTER TABLE service_windows
+    ADD COLUMN IF NOT EXISTS staff_id BIGINT REFERENCES members(id);
+
 CREATE TABLE IF NOT EXISTS service_window_service_types (
     id BIGSERIAL PRIMARY KEY,
     service_window_id BIGINT NOT NULL REFERENCES service_windows(id),
