@@ -30,6 +30,8 @@
 		<result property="windowName" column="window_name"/>
 		<result property="status" column="status"/>
 		<result property="windowActive" column="window_active"/>
+		<result property="staffId" column="staff_id"/>
+		<result property="staffName" column="staff_name"/>
 		<result property="serviceTypeId" column="service_type_id"/>
 		<result property="serviceTypeCode" column="service_type_code"/>
 		<result property="serviceTypeName" column="service_type_name"/>
@@ -139,6 +141,75 @@
 		ORDER BY id
 	</select>
 
+	<select id="selectStaffById" parameterType="long" resultMap="Staff">
+		SELECT
+			id,
+			health_center_id,
+			email,
+			name,
+			phone,
+			role,
+			active
+		FROM members
+		WHERE id = #{staffId}
+		  AND role = 'STAFF'
+	</select>
+
+	<select id="selectStaffByEmail" parameterType="string" resultMap="Staff">
+		SELECT
+			id,
+			health_center_id,
+			email,
+			name,
+			phone,
+			role,
+			active
+		FROM members
+		WHERE email = #{email}
+		  AND role = 'STAFF'
+	</select>
+
+	<insert id="insertStaff" parameterType="map">
+		INSERT INTO members (
+			health_center_id,
+			email,
+			password,
+			name,
+			phone,
+			role,
+			active,
+			created_at
+		) VALUES (
+			#{healthCenterId},
+			#{email},
+			#{password},
+			#{name},
+			#{phone},
+			'STAFF',
+			true,
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+
+	<update id="updateStaff" parameterType="map">
+		UPDATE members
+		SET name = #{name},
+			phone = #{phone},
+			active = #{active},
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{staffId}
+		  AND role = 'STAFF'
+	</update>
+
+	<update id="deactivateStaff" parameterType="long">
+		UPDATE members
+		SET active = false,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{staffId}
+		  AND role = 'STAFF'
+		  AND active = true
+	</update>
+
 	<select id="selectServiceWindowMappings" resultMap="ServiceWindowMapping">
 		SELECT
 			sw.id AS window_id,
@@ -147,6 +218,8 @@
 			sw.name AS window_name,
 			sw.status,
 			sw.active AS window_active,
+			sw.staff_id,
+			staff.name AS staff_name,
 			st.id AS service_type_id,
 			st.code AS service_type_code,
 			st.name AS service_type_name,
@@ -154,6 +227,8 @@
 			st.default_capacity,
 			st.active AS service_type_active
 		FROM service_windows sw
+		LEFT JOIN members staff
+			ON staff.id = sw.staff_id
 		LEFT JOIN service_window_service_types swst
 			ON swst.service_window_id = sw.id
 		   AND swst.active = true
@@ -163,5 +238,104 @@
 		WHERE sw.active = true
 		ORDER BY sw.window_number, st.id
 	</select>
+
+	<select id="selectServiceWindowMappingsById" parameterType="long" resultMap="ServiceWindowMapping">
+		SELECT
+			sw.id AS window_id,
+			sw.health_center_id,
+			sw.window_number,
+			sw.name AS window_name,
+			sw.status,
+			sw.active AS window_active,
+			sw.staff_id,
+			staff.name AS staff_name,
+			st.id AS service_type_id,
+			st.code AS service_type_code,
+			st.name AS service_type_name,
+			st.description AS service_type_description,
+			st.default_capacity,
+			st.active AS service_type_active
+		FROM service_windows sw
+		LEFT JOIN members staff
+			ON staff.id = sw.staff_id
+		LEFT JOIN service_window_service_types swst
+			ON swst.service_window_id = sw.id
+		   AND swst.active = true
+		LEFT JOIN service_types st
+			ON st.id = swst.service_type_id
+		   AND st.active = true
+		WHERE sw.id = #{serviceWindowId}
+		ORDER BY sw.window_number, st.id
+	</select>
+
+	<select id="selectServiceWindowIdByNumber" parameterType="map" resultType="long">
+		SELECT id
+		FROM service_windows
+		WHERE health_center_id = #{healthCenterId}
+		  AND window_number = #{windowNumber}
+	</select>
+
+	<insert id="insertServiceWindow" parameterType="map">
+		INSERT INTO service_windows (
+			health_center_id,
+			window_number,
+			name,
+			status,
+			active,
+			staff_id,
+			created_at
+		) VALUES (
+			#{healthCenterId},
+			#{windowNumber},
+			#{name},
+			#{status},
+			#{active},
+			#{staffId},
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+
+	<update id="updateServiceWindow" parameterType="map">
+		UPDATE service_windows
+		SET window_number = #{windowNumber},
+			name = #{name},
+			status = #{status},
+			active = #{active},
+			staff_id = #{staffId},
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{serviceWindowId}
+	</update>
+
+	<update id="deactivateServiceWindow" parameterType="long">
+		UPDATE service_windows
+		SET active = false,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{serviceWindowId}
+		  AND active = true
+	</update>
+
+	<update id="deactivateServiceWindowServiceTypes" parameterType="long">
+		UPDATE service_window_service_types
+		SET active = false,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE service_window_id = #{serviceWindowId}
+	</update>
+
+	<insert id="upsertServiceWindowServiceType" parameterType="map">
+		INSERT INTO service_window_service_types (
+			service_window_id,
+			service_type_id,
+			active,
+			created_at
+		) VALUES (
+			#{serviceWindowId},
+			#{serviceTypeId},
+			true,
+			CURRENT_TIMESTAMP
+		)
+		ON CONFLICT (service_window_id, service_type_id) DO UPDATE
+		SET active = true,
+			updated_at = CURRENT_TIMESTAMP
+	</insert>
 
 </mapper>

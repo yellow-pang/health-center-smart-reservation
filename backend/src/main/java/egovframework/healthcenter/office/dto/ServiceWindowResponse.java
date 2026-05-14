@@ -18,6 +18,10 @@ public record ServiceWindowResponse(
 	String status,
 	@Schema(description = "사용 여부", example = "true")
 	boolean active,
+	@Schema(description = "담당 직원 ID", example = "2")
+	Long staffId,
+	@Schema(description = "담당 직원 이름", example = "보건소 직원")
+	String staffName,
 	@Schema(description = "담당 업무 유형 목록")
 	List<ServiceTypeResponse> serviceTypes
 ) {

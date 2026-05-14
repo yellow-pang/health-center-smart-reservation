@@ -31,7 +31,14 @@ import { PageHeader } from '@/src/components/common/page-header';
 import { DataTable, type Column } from '@/src/components/common/data-table';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
-import { getAdminStaff, getAdminServiceWindows, type StaffMember } from '@/src/lib/admin-master-data-api';
+import {
+  createAdminStaff,
+  deactivateAdminStaff,
+  getAdminStaff,
+  getAdminServiceWindows,
+  updateAdminStaff,
+  type StaffMember,
+} from '@/src/lib/admin-master-data-api';
 import type { ServiceWindow } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 
@@ -44,10 +51,12 @@ export default function StaffManagementPage() {
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<StaffMember | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
+  const [formPassword, setFormPassword] = useState('password1234');
   const [formPhone, setFormPhone] = useState('');
   const [formWindowId, setFormWindowId] = useState<string>(UNASSIGNED_WINDOW_VALUE);
   const [formIsActive, setFormIsActive] = useState(true);
@@ -79,6 +88,7 @@ export default function StaffManagementPage() {
   const resetForm = () => {
     setFormName('');
     setFormEmail('');
+    setFormPassword('password1234');
     setFormPhone('');
     setFormWindowId(UNASSIGNED_WINDOW_VALUE);
     setFormIsActive(true);
@@ -86,27 +96,71 @@ export default function StaffManagementPage() {
   };
 
   const openCreateDialog = () => {
-    toast.info('직원 추가 API는 후속 백엔드 작업에서 연동합니다.');
+    resetForm();
+    setIsDialogOpen(true);
   };
 
   const openEditDialog = (item: StaffMember) => {
     setEditingItem(item);
     setFormName(item.name);
     setFormEmail(item.email);
+    setFormPassword('');
     setFormPhone(item.phone);
     setFormWindowId(UNASSIGNED_WINDOW_VALUE);
     setFormIsActive(item.active);
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = () => {
-    toast.info('직원 수정 API는 후속 백엔드 작업에서 연동합니다.');
-    setIsDialogOpen(false);
-    resetForm();
+  const handleSubmit = async () => {
+    if (!formName.trim() || !formEmail.trim() || !formPhone.trim()) {
+      toast.error('이름, 이메일, 연락처를 입력해주세요.');
+      return;
+    }
+    if (!editingItem && !formPassword.trim()) {
+      toast.error('초기 비밀번호를 입력해주세요.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (editingItem) {
+        const updatedStaff = await updateAdminStaff(editingItem.id, {
+          name: formName.trim(),
+          phone: formPhone.trim(),
+          active: formIsActive,
+        });
+        setStaff(prev =>
+          prev.map(item => item.id === editingItem.id ? updatedStaff : item)
+        );
+        toast.success('직원 정보가 수정되었습니다.');
+      } else {
+        const createdStaff = await createAdminStaff({
+          email: formEmail.trim(),
+          password: formPassword.trim(),
+          name: formName.trim(),
+          phone: formPhone.trim(),
+        });
+        setStaff(prev => [...prev, createdStaff]);
+        toast.success('직원이 추가되었습니다.');
+      }
+
+      setIsDialogOpen(false);
+      resetForm();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = () => {
-    toast.info('직원 삭제 API는 후속 백엔드 작업에서 연동합니다.');
+  const handleDelete = async (id: number) => {
+    try {
+      await deactivateAdminStaff(id);
+      setStaff(prev => prev.filter(item => item.id !== id));
+      toast.success('직원이 비활성화되었습니다.');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   };
 
   const columns: Column<StaffMember>[] = [
@@ -180,7 +234,7 @@ export default function StaffManagementPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>취소</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={handleDelete}
+                  onClick={() => handleDelete(item.id)}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   삭제
@@ -233,8 +287,21 @@ export default function StaffManagementPage() {
                     value={formEmail}
                     onChange={(e) => setFormEmail(e.target.value)}
                     placeholder="hong@health.go.kr"
+                    disabled={Boolean(editingItem)}
                   />
                 </div>
+                {!editingItem && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">초기 비밀번호</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formPassword}
+                      onChange={(e) => setFormPassword(e.target.value)}
+                      placeholder="password1234"
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   <Label htmlFor="phone">연락처</Label>
                   <Input
@@ -272,7 +339,7 @@ export default function StaffManagementPage() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   취소
                 </Button>
-                <Button onClick={handleSubmit}>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
                   {editingItem ? '수정' : '추가'}
                 </Button>
               </DialogFooter>
@@ -296,4 +363,12 @@ export default function StaffManagementPage() {
       </div>
     </div>
   );
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return '요청 처리 중 오류가 발생했습니다.';
 }
