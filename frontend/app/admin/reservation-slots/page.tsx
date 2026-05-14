@@ -20,8 +20,11 @@ import { PageHeader } from '@/src/components/common/page-header';
 import { DataTable, type Column } from '@/src/components/common/data-table';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
-import { getAllReservationSlots, getServiceTypes } from '@/src/lib/mock-services';
-import { getServiceTypeName } from '@/src/lib/mock-data';
+import {
+  createAdminReservationSlot,
+  getAdminReservationSlots,
+  getAdminServiceTypes,
+} from '@/src/lib/admin-master-data-api';
 import type { ReservationSlot, ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -35,8 +38,9 @@ export default function ReservationSlotsPage() {
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [filterServiceType, setFilterServiceType] = useState<string>('all');
-  const [filterDate, setFilterDate] = useState<string>('');
+  const [filterDate, setFilterDate] = useState<string>(() => getTodayDate());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
   const [formServiceType, setFormServiceType] = useState('');
@@ -47,9 +51,10 @@ export default function ReservationSlotsPage() {
   const loadData = async () => {
     setLoadState('loading');
     try {
-      const [slotsData, servicesData] = await Promise.all([
-        getAllReservationSlots(),
-        getServiceTypes(),
+      const serviceTypeId = filterServiceType === 'all' ? undefined : Number(filterServiceType);
+      const [servicesData, slotsData] = await Promise.all([
+        getAdminServiceTypes(),
+        getAdminReservationSlots({ serviceTypeId, date: filterDate }),
       ]);
       setSlots(slotsData);
       setServiceTypes(servicesData);
@@ -61,41 +66,40 @@ export default function ReservationSlotsPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [filterDate, filterServiceType]);
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!formServiceType || !formDate || !formTime) {
       toast.error('모든 항목을 입력해주세요.');
       return;
     }
 
-    const newSlot: ReservationSlot = {
-      slotId: Date.now(),
-      serviceTypeId: Number(formServiceType),
-      date: formDate,
-      startTime: formTime,
-      endTime: formTime,
-      capacity: parseInt(formCapacity) || 5,
-      reservedCount: 0,
-      availableCount: parseInt(formCapacity) || 5,
-      available: true,
-    };
+    setIsSubmitting(true);
+    try {
+      const createdSlot = await createAdminReservationSlot({
+        serviceTypeId: Number(formServiceType),
+        date: formDate,
+        startTime: formTime,
+        endTime: getEndTime(formTime),
+        capacity: parseInt(formCapacity) || 5,
+      });
 
-    setSlots(prev => [...prev, newSlot]);
-    setIsDialogOpen(false);
-    setFormServiceType('');
-    setFormDate('');
-    setFormTime('');
-    setFormCapacity('5');
-    toast.success('예약 슬롯이 추가되었습니다.');
+      setSlots(prev => [...prev, createdSlot]);
+      setIsDialogOpen(false);
+      setFormServiceType('');
+      setFormDate('');
+      setFormTime('');
+      setFormCapacity('5');
+      toast.success('예약 슬롯이 추가되었습니다.');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  // Filter slots
-  const filteredSlots = slots.filter(slot => {
-    if (filterServiceType !== 'all' && String(slot.serviceTypeId) !== filterServiceType) return false;
-    if (filterDate && slot.date !== filterDate) return false;
-    return true;
-  });
+  const getServiceTypeName = (serviceTypeId: number) =>
+    serviceTypes.find(serviceType => serviceType.serviceTypeId === serviceTypeId)?.name || '미확인 업무';
 
   const columns: Column<ReservationSlot>[] = [
     {
@@ -207,7 +211,7 @@ export default function ReservationSlotsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="time">시간</Label>
+                  <Label htmlFor="time">시작 시간</Label>
                   <Input
                     id="time"
                     type="time"
@@ -230,7 +234,7 @@ export default function ReservationSlotsPage() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   취소
                 </Button>
-                <Button onClick={handleCreate}>추가</Button>
+                <Button onClick={handleCreate} disabled={isSubmitting}>추가</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -264,16 +268,16 @@ export default function ReservationSlotsPage() {
               <Input
                 type="date"
                 value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
+                onChange={(e) => setFilterDate(e.target.value || getTodayDate())}
                 placeholder="날짜 선택"
               />
             </div>
-            {(filterServiceType !== 'all' || filterDate) && (
+            {(filterServiceType !== 'all' || filterDate !== getTodayDate()) && (
               <Button 
                 variant="ghost" 
                 onClick={() => {
                   setFilterServiceType('all');
-                  setFilterDate('');
+                  setFilterDate(getTodayDate());
                 }}
               >
                 필터 초기화
@@ -289,7 +293,7 @@ export default function ReservationSlotsPage() {
         {loadState === 'success' && (
           <DataTable
             columns={columns}
-            data={filteredSlots}
+            data={slots}
             keyExtractor={(item) => String(item.slotId)}
             emptyMessage="등록된 예약 슬롯이 없습니다."
           />
@@ -297,4 +301,29 @@ export default function ReservationSlotsPage() {
       </div>
     </div>
   );
+}
+
+function getTodayDate(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function getEndTime(startTime: string): string {
+  const [hour, minute] = startTime.split(':').map(Number);
+  const date = new Date(2000, 0, 1, hour, minute);
+  date.setMinutes(date.getMinutes() + 30);
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return '요청 처리 중 오류가 발생했습니다.';
 }

@@ -16,13 +16,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { PageHeader } from '@/src/components/common/page-header';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
-import { getServiceWindows, getServiceTypes } from '@/src/lib/mock-services';
-import { getServiceTypeName } from '@/src/lib/mock-data';
+import { getAdminServiceTypes, getAdminServiceWindows } from '@/src/lib/admin-master-data-api';
 import type { ServiceWindow, ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -45,8 +43,8 @@ export default function ServiceWindowsPage() {
     setLoadState('loading');
     try {
       const [windowsData, servicesData] = await Promise.all([
-        getServiceWindows(),
-        getServiceTypes(),
+        getAdminServiceWindows(),
+        getAdminServiceTypes(),
       ]);
       setWindows(windowsData);
       setServiceTypes(servicesData);
@@ -68,8 +66,7 @@ export default function ServiceWindowsPage() {
   };
 
   const openCreateDialog = () => {
-    resetForm();
-    setIsDialogOpen(true);
+    toast.info('창구 추가 API는 후속 백엔드 작업에서 연동합니다.');
   };
 
   const openEditDialog = (item: ServiceWindow) => {
@@ -89,34 +86,13 @@ export default function ServiceWindowsPage() {
   };
 
   const handleSubmit = () => {
-    if (!formName.trim()) {
-      toast.error('창구명을 입력해주세요.');
-      return;
-    }
-
-    if (editingItem) {
-      setWindows(prev =>
-        prev.map(w =>
-          w.id === editingItem.id
-            ? { ...w, name: formName, serviceTypeIds: formServiceTypeIds, active: formIsActive }
-            : w
-        )
-      );
-      toast.success('창구 정보가 수정되었습니다.');
-    } else {
-      const newWindow: ServiceWindow = {
-        id: `win-${Date.now()}`,
-        name: formName,
-        serviceTypeIds: formServiceTypeIds,
-        active: formIsActive,
-      };
-      setWindows(prev => [...prev, newWindow]);
-      toast.success('창구가 추가되었습니다.');
-    }
-    
+    toast.info('창구 수정 API는 후속 백엔드 작업에서 연동합니다.');
     setIsDialogOpen(false);
     resetForm();
   };
+
+  const getServiceTypeName = (serviceTypeId: number) =>
+    serviceTypes.find(serviceType => serviceType.serviceTypeId === serviceTypeId)?.name || '미확인 업무';
 
   return (
     <div>
@@ -124,13 +100,12 @@ export default function ServiceWindowsPage() {
         title="창구 관리"
         description="보건소 창구와 담당 업무를 관리합니다"
         actions={
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreateDialog}>
-                <Plus className="mr-2 h-4 w-4" />
-                창구 추가
-              </Button>
-            </DialogTrigger>
+          <>
+            <Button onClick={openCreateDialog}>
+              <Plus className="mr-2 h-4 w-4" />
+              창구 추가
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
@@ -188,7 +163,8 @@ export default function ServiceWindowsPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </>
         }
       />
 
@@ -251,16 +227,6 @@ export default function ServiceWindowsPage() {
                     </div>
                   </div>
 
-                  {window.staffId && (
-                    <div className="mt-3 pt-3 border-t">
-                      <p className="text-xs text-muted-foreground">담당자</p>
-                      <p className="text-sm font-medium">
-                        {window.staffId === 'staff-1' ? '김직원' : 
-                         window.staffId === 'staff-2' ? '이직원' : 
-                         window.staffId === 'staff-3' ? '박직원' : '미배정'}
-                      </p>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             ))}

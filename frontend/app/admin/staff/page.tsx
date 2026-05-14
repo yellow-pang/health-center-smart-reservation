@@ -15,7 +15,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
   AlertDialog,
@@ -32,28 +31,12 @@ import { PageHeader } from '@/src/components/common/page-header';
 import { DataTable, type Column } from '@/src/components/common/data-table';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
-import { getServiceWindows } from '@/src/lib/mock-services';
+import { getAdminStaff, getAdminServiceWindows, type StaffMember } from '@/src/lib/admin-master-data-api';
 import type { ServiceWindow } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 
 type LoadState = 'loading' | 'success' | 'error';
-
-interface StaffMember {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  windowId?: string;
-  isActive: boolean;
-}
-
-// Mock staff data
-const initialStaff: StaffMember[] = [
-  { id: 'staff-1', name: '김직원', email: 'kim@health.go.kr', phone: '010-2345-6789', windowId: 'win-1', isActive: true },
-  { id: 'staff-2', name: '이직원', email: 'lee@health.go.kr', phone: '010-3456-7890', windowId: 'win-2', isActive: true },
-  { id: 'staff-3', name: '박직원', email: 'park@health.go.kr', phone: '010-4567-8901', windowId: 'win-3', isActive: true },
-  { id: 'staff-4', name: '최직원', email: 'choi@health.go.kr', phone: '010-5678-9012', isActive: false },
-];
+const UNASSIGNED_WINDOW_VALUE = 'unassigned';
 
 export default function StaffManagementPage() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -66,15 +49,18 @@ export default function StaffManagementPage() {
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
-  const [formWindowId, setFormWindowId] = useState<string>('');
+  const [formWindowId, setFormWindowId] = useState<string>(UNASSIGNED_WINDOW_VALUE);
   const [formIsActive, setFormIsActive] = useState(true);
 
   const loadData = async () => {
     setLoadState('loading');
     try {
-      const windowsData = await getServiceWindows();
+      const [staffData, windowsData] = await Promise.all([
+        getAdminStaff(),
+        getAdminServiceWindows(),
+      ]);
       setWindows(windowsData);
-      setStaff(initialStaff);
+      setStaff(staffData);
       setLoadState('success');
     } catch {
       setLoadState('error');
@@ -94,14 +80,13 @@ export default function StaffManagementPage() {
     setFormName('');
     setFormEmail('');
     setFormPhone('');
-    setFormWindowId('');
+    setFormWindowId(UNASSIGNED_WINDOW_VALUE);
     setFormIsActive(true);
     setEditingItem(null);
   };
 
   const openCreateDialog = () => {
-    resetForm();
-    setIsDialogOpen(true);
+    toast.info('직원 추가 API는 후속 백엔드 작업에서 연동합니다.');
   };
 
   const openEditDialog = (item: StaffMember) => {
@@ -109,46 +94,19 @@ export default function StaffManagementPage() {
     setFormName(item.name);
     setFormEmail(item.email);
     setFormPhone(item.phone);
-    setFormWindowId(item.windowId || '');
-    setFormIsActive(item.isActive);
+    setFormWindowId(UNASSIGNED_WINDOW_VALUE);
+    setFormIsActive(item.active);
     setIsDialogOpen(true);
   };
 
   const handleSubmit = () => {
-    if (!formName.trim() || !formEmail.trim()) {
-      toast.error('이름과 이메일을 입력해주세요.');
-      return;
-    }
-
-    if (editingItem) {
-      setStaff(prev =>
-        prev.map(s =>
-          s.id === editingItem.id
-            ? { ...s, name: formName, email: formEmail, phone: formPhone, windowId: formWindowId || undefined, isActive: formIsActive }
-            : s
-        )
-      );
-      toast.success('직원 정보가 수정되었습니다.');
-    } else {
-      const newStaff: StaffMember = {
-        id: `staff-${Date.now()}`,
-        name: formName,
-        email: formEmail,
-        phone: formPhone,
-        windowId: formWindowId || undefined,
-        isActive: formIsActive,
-      };
-      setStaff(prev => [...prev, newStaff]);
-      toast.success('직원이 추가되었습니다.');
-    }
-    
+    toast.info('직원 수정 API는 후속 백엔드 작업에서 연동합니다.');
     setIsDialogOpen(false);
     resetForm();
   };
 
-  const handleDelete = (id: string) => {
-    setStaff(prev => prev.filter(s => s.id !== id));
-    toast.success('직원이 삭제되었습니다.');
+  const handleDelete = () => {
+    toast.info('직원 삭제 API는 후속 백엔드 작업에서 연동합니다.');
   };
 
   const columns: Column<StaffMember>[] = [
@@ -173,18 +131,18 @@ export default function StaffManagementPage() {
     {
       key: 'window',
       header: '담당 창구',
-      cell: (item) => getWindowName(item.windowId),
+      cell: () => getWindowName(),
     },
     {
-      key: 'isActive',
+      key: 'active',
       header: '상태',
       cell: (item) => (
         <span className={`text-xs px-2 py-1 rounded-full ${
-          item.isActive 
+          item.active
             ? 'bg-green-100 text-green-700' 
             : 'bg-gray-100 text-gray-500'
         }`}>
-          {item.isActive ? '근무 중' : '비활성'}
+          {item.active ? '근무 중' : '비활성'}
         </span>
       ),
       className: 'w-24',
@@ -222,7 +180,7 @@ export default function StaffManagementPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>취소</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDelete(item.id)}
+                  onClick={handleDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
                   삭제
@@ -242,13 +200,12 @@ export default function StaffManagementPage() {
         title="직원 관리"
         description="보건소 직원을 관리합니다"
         actions={
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={openCreateDialog}>
-                <Plus className="mr-2 h-4 w-4" />
-                직원 추가
-              </Button>
-            </DialogTrigger>
+          <>
+            <Button onClick={openCreateDialog}>
+              <Plus className="mr-2 h-4 w-4" />
+              직원 추가
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
@@ -295,7 +252,7 @@ export default function StaffManagementPage() {
                       <SelectValue placeholder="창구 선택 (선택사항)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">미배정</SelectItem>
+                      <SelectItem value={UNASSIGNED_WINDOW_VALUE}>미배정</SelectItem>
                       {windows.filter(w => w.active).map((w) => (
                         <SelectItem key={w.id} value={w.id}>{w.name}</SelectItem>
                       ))}
@@ -320,7 +277,8 @@ export default function StaffManagementPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </>
         }
       />
 
@@ -331,7 +289,7 @@ export default function StaffManagementPage() {
           <DataTable
             columns={columns}
             data={staff}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => String(item.id)}
             emptyMessage="등록된 직원이 없습니다."
           />
         )}
