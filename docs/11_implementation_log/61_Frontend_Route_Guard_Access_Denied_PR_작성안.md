@@ -43,11 +43,11 @@ feat: 프론트엔드 역할별 라우트 가드 추가
 - [x] `npm.cmd exec -- tsc --noEmit`
 - [x] `npm.cmd run build`
 - [x] `git diff --check`
-- [ ] 브라우저에서 시민 계정으로 `/staff/queues` 접근 시 권한 없음 화면 확인
-- [ ] 브라우저에서 시민 계정으로 `/admin/dashboard` 접근 시 권한 없음 화면 확인
-- [ ] 브라우저에서 직원 계정으로 `/citizen/reservations` 접근 시 권한 없음 화면 확인
-- [ ] 브라우저에서 관리자 계정으로 `/staff/queues` 접근 시 권한 없음 화면 확인
-- [ ] 권한 없음 화면의 "내 화면으로 이동" 버튼이 역할별 홈으로 이동하는지 확인
+- [x] 브라우저에서 시민 계정으로 `/staff/queues` 접근 시 권한 없음 화면 확인
+- [x] 브라우저에서 시민 계정으로 `/admin/dashboard` 접근 시 권한 없음 화면 확인
+- [x] 브라우저에서 직원 계정으로 `/citizen/reservations` 접근 시 권한 없음 화면 확인
+- [x] 브라우저에서 관리자 계정으로 `/staff/queues` 접근 시 권한 없음 화면 확인
+- [x] 권한 없음 화면의 "내 화면으로 이동" 버튼이 역할별 홈으로 이동하는지 확인
 - [ ] API 403 응답 발생 시 `/access-denied` 이동 확인
 
 ## Swagger 대표 예시
@@ -56,8 +56,8 @@ feat: 프론트엔드 역할별 라우트 가드 추가
 
 ## 추가 테스트 체크리스트
 
-- [ ] Happy: 올바른 역할 사용자는 자기 역할 화면에 접근 가능
-- [ ] Edge: 로그인 직후 인증 hydrate 중 화면 깜빡임 없이 대기
+- [x] Happy: 올바른 역할 사용자는 자기 역할 화면에 접근 가능
+- [x] Edge: 로그인 직후 인증 hydrate 중 화면 깜빡임 없이 대기
 - [ ] Edge: 권한 없음 화면에 `from` query가 없을 때도 정상 표시
 - [ ] Bad: 미로그인 사용자가 보호 화면 접근 시 `/login` 이동
 - [ ] Bad: 역할이 다른 로그인 사용자가 직접 URL 입력 시 `/access-denied` 이동
