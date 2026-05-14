@@ -31,12 +31,12 @@ import { PageHeader } from '@/src/components/common/page-header';
 import { DataTable, type Column } from '@/src/components/common/data-table';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
-import { 
-  getAllServiceTypes, 
-  createServiceType, 
-  updateServiceType, 
-  deleteServiceType 
-} from '@/src/lib/mock-services';
+import {
+  createAdminServiceType,
+  deactivateAdminServiceType,
+  getAdminServiceTypes,
+  updateAdminServiceType,
+} from '@/src/lib/admin-master-data-api';
 import type { ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 
@@ -58,7 +58,7 @@ export default function ServiceTypesPage() {
   const loadData = async () => {
     setLoadState('loading');
     try {
-      const data = await getAllServiceTypes();
+      const data = await getAdminServiceTypes();
       setServiceTypes(data);
       setLoadState('success');
     } catch {
@@ -100,34 +100,27 @@ export default function ServiceTypesPage() {
 
     setIsSubmitting(true);
     try {
+      const payload = {
+        code: editingItem?.code,
+        name: formName.trim(),
+        description: formDescription.trim(),
+        defaultCapacity: parseInt(formMinutes) || 5,
+        active: formIsActive,
+      };
+
       if (editingItem) {
-        // Update
-        await updateServiceType(editingItem.serviceTypeId, {
-          name: formName,
-          description: formDescription,
-          defaultCapacity: parseInt(formMinutes) || 5,
-          active: formIsActive,
-        });
+        const updatedServiceType = await updateAdminServiceType(editingItem.serviceTypeId, payload);
         setServiceTypes(prev =>
           prev.map(s =>
             s.serviceTypeId === editingItem.serviceTypeId
-              ? { ...s, name: formName, description: formDescription, defaultCapacity: parseInt(formMinutes) || 5, active: formIsActive }
+              ? updatedServiceType
               : s
           )
         );
         toast.success('업무 유형이 수정되었습니다.');
       } else {
-        // Create
-        const result = await createServiceType({
-          code: formName.toUpperCase().replace(/\s+/g, '_'),
-          name: formName,
-          description: formDescription,
-          defaultCapacity: parseInt(formMinutes) || 5,
-          active: formIsActive,
-        });
-        if (result.serviceType) {
-          setServiceTypes(prev => [...prev, result.serviceType!]);
-        }
+        const createdServiceType = await createAdminServiceType(payload);
+        setServiceTypes(prev => [...prev, createdServiceType]);
         toast.success('업무 유형이 추가되었습니다.');
       }
       setIsDialogOpen(false);
@@ -141,11 +134,11 @@ export default function ServiceTypesPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      await deleteServiceType(id);
+      await deactivateAdminServiceType(id);
       setServiceTypes(prev => prev.filter(s => s.serviceTypeId !== id));
-      toast.success('업무 유형이 삭제되었습니다.');
+      toast.success('업무 유형이 비활성화되었습니다.');
     } catch {
-      toast.error('삭제 중 오류가 발생했습니다.');
+      toast.error('비활성화 중 오류가 발생했습니다.');
     }
   };
 
@@ -214,7 +207,7 @@ export default function ServiceTypesPage() {
               <AlertDialogHeader>
                 <AlertDialogTitle>업무 유형 삭제</AlertDialogTitle>
                 <AlertDialogDescription>
-                  &quot;{item.name}&quot; 업무 유형을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+                  &quot;{item.name}&quot; 업무 유형을 비활성화하시겠습니까? 비활성화된 업무는 예약 선택 목록에서 제외됩니다.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -223,7 +216,7 @@ export default function ServiceTypesPage() {
                   onClick={() => handleDelete(item.serviceTypeId)}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
-                  삭제
+                  비활성화
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
