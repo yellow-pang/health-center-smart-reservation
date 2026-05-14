@@ -40,6 +40,7 @@ feat: 관리자 업무 유형 전체 조회와 재활성화 구현
 - 업무 유형 관리 화면에 활성/비활성 탭 추가
 - 비활성화 성공 시 비활성 탭으로 이동
 - 재활성화 성공 시 활성 탭으로 이동
+- 비활성 탭 확인용 `DISABLED_TEST_SERVICE` 개발 seed 추가
 - API 명세 갱신
 
 ## 검증
@@ -68,6 +69,7 @@ feat: 관리자 업무 유형 전체 조회와 재활성화 구현
 - `success: true`
 - `data`에 활성/비활성 업무 유형이 모두 포함
 - 비활성 항목은 `active: false`로 표시
+- 개발 seed 기준 `DISABLED_TEST_SERVICE`가 `active: false`로 포함
 
 ## 추가 테스트 체크리스트
 

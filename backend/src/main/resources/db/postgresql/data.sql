@@ -94,7 +94,8 @@ INSERT INTO service_types (health_center_id, code, name, description, default_ca
 VALUES
     (1, 'VACCINATION', '예방접종', '예방접종 예약 및 현장 접수', 5, true),
     (1, 'HEALTH_CHECK', '건강검진/검사', '건강검진과 검사 예약 및 현장 접수', 5, true),
-    (1, 'HEALTH_CONSULT', '건강상담', '건강 상담 예약 및 현장 접수', 5, true)
+    (1, 'HEALTH_CONSULT', '건강상담', '건강 상담 예약 및 현장 접수', 5, true),
+    (1, 'DISABLED_TEST_SERVICE', '비활성 테스트 업무', '관리자 업무 유형 비활성 탭 확인용 데이터', 5, false)
 ON CONFLICT (health_center_id, code) DO UPDATE
 SET name = EXCLUDED.name,
     description = EXCLUDED.description,

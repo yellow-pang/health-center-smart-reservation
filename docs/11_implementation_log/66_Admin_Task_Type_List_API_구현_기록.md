@@ -13,6 +13,7 @@
 - [x] 관리자 전체 업무 유형 조회 API 추가
 - [x] 업무 유형 재활성화 API 추가
 - [x] MyBatis Mapper XML 쿼리 추가
+- [x] 비활성 탭 확인용 개발 seed 추가
 - [x] 관리자 기준정보 API client 갱신
 - [x] 관리자 업무 유형 화면 활성/비활성 탭 추가
 - [x] 비활성화 성공 시 비활성 탭으로 이동
@@ -52,6 +53,12 @@
 - `/admin/service-types` 화면에 활성/비활성 필터 버튼을 추가했다.
 - 업무 유형 비활성화 성공 시 목록에서 제거하지 않고 상태를 갱신한 뒤 비활성 탭으로 이동한다.
 - 비활성 탭에서는 재활성화 버튼을 제공하고, 성공 시 활성 탭으로 이동한다.
+
+### 3.3 개발 seed
+
+- `backend/src/main/resources/db/postgresql/data.sql`에 `DISABLED_TEST_SERVICE` 업무 유형을 추가했다.
+- `active = false` 상태로 생성되어 관리자 업무 유형 화면의 비활성 탭과 재활성화 흐름을 바로 확인할 수 있다.
+- 예약 슬롯 seed는 활성 업무 유형만 대상으로 하므로 비활성 테스트 업무에는 예약 슬롯이 생성되지 않는다.
 
 ## 4. GitNexus 및 영향 범위
 
@@ -97,6 +104,7 @@ Swagger 대표 예시:
 - `success: true`
 - `data`에 활성/비활성 업무 유형이 모두 포함
 - 비활성 항목은 `active: false`로 표시
+- 개발 seed 기준 `DISABLED_TEST_SERVICE`가 `active: false`로 포함
 
 브라우저 확인:
 
