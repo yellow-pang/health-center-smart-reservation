@@ -42,20 +42,25 @@ feat: 관리자 대시보드 API 연동
 - 새로고침 시 현재 선택 날짜 기준으로 재조회
 - 데이터가 비어 있을 때 차트 영역에 빈 상태 표시
 - 노쇼율 카드에 계산 대상 예약 수와 미방문 건수 표시
+- 차트 색상 값을 `var(--chart-*)` 기준으로 보정
+- 업무별 평균 대기시간 막대 색상 분리
+- 현재 날짜 기준 Dashboard 개발용 seed 데이터 추가
 
 ## 검증
 
 - [x] `npm.cmd exec -- tsc --noEmit`
 - [x] `npm.cmd run build`
+- [x] `mvn.cmd -q -DskipTests compile`
+- [x] `mvn.cmd -q test-compile`
 - [x] `git diff --check`
-- [ ] Swagger `GET /api/dashboard/summary?date=2026-05-14` 대표 예시 확인
-- [ ] 브라우저 `/admin/dashboard` KPI 카드 표시 확인
-- [ ] 브라우저 시간대별 방문자 차트 확인
-- [ ] 브라우저 업무별 평균 대기시간 차트 확인
-- [ ] 브라우저 방문 유형 비율 차트 확인
-- [ ] 브라우저 노쇼율 카드 확인
-- [ ] 날짜 필터 변경 시 재조회 확인
-- [ ] 새로고침 버튼 클릭 시 재조회 확인
+- [x] Swagger `GET /api/dashboard/summary?date=2026-05-14` 대표 예시 확인
+- [x] 브라우저 `/admin/dashboard` KPI 카드 표시 확인
+- [x] 브라우저 시간대별 방문자 차트 확인
+- [x] 브라우저 업무별 평균 대기시간 차트 확인
+- [x] 브라우저 방문 유형 비율 차트 확인
+- [x] 브라우저 노쇼율 카드 확인
+- [x] 날짜 필터 변경 시 재조회 확인
+- [x] 새로고침 버튼 클릭 시 재조회 확인
 
 ## Swagger 대표 예시
 
@@ -91,6 +96,7 @@ feat: 관리자 대시보드 API 연동
 - 브라우저 런타임에서 CORS, API base URL, 관리자 accessToken, 백엔드 실행 상태를 확인해야 합니다.
 - Dashboard API가 날짜별 데이터가 거의 없는 경우 차트가 대부분 0 또는 빈 상태로 보일 수 있습니다.
 - `package-lock.json`과 `pnpm-lock.yaml` 공존으로 Next build root 추론 경고가 남아 있습니다.
+- 개발용 Dashboard seed는 `CURRENT_DATE` 기준으로 생성되므로 운영 데이터와 분리된 초기 개발/시연용 데이터입니다.
 
 ## 후속 작업
 
@@ -108,6 +114,8 @@ feat: 관리자 대시보드 API 연동
 - Dashboard API client 추가
 - 관리자 대시보드 지표와 차트를 실제 API로 연결
 - 날짜 필터와 노쇼율 상세 표시 보강
+- 차트 색상 적용 오류 수정
+- 현재 날짜 Dashboard 예시 데이터 추가
 ```
 
 ## Merge 후 브랜치 정리 기준

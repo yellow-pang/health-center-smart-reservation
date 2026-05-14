@@ -22,7 +22,7 @@ import type {
   ServiceWaitTime, 
   VisitTypeRatio 
 } from '@/src/lib/mock-data';
-import { 
+import {
   LineChart, 
   Line, 
   XAxis, 
@@ -39,6 +39,14 @@ import {
 import { cn } from '@/lib/utils';
 
 type LoadState = 'loading' | 'success' | 'error';
+
+const chartColors = [
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)',
+  'var(--chart-4)',
+  'var(--chart-5)',
+];
 
 export default function AdminDashboardPage() {
   const [selectedDate, setSelectedDate] = useState(() => getTodayDate());
@@ -86,7 +94,7 @@ export default function AdminDashboardPage() {
     loadData();
   }, [loadData]);
 
-  const pieColors = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))'];
+  const pieColors = [chartColors[0], chartColors[1]];
   const noShowGoalRate = 5;
   const noShowProgress = stats ? Math.max(0, Math.min(100, Math.round((1 - stats.noShowRate / 15) * 100))) : 0;
 
@@ -167,7 +175,7 @@ export default function AdminDashboardPage() {
                   {hourlyData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={hourlyData}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                         <XAxis
                           dataKey="hour"
                           tick={{ fontSize: 12 }}
@@ -181,19 +189,20 @@ export default function AdminDashboardPage() {
                         />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
+                            backgroundColor: 'var(--card)',
+                            border: '1px solid var(--border)',
                             borderRadius: '8px',
+                            color: 'var(--card-foreground)',
                           }}
                           formatter={(value: number) => [`${value}명`, '방문자']}
                         />
                         <Line
                           type="monotone"
                           dataKey="count"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={2}
-                          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2 }}
-                          activeDot={{ r: 6 }}
+                          stroke={chartColors[0]}
+                          strokeWidth={3}
+                          dot={{ fill: 'var(--card)', stroke: chartColors[0], strokeWidth: 2, r: 3 }}
+                          activeDot={{ r: 6, fill: chartColors[0], stroke: 'var(--card)', strokeWidth: 2 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -217,7 +226,7 @@ export default function AdminDashboardPage() {
                   {waitTimeData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={waitTimeData} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={true} vertical={false} />
+                        <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={true} vertical={false} />
                         <XAxis
                           type="number"
                           tick={{ fontSize: 12 }}
@@ -234,17 +243,24 @@ export default function AdminDashboardPage() {
                         />
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
+                            backgroundColor: 'var(--card)',
+                            border: '1px solid var(--border)',
                             borderRadius: '8px',
+                            color: 'var(--card-foreground)',
                           }}
                           formatter={(value: number) => [`${value}분`, '평균 대기']}
                         />
                         <Bar
                           dataKey="avgMinutes"
-                          fill="hsl(var(--chart-2))"
                           radius={[0, 4, 4, 0]}
-                        />
+                        >
+                          {waitTimeData.map((item, index) => (
+                            <Cell
+                              key={`wait-${item.serviceType}`}
+                              fill={chartColors[(index + 1) % chartColors.length]}
+                            />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
@@ -288,9 +304,10 @@ export default function AdminDashboardPage() {
                         </Pie>
                         <Tooltip
                           contentStyle={{
-                            backgroundColor: 'hsl(var(--card))',
-                            border: '1px solid hsl(var(--border))',
+                            backgroundColor: 'var(--card)',
+                            border: '1px solid var(--border)',
                             borderRadius: '8px',
+                            color: 'var(--card-foreground)',
                           }}
                           formatter={(value: number, name: string) => [`${value}명`, name]}
                         />
