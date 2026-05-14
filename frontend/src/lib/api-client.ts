@@ -37,6 +37,7 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
   query?: Record<string, QueryValue>;
   auth?: boolean;
   redirectOnUnauthorized?: boolean;
+  redirectOnForbidden?: boolean;
 }
 
 export const ACCESS_TOKEN_STORAGE_KEY = 'healthcenter.accessToken';
@@ -113,6 +114,7 @@ export async function apiResponse<T>(
     query,
     auth = true,
     redirectOnUnauthorized = true,
+    redirectOnForbidden = true,
     ...init
   } = options;
 
@@ -139,6 +141,11 @@ export async function apiResponse<T>(
     if (redirectOnUnauthorized && typeof window !== 'undefined') {
       window.location.href = '/login';
     }
+  }
+
+  if (httpResponse.status === 403 && redirectOnForbidden && typeof window !== 'undefined') {
+    const from = encodeURIComponent(window.location.pathname);
+    window.location.href = `/access-denied?from=${from}`;
   }
 
   if (!httpResponse.ok) {
