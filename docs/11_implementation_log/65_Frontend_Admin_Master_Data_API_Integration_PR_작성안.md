@@ -48,11 +48,11 @@ feat: 관리자 기준정보 화면 API 연동
 - [x] `npm.cmd exec -- tsc --noEmit`
 - [x] `npm.cmd run build`
 - [x] `git diff --check`
-- [ ] Swagger `GET /api/admin/service-windows` 대표 예시 확인
-- [ ] 브라우저 `/admin/service-types` 목록/생성/수정/비활성화 확인
-- [ ] 브라우저 `/admin/reservation-slots` 날짜별 조회/생성 확인
-- [ ] 브라우저 `/admin/staff` 직원 목록 조회 확인
-- [ ] 브라우저 `/admin/service-windows` 창구 업무 매핑 조회 확인
+- [x] Swagger `GET /api/admin/service-windows` 대표 예시 확인
+- [x] 브라우저 `/admin/service-types` 목록/생성/수정/비활성화 확인
+- [x] 브라우저 `/admin/reservation-slots` 날짜별 조회/생성 확인
+- [x] 브라우저 `/admin/staff` 직원 목록 조회 확인
+- [x] 브라우저 `/admin/service-windows` 창구 업무 매핑 조회 확인
 
 ## Swagger 대표 예시
 
@@ -70,16 +70,16 @@ feat: 관리자 기준정보 화면 API 연동
 
 ## 추가 테스트 체크리스트
 
-- [ ] Happy: 관리자 계정으로 업무 유형 목록 조회 성공
-- [ ] Happy: 업무 유형 생성 후 목록에 신규 업무 표시
-- [ ] Happy: 업무 유형 수정 후 변경된 이름/설명/기본 정원 표시
-- [ ] Happy: 업무 유형 비활성화 후 예약 선택 목록에서 제외
-- [ ] Happy: 오늘 날짜 기준 예약 슬롯 조회 성공
-- [ ] Happy: 예약 슬롯 생성 후 같은 날짜 필터에서 신규 슬롯 표시
-- [ ] Happy: 직원 목록에 `staff@test.com` 표시
-- [ ] Happy: 창구 목록에 기본 창구와 담당 업무 표시
-- [ ] Edge: 특정 업무 유형 필터에서 해당 업무 슬롯만 표시
-- [ ] Edge: 슬롯이 없는 날짜는 빈 상태 표시
+- [x] Happy: 관리자 계정으로 업무 유형 목록 조회 성공
+- [x] Happy: 업무 유형 생성 후 목록에 신규 업무 표시
+- [x] Happy: 업무 유형 수정 후 변경된 이름/설명/기본 정원 표시
+- [x] Happy: 업무 유형 비활성화 후 예약 선택 목록에서 제외
+- [x] Happy: 오늘 날짜 기준 예약 슬롯 조회 성공
+- [x] Happy: 예약 슬롯 생성 후 같은 날짜 필터에서 신규 슬롯 표시
+- [x] Happy: 직원 목록에 `staff@test.com` 표시
+- [x] Happy: 창구 목록에 기본 창구와 담당 업무 표시
+- [x] Edge: 특정 업무 유형 필터에서 해당 업무 슬롯만 표시
+- [x] Edge: 슬롯이 없는 날짜는 빈 상태 표시
 - [ ] Bad: 직원 계정으로 관리자 기준정보 화면 접근 시 route guard 또는 403 처리 확인
 - [ ] Bad: 중복 예약 슬롯 생성 시 API 오류 토스트 표시
 
