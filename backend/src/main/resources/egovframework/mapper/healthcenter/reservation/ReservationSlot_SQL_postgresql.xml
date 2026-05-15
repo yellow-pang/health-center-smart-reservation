@@ -98,4 +98,25 @@
 		)
 	</insert>
 
+	<update id="updateSlot" parameterType="map">
+		UPDATE reservation_slots
+		SET service_type_id = #{serviceTypeId},
+			slot_date = #{date},
+			start_time = #{startTime},
+			end_time = #{endTime},
+			capacity = #{capacity},
+			active = #{active},
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{slotId}
+		  AND reserved_count <![CDATA[<=]]> #{capacity}
+	</update>
+
+	<update id="deactivateSlot" parameterType="long">
+		UPDATE reservation_slots
+		SET active = false,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{slotId}
+		  AND active = true
+	</update>
+
 </mapper>

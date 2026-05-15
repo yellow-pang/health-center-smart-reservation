@@ -28,6 +28,8 @@ interface ServiceWindowApiResponse {
   name: string;
   status: string;
   active: boolean;
+  staffId: number | null;
+  staffName: string | null;
   serviceTypes: ServiceTypeApiResponse[];
 }
 
@@ -55,6 +57,32 @@ export interface ReservationSlotCreateInput {
   startTime: string;
   endTime: string;
   capacity: number;
+}
+
+export interface ReservationSlotUpdateInput extends ReservationSlotCreateInput {
+  active: boolean;
+}
+
+export interface StaffCreateInput {
+  email: string;
+  password: string;
+  name: string;
+  phone: string;
+}
+
+export interface StaffUpdateInput {
+  name: string;
+  phone: string;
+  active: boolean;
+}
+
+export interface ServiceWindowInput {
+  windowNumber: number;
+  name: string;
+  status: string;
+  active: boolean;
+  staffId?: number | null;
+  serviceTypeIds: number[];
 }
 
 export async function getAdminServiceTypes(): Promise<ServiceType[]> {
@@ -118,7 +146,9 @@ export async function getAdminReservationSlots(filters: {
 }): Promise<ReservationSlot[]> {
   const serviceTypeIds = filters.serviceTypeId
     ? [filters.serviceTypeId]
-    : (await getAdminServiceTypes()).map((serviceType) => serviceType.serviceTypeId);
+    : (await getAdminServiceTypes())
+      .filter((serviceType) => serviceType.active)
+      .map((serviceType) => serviceType.serviceTypeId);
 
   const slotGroups = await Promise.all(
     serviceTypeIds.map((serviceTypeId) =>
@@ -153,14 +183,105 @@ export async function createAdminReservationSlot(
   });
 }
 
+export async function updateAdminReservationSlot(
+  slotId: number,
+  input: ReservationSlotUpdateInput,
+): Promise<ReservationSlot> {
+  return apiRequest<ReservationSlot>(`/api/admin/reservation-slots/${slotId}`, {
+    method: 'PUT',
+    body: {
+      serviceTypeId: input.serviceTypeId,
+      date: input.date,
+      startTime: input.startTime,
+      endTime: input.endTime,
+      capacity: input.capacity,
+      active: input.active,
+    } satisfies ApiRequestBody,
+  });
+}
+
+export async function deactivateAdminReservationSlot(slotId: number): Promise<ReservationSlot> {
+  return apiRequest<ReservationSlot>(`/api/admin/reservation-slots/${slotId}/deactivate`, {
+    method: 'PATCH',
+  });
+}
+
 export async function getAdminStaff(): Promise<StaffMember[]> {
   const staff = await apiRequest<StaffApiResponse[]>('/api/admin/staff');
   return staff.map(toStaffMember);
 }
 
+export async function createAdminStaff(input: StaffCreateInput): Promise<StaffMember> {
+  const staff = await apiRequest<StaffApiResponse>('/api/admin/staff', {
+    method: 'POST',
+    body: {
+      email: input.email,
+      password: input.password,
+      name: input.name,
+      phone: input.phone,
+    } satisfies ApiRequestBody,
+  });
+
+  return toStaffMember(staff);
+}
+
+export async function updateAdminStaff(
+  staffId: number,
+  input: StaffUpdateInput,
+): Promise<StaffMember> {
+  const staff = await apiRequest<StaffApiResponse>(`/api/admin/staff/${staffId}`, {
+    method: 'PUT',
+    body: {
+      name: input.name,
+      phone: input.phone,
+      active: input.active,
+    } satisfies ApiRequestBody,
+  });
+
+  return toStaffMember(staff);
+}
+
+export async function deactivateAdminStaff(staffId: number): Promise<StaffMember> {
+  const staff = await apiRequest<StaffApiResponse>(`/api/admin/staff/${staffId}/deactivate`, {
+    method: 'PATCH',
+  });
+
+  return toStaffMember(staff);
+}
+
 export async function getAdminServiceWindows(): Promise<ServiceWindow[]> {
   const windows = await apiRequest<ServiceWindowApiResponse[]>('/api/admin/service-windows');
   return windows.map(toServiceWindow);
+}
+
+export async function createAdminServiceWindow(input: ServiceWindowInput): Promise<ServiceWindow> {
+  const window = await apiRequest<ServiceWindowApiResponse>('/api/admin/service-windows', {
+    method: 'POST',
+    body: toServiceWindowRequestBody(input),
+  });
+
+  return toServiceWindow(window);
+}
+
+export async function updateAdminServiceWindow(
+  serviceWindowId: string,
+  input: ServiceWindowInput,
+): Promise<ServiceWindow> {
+  const window = await apiRequest<ServiceWindowApiResponse>(`/api/admin/service-windows/${serviceWindowId}`, {
+    method: 'PUT',
+    body: toServiceWindowRequestBody(input),
+  });
+
+  return toServiceWindow(window);
+}
+
+export async function deactivateAdminServiceWindow(serviceWindowId: string): Promise<ServiceWindow> {
+  const window = await apiRequest<ServiceWindowApiResponse>(
+    `/api/admin/service-windows/${serviceWindowId}/deactivate`,
+    { method: 'PATCH' },
+  );
+
+  return toServiceWindow(window);
 }
 
 function toServiceType(serviceType: ServiceTypeApiResponse): ServiceType {
@@ -190,9 +311,23 @@ function toStaffMember(staff: StaffApiResponse): StaffMember {
 function toServiceWindow(window: ServiceWindowApiResponse): ServiceWindow {
   return {
     id: String(window.id),
+    windowNumber: window.windowNumber,
     name: window.name,
     serviceTypeIds: window.serviceTypes.map((serviceType) => serviceType.id),
+    staffId: window.staffId ? String(window.staffId) : undefined,
+    staffName: window.staffName || undefined,
     active: window.active && window.status === 'OPEN',
+  };
+}
+
+function toServiceWindowRequestBody(input: ServiceWindowInput): ApiRequestBody {
+  return {
+    windowNumber: input.windowNumber,
+    name: input.name,
+    status: input.status,
+    active: input.active,
+    staffId: input.staffId ?? null,
+    serviceTypeIds: input.serviceTypeIds,
   };
 }
 

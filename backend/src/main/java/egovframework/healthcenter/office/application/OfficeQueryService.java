@@ -90,6 +90,8 @@ public class OfficeQueryService {
 				window.getWindowName(),
 				window.getStatus(),
 				window.isWindowActive(),
+				window.getStaffId(),
+				window.getStaffName(),
 				List.copyOf(serviceTypes)
 			);
 		}

@@ -9,6 +9,7 @@ import org.egovframe.rte.psl.dataaccess.EgovAbstractMapper;
 import org.springframework.stereotype.Repository;
 
 import egovframework.healthcenter.reservation.dto.ReservationSlotCreateRequest;
+import egovframework.healthcenter.reservation.dto.ReservationSlotUpdateRequest;
 
 @Repository("reservationSlotMapper")
 public class ReservationSlotMapper extends EgovAbstractMapper {
@@ -41,5 +42,21 @@ public class ReservationSlotMapper extends EgovAbstractMapper {
 		params.put("endTime", request.endTime());
 		params.put("capacity", request.capacity());
 		insert("ReservationSlotMapper.insertSlot", params);
+	}
+
+	public int updateSlot(Long slotId, ReservationSlotUpdateRequest request) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("slotId", slotId);
+		params.put("serviceTypeId", request.serviceTypeId());
+		params.put("date", request.date());
+		params.put("startTime", request.startTime());
+		params.put("endTime", request.endTime());
+		params.put("capacity", request.capacity());
+		params.put("active", request.active());
+		return update("ReservationSlotMapper.updateSlot", params);
+	}
+
+	public int deactivateSlot(Long slotId) {
+		return update("ReservationSlotMapper.deactivateSlot", slotId);
 	}
 }

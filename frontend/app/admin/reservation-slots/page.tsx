@@ -1,12 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Plus, Filter } from 'lucide-react';
+import { Pencil, Plus, Filter, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   Dialog,
   DialogContent,
@@ -22,8 +33,10 @@ import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
 import {
   createAdminReservationSlot,
+  deactivateAdminReservationSlot,
   getAdminReservationSlots,
   getAdminServiceTypes,
+  updateAdminReservationSlot,
 } from '@/src/lib/admin-master-data-api';
 import type { ReservationSlot, ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
@@ -40,6 +53,7 @@ export default function ReservationSlotsPage() {
   const [filterServiceType, setFilterServiceType] = useState<string>('all');
   const [filterDate, setFilterDate] = useState<string>(() => getTodayDate());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingSlot, setEditingSlot] = useState<ReservationSlot | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form state
@@ -68,7 +82,29 @@ export default function ReservationSlotsPage() {
     loadData();
   }, [filterDate, filterServiceType]);
 
-  const handleCreate = async () => {
+  const resetForm = () => {
+    setEditingSlot(null);
+    setFormServiceType('');
+    setFormDate('');
+    setFormTime('');
+    setFormCapacity('5');
+  };
+
+  const openCreateDialog = () => {
+    resetForm();
+    setIsDialogOpen(true);
+  };
+
+  const openEditDialog = (slot: ReservationSlot) => {
+    setEditingSlot(slot);
+    setFormServiceType(String(slot.serviceTypeId));
+    setFormDate(slot.date);
+    setFormTime(slot.startTime);
+    setFormCapacity(String(slot.capacity));
+    setIsDialogOpen(true);
+  };
+
+  const handleSubmit = async () => {
     if (!formServiceType || !formDate || !formTime) {
       toast.error('모든 항목을 입력해주세요.');
       return;
@@ -76,21 +112,32 @@ export default function ReservationSlotsPage() {
 
     setIsSubmitting(true);
     try {
-      const createdSlot = await createAdminReservationSlot({
+      const payload = {
         serviceTypeId: Number(formServiceType),
         date: formDate,
         startTime: formTime,
         endTime: getEndTime(formTime),
         capacity: parseInt(formCapacity) || 5,
-      });
+      };
 
-      setSlots(prev => [...prev, createdSlot]);
+      if (editingSlot) {
+        const updatedSlot = await updateAdminReservationSlot(editingSlot.slotId, {
+          ...payload,
+          active: true,
+        });
+
+        setSlots(prev =>
+          prev.map(slot => slot.slotId === editingSlot.slotId ? updatedSlot : slot)
+        );
+        toast.success('예약 슬롯이 수정되었습니다.');
+      } else {
+        const createdSlot = await createAdminReservationSlot(payload);
+        setSlots(prev => [...prev, createdSlot]);
+        toast.success('예약 슬롯이 추가되었습니다.');
+      }
+
       setIsDialogOpen(false);
-      setFormServiceType('');
-      setFormDate('');
-      setFormTime('');
-      setFormCapacity('5');
-      toast.success('예약 슬롯이 추가되었습니다.');
+      resetForm();
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -100,6 +147,16 @@ export default function ReservationSlotsPage() {
 
   const getServiceTypeName = (serviceTypeId: number) =>
     serviceTypes.find(serviceType => serviceType.serviceTypeId === serviceTypeId)?.name || '미확인 업무';
+
+  const handleDeactivate = async (slotId: number) => {
+    try {
+      await deactivateAdminReservationSlot(slotId);
+      setSlots(prev => prev.filter(slot => slot.slotId !== slotId));
+      toast.success('예약 슬롯이 비활성화되었습니다.');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  };
 
   const columns: Column<ReservationSlot>[] = [
     {
@@ -165,6 +222,52 @@ export default function ReservationSlotsPage() {
       },
       className: 'w-24',
     },
+    {
+      key: 'actions',
+      header: '',
+      cell: (item) => (
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => openEditDialog(item)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>예약 슬롯 비활성화</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {format(parseISO(item.date), 'yyyy년 M월 d일', { locale: ko })} {item.startTime} 슬롯을 비활성화하시겠습니까?
+                  기존 예약은 유지되고 신규 예약 선택 목록에서 제외됩니다.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>취소</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDeactivate(item.slotId)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  비활성화
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      ),
+      className: 'w-24',
+    },
   ];
 
   return (
@@ -175,16 +278,16 @@ export default function ReservationSlotsPage() {
         actions={
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={openCreateDialog}>
                 <Plus className="mr-2 h-4 w-4" />
                 슬롯 추가
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>새 예약 슬롯 추가</DialogTitle>
+                <DialogTitle>{editingSlot ? '예약 슬롯 수정' : '새 예약 슬롯 추가'}</DialogTitle>
                 <DialogDescription>
-                  새로운 예약 가능 시간대를 추가합니다.
+                  {editingSlot ? '예약 가능 시간과 정원을 수정합니다.' : '새로운 예약 가능 시간대를 추가합니다.'}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -196,7 +299,9 @@ export default function ReservationSlotsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       {serviceTypes.map((st) => (
-                        <SelectItem key={st.serviceTypeId} value={String(st.serviceTypeId)}>{st.name}</SelectItem>
+                        st.active && (
+                          <SelectItem key={st.serviceTypeId} value={String(st.serviceTypeId)}>{st.name}</SelectItem>
+                        )
                       ))}
                     </SelectContent>
                   </Select>
@@ -234,7 +339,9 @@ export default function ReservationSlotsPage() {
                 <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                   취소
                 </Button>
-                <Button onClick={handleCreate} disabled={isSubmitting}>추가</Button>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                  {editingSlot ? '수정' : '추가'}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -259,7 +366,9 @@ export default function ReservationSlotsPage() {
                 <SelectContent>
                   <SelectItem value="all">전체 업무</SelectItem>
                   {serviceTypes.map(st => (
-                    <SelectItem key={st.serviceTypeId} value={String(st.serviceTypeId)}>{st.name}</SelectItem>
+                    st.active && (
+                      <SelectItem key={st.serviceTypeId} value={String(st.serviceTypeId)}>{st.name}</SelectItem>
+                    )
                   ))}
                 </SelectContent>
               </Select>

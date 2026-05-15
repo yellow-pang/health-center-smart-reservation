@@ -88,9 +88,11 @@ export interface QueueEntry {
 
 export interface ServiceWindow {
   id: string;
+  windowNumber?: number;
   name: string;
   serviceTypeIds: number[];
   staffId?: string;
+  staffName?: string;
   active: boolean;
 }
 

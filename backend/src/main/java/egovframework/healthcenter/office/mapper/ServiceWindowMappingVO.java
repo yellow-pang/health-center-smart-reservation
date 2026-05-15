@@ -8,6 +8,8 @@ public class ServiceWindowMappingVO {
 	private String windowName;
 	private String status;
 	private boolean windowActive;
+	private Long staffId;
+	private String staffName;
 	private Long serviceTypeId;
 	private String serviceTypeCode;
 	private String serviceTypeName;
@@ -61,6 +63,22 @@ public class ServiceWindowMappingVO {
 
 	public void setWindowActive(boolean windowActive) {
 		this.windowActive = windowActive;
+	}
+
+	public Long getStaffId() {
+		return staffId;
+	}
+
+	public void setStaffId(Long staffId) {
+		this.staffId = staffId;
+	}
+
+	public String getStaffName() {
+		return staffName;
+	}
+
+	public void setStaffName(String staffName) {
+		this.staffName = staffName;
 	}
 
 	public Long getServiceTypeId() {
