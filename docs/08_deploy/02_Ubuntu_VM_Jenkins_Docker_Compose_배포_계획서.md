@@ -38,6 +38,24 @@ feature/* 브랜치
 
 - 기존 `docs/08_deploy/01_배포_설계서.md`에는 Frontend 변수 예시가 `VITE_API_BASE_URL`로 되어 있으나, 현재 프론트엔드는 Next.js이므로 `NEXT_PUBLIC_API_BASE_URL`을 사용한다.
 - PostgreSQL은 직접 Dockerfile을 만들지 않고 공식 이미지를 사용한다. 이 프로젝트는 pgvector 확장 가능성을 고려하므로 `pgvector/pgvector:0.8.2-pg18`을 우선 사용해도 되고, 순수 PostgreSQL만 필요하면 `postgres:18` 계열 공식 이미지를 사용할 수 있다.
+- `NEXT_PUBLIC_API_BASE_URL`은 Docker 내부 주소가 아니라 브라우저 기준 주소다. Windows 브라우저에서 접속한다면 `http://<ubuntu-vm-ip>:8080`처럼 VM IP를 기준으로 잡는다.
+- Jenkins 컨테이너에서 `docker compose`를 실행하려면 Docker CLI뿐 아니라 Docker Compose v2 플러그인이 필요하다. Jenkins용 커스텀 이미지를 만드는 것을 기본 방향으로 둔다.
+- Jenkins workspace에는 Git에 올리지 않는 `.env`가 없으므로, `.env` 주입 방식은 반드시 먼저 결정한다.
+
+---
+
+## 2.1 구현 전 보완 체크
+
+아래 항목은 배포 파일을 만들기 전에 먼저 결정하거나 체크한다.
+
+| 항목 | 결정/보완 내용 | 이유 |
+|---|---|---|
+| Jenkins Docker Compose 실행 | Jenkins용 커스텀 이미지에 `docker-cli`, `docker-compose-plugin` 설치 | `/usr/bin/docker`만 마운트하면 `docker compose`가 실패할 수 있음 |
+| `.env` 주입 방식 | 1순위 Jenkins Credentials 파일 주입, 2순위 VM 로컬 배포 디렉터리 `.env` | Git checkout workspace에는 `.env`가 없음 |
+| 프론트 API URL | `NEXT_PUBLIC_API_BASE_URL=http://<ubuntu-vm-ip>:8080` | 브라우저에서 `localhost`는 Ubuntu VM이 아니라 접속한 PC 자신을 의미할 수 있음 |
+| CORS | backend 허용 Origin에 `http://<ubuntu-vm-ip>:3000`, 개발용 `http://localhost:3000` 포함 검토 | frontend 3000과 backend 8080은 서로 다른 Origin |
+| PostgreSQL 초기화 SQL | `/docker-entrypoint-initdb.d` 사용 여부와 volume 초기화 방법 문서화 | init SQL은 DB volume 최초 생성 시에만 실행 |
+| 테스트 명령 | 현재는 `mvn test-compile`, 테스트 안정화 후 `mvn test`로 전환 | test-compile은 테스트 실행이 아니라 컴파일 검증 |
 
 ---
 
@@ -198,6 +216,7 @@ docker run hello-world
 ### 7.1 Jenkins용 Docker Compose 별도 운영
 
 Jenkins는 애플리케이션 Compose와 분리하는 것을 추천한다.
+또한 Jenkins 컨테이너 안에서 `docker compose`를 실행해야 하므로 기본 `jenkins/jenkins:lts-jdk17` 이미지를 그대로 쓰기보다 Jenkins용 커스텀 이미지를 만든다.
 
 추천 파일:
 
@@ -205,12 +224,44 @@ Jenkins는 애플리케이션 Compose와 분리하는 것을 추천한다.
 infra/jenkins/docker-compose.jenkins.yml
 ```
 
-예상 구성:
+추천 파일:
+
+```text
+infra/jenkins/Dockerfile
+```
+
+예상 Jenkins 커스텀 이미지:
+
+```dockerfile
+FROM jenkins/jenkins:lts-jdk17
+
+USER root
+
+RUN apt-get update \
+    && apt-get install -y ca-certificates curl gnupg lsb-release \
+    && install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/debian/gpg \
+      | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
+    && chmod a+r /etc/apt/keyrings/docker.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \
+      > /etc/apt/sources.list.d/docker.list \
+    && apt-get update \
+    && apt-get install -y docker-ce-cli docker-compose-plugin \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+USER jenkins
+```
+
+예상 Compose 구성:
 
 ```yaml
 services:
   jenkins:
-    image: jenkins/jenkins:lts-jdk17
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: health-center-jenkins:lts-jdk17-docker
     container_name: health-center-jenkins
     user: root
     ports:
@@ -219,7 +270,6 @@ services:
     volumes:
       - jenkins-home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker
     restart: unless-stopped
 
 volumes:
@@ -230,7 +280,12 @@ volumes:
 
 - 위 구성은 로컬 VM 학습 환경용이다.
 - 운영 서버에서는 Jenkins에 Docker socket을 직접 마운트하는 방식을 신중히 검토해야 한다.
-- Docker Compose v2 플러그인을 Jenkins 컨테이너 내부에서 쓰기 어렵다면 Jenkins용 커스텀 이미지를 별도로 만든다.
+- Jenkins 컨테이너에서 아래 명령이 모두 성공해야 Pipeline에서 배포할 수 있다.
+
+```bash
+docker exec -it health-center-jenkins docker version
+docker exec -it health-center-jenkins docker compose version
+```
 
 ### 7.2 Jenkins 최초 설정
 
@@ -282,6 +337,8 @@ http://<ubuntu-vm-ip>:8081
 - `health-center-postgres-data` volume
 - backend는 postgres healthcheck 이후 시작
 - frontend는 backend URL을 `NEXT_PUBLIC_API_BASE_URL`로 주입
+- backend CORS 허용 Origin에 frontend 주소를 포함
+- PostgreSQL init SQL을 사용할 경우 `/docker-entrypoint-initdb.d` 마운트 전략 문서화
 
 예상 `.env.example`:
 
@@ -300,10 +357,76 @@ JWT_SECRET=change-this-to-long-random-secret
 JWT_ACCESS_EXPIRE=3600
 JWT_REFRESH_EXPIRE=1209600
 
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+NEXT_PUBLIC_API_BASE_URL=http://<ubuntu-vm-ip>:8080
+BACKEND_INTERNAL_URL=http://backend:8080
+CORS_ALLOWED_ORIGINS=http://<ubuntu-vm-ip>:3000,http://localhost:3000
 ```
 
 실제 `.env`는 Git에 올리지 않는다.
+`NEXT_PUBLIC_API_BASE_URL`은 브라우저가 호출할 주소이므로 VM 외부에서 접속하는 Windows 기준 URL을 적는다.
+`BACKEND_INTERNAL_URL`은 향후 Next.js 서버 측 fetch가 필요할 때 컨테이너 내부 통신 주소로 사용한다.
+
+### 8.1 `.env` 주입 방식
+
+Jenkins 배포에서는 아래 두 방식 중 하나를 선택한다.
+
+| 방식 | 설명 | 추천 상황 |
+|---|---|---|
+| Jenkins Credentials 파일 주입 | Jenkins에 secret file로 `.env`를 등록하고 Pipeline에서 workspace에 복사 | 포트폴리오 설명과 보안 분리 강조 |
+| VM 로컬 파일 사용 | `/home/<user>/deploy/health-center/.env`를 직접 만들고 Jenkins가 해당 파일을 참조 | 로컬 학습 환경에서 가장 단순 |
+
+추천:
+
+```text
+1차 구현은 Jenkins Credentials 파일 주입을 기준으로 문서화한다.
+문제가 생기면 VM 로컬 파일 방식으로 단순화한다.
+```
+
+### 8.2 PostgreSQL 초기화 SQL과 volume
+
+PostgreSQL 공식 이미지는 컨테이너 최초 초기화 시 `/docker-entrypoint-initdb.d` 아래 SQL을 실행할 수 있다.
+
+예상 Compose 일부:
+
+```yaml
+postgresql:
+  image: pgvector/pgvector:0.8.2-pg18
+  volumes:
+    - health-center-postgres-data:/var/lib/postgresql/data
+    - ./database/init:/docker-entrypoint-initdb.d:ro
+```
+
+주의:
+
+- `/docker-entrypoint-initdb.d`의 SQL은 DB volume이 처음 생성될 때만 실행된다.
+- 이미 `health-center-postgres-data` volume이 있으면 SQL을 다시 넣어도 자동 재실행되지 않는다.
+- 초기화부터 다시 테스트하려면 아래처럼 volume 삭제가 필요하다.
+
+```bash
+docker compose down -v
+docker volume ls
+docker compose up -d --build
+```
+
+운영 데이터가 있는 상태에서는 `down -v`를 실행하지 않는다.
+
+### 8.3 CORS 체크
+
+Frontend와 Backend 포트가 다르므로 브라우저 API 호출에는 CORS 설정이 필요하다.
+
+확인할 Origin:
+
+```text
+http://<ubuntu-vm-ip>:3000
+http://localhost:3000
+```
+
+배포 설정 작업에서 아래를 확인한다.
+
+- [ ] backend CORS 설정 위치 확인
+- [ ] `CORS_ALLOWED_ORIGINS` 환경변수 적용 여부 결정
+- [ ] Swagger 호출과 브라우저 호출을 분리해 확인
+- [ ] 권한 없음 403과 CORS 오류를 구분해 기록
 
 ---
 
@@ -459,6 +582,15 @@ pipeline {
       }
     }
 
+    stage('Prepare Env') {
+      steps {
+        withCredentials([file(credentialsId: 'health-center-env-file', variable: 'ENV_FILE')]) {
+          sh 'cp "$ENV_FILE" .env'
+          sh 'chmod 600 .env'
+        }
+      }
+    }
+
     stage('Docker Build') {
       steps {
         sh 'docker compose --env-file .env build'
@@ -469,6 +601,7 @@ pipeline {
       steps {
         sh 'docker compose --env-file .env down'
         sh 'docker compose --env-file .env up -d'
+        sh 'docker compose --env-file .env ps'
       }
     }
 
@@ -483,8 +616,10 @@ pipeline {
 
 보완 예정:
 
-- Jenkins Credentials에서 `.env` 내용을 파일 credential로 관리할지, Ubuntu VM의 배포 디렉터리에 `.env`를 직접 둘지 결정한다.
-- 개인 VM 학습 환경에서는 `/home/<user>/deploy/health-center/.env`를 수동 생성하고 Jenkins가 같은 작업 디렉터리에서 Compose를 실행하는 방식이 가장 단순하다.
+- 위 초안은 Jenkins Credentials에 `.env` 파일을 `health-center-env-file` ID로 등록하는 방식을 기준으로 한다.
+- VM 로컬 파일 방식을 선택하면 `Prepare Env` 단계를 `cp /home/<user>/deploy/health-center/.env .env`로 바꾼다.
+- 현재 `Backend Test`는 테스트 실행이 아니라 `test-compile` 검증이다. 테스트 코드가 안정화되면 `mvn -q test`로 변경한다.
+- Jenkinsfile 작성 전에는 반드시 수동으로 `docker compose --env-file .env up -d --build`를 먼저 성공시킨다.
 
 ---
 
@@ -597,6 +732,9 @@ GitHub 보호 규칙 추천:
 - [ ] 루트 `.gitignore`에 `.env` 제외 확인
 - [ ] backend `application.properties` 환경변수 placeholder 적용
 - [ ] frontend `.env.example`과 루트 `.env.example` 기준 정렬
+- [ ] `NEXT_PUBLIC_API_BASE_URL`을 VM IP 기준으로 정리
+- [ ] `.env` 주입 방식 결정: Jenkins Credentials 또는 VM 로컬 파일
+- [ ] backend CORS 허용 Origin 설정 확인
 - [ ] Maven compile/test-compile 확인
 - [ ] Next build 확인
 
@@ -612,15 +750,22 @@ GitHub 보호 규칙 추천:
 - [ ] postgresql/backend/frontend 서비스 구성
 - [ ] network, volume, env_file, restart 정책 추가
 - [ ] postgres healthcheck 추가
+- [ ] PostgreSQL init SQL 마운트 방식 결정
+- [ ] DB volume 초기화/재생성 방법 문서화
 - [ ] backend DB 연결 확인
 - [ ] frontend API base URL 확인
+- [ ] 수동 `docker compose --env-file .env up -d --build` 성공
+- [ ] `docker compose logs` 확인 명령 문서화
+- [ ] 컨테이너 healthcheck 확인 명령 문서화
 
 ### 5단계. Jenkins 구성
 
+- [ ] Jenkins 커스텀 Dockerfile 작성
 - [ ] Jenkins Compose 작성
 - [ ] Jenkins 최초 설정 문서화
 - [ ] GitHub repository 연결
 - [ ] Jenkins Credentials 등록
+- [ ] Jenkins 컨테이너에서 `docker compose version` 확인
 - [ ] Poll SCM 설정
 
 ### 6단계. Jenkinsfile 작성
@@ -639,6 +784,22 @@ GitHub 보호 규칙 추천:
 - [ ] Notion 정리용 문서 초안 작성
 - [ ] 트러블슈팅 기록 양식 작성
 - [ ] 최종 배포 흐름도 정리
+
+권장 실제 진행 순서:
+
+```text
+1. .env.example 정리
+2. backend 환경변수 placeholder 적용
+3. CORS 설정 확인
+4. backend/frontend Dockerfile 작성
+5. docker-compose.yml로 수동 실행 성공
+6. PostgreSQL init SQL과 volume 동작 확인
+7. Jenkins 커스텀 이미지와 Compose 구성
+8. Jenkins에서 docker compose 실행 가능 여부 확인
+9. Jenkinsfile 작성
+10. Poll SCM으로 main 배포 흐름 연결
+11. README/Notion 문서 정리
+```
 
 ---
 
