@@ -51,7 +51,7 @@ feature/* 브랜치
 | 항목 | 결정/보완 내용 | 이유 |
 |---|---|---|
 | Jenkins Docker Compose 실행 | Jenkins용 커스텀 이미지에 `docker-cli`, `docker-compose-plugin` 설치 | `/usr/bin/docker`만 마운트하면 `docker compose`가 실패할 수 있음 |
-| `.env` 주입 방식 | 1순위 Jenkins Credentials 파일 주입, 2순위 VM 로컬 배포 디렉터리 `.env` | Git checkout workspace에는 `.env`가 없음 |
+| `.env` 주입 방식 | Jenkins Credentials secret file 주입, ID는 `health-center-env-file` | Git checkout workspace에는 `.env`가 없음 |
 | 프론트 API URL | `NEXT_PUBLIC_API_BASE_URL=http://<ubuntu-vm-ip>:8080` | 브라우저에서 `localhost`는 Ubuntu VM이 아니라 접속한 PC 자신을 의미할 수 있음 |
 | CORS | backend 허용 Origin에 `http://<ubuntu-vm-ip>:3000`, 개발용 `http://localhost:3000` 포함 검토 | frontend 3000과 backend 8080은 서로 다른 Origin |
 | PostgreSQL 초기화 SQL | `/docker-entrypoint-initdb.d` 사용 여부와 volume 초기화 방법 문서화 | init SQL은 DB volume 최초 생성 시에만 실행 |
@@ -740,7 +740,7 @@ GitHub 보호 규칙 추천:
 - [x] backend `application.properties` 환경변수 placeholder 적용
 - [x] frontend `.env.example`과 루트 `.env.example` 기준 정렬
 - [x] `NEXT_PUBLIC_API_BASE_URL`을 VM IP 기준으로 정리
-- [ ] `.env` 주입 방식 결정: Jenkins Credentials 또는 VM 로컬 파일
+- [x] `.env` 주입 방식 결정: Jenkins Credentials secret file
 - [x] backend CORS 허용 Origin 설정 확인
 - [x] Maven compile/test-compile 확인
 - [x] Next build 확인
@@ -771,9 +771,9 @@ GitHub 보호 규칙 추천:
 
 ### 5단계. Jenkins 구성
 
-- [ ] Jenkins 커스텀 Dockerfile 작성
-- [ ] Jenkins Compose 작성
-- [ ] Jenkins 최초 설정 문서화
+- [x] Jenkins 커스텀 Dockerfile 작성
+- [x] Jenkins Compose 작성
+- [x] Jenkins 최초 설정 문서화
 - [ ] GitHub repository 연결
 - [ ] Jenkins Credentials 등록
 - [ ] Jenkins 컨테이너에서 `docker compose version` 확인
@@ -781,12 +781,12 @@ GitHub 보호 규칙 추천:
 
 ### 6단계. Jenkinsfile 작성
 
-- [ ] checkout 단계
-- [ ] main 브랜치 확인 단계
-- [ ] backend test/build 단계
-- [ ] frontend build 단계
-- [ ] docker compose build/up 단계
-- [ ] image prune 단계
+- [x] checkout 단계
+- [x] main 브랜치 확인 단계
+- [x] backend test/build 단계
+- [x] frontend build 단계
+- [x] docker compose build/up 단계
+- [x] image prune 단계
 - [ ] 실패 시 로그 확인 방법 작성
 
 ### 7단계. README/Notion 문서 정리
