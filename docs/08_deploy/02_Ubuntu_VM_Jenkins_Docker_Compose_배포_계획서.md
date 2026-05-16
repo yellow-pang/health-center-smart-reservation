@@ -724,7 +724,14 @@ GitHub 보호 규칙 추천:
 
 - [x] 기존 배포 설계서 확인
 - [x] Ubuntu VM + Jenkins + Docker Compose 계획서 작성
-- [ ] 다음 작업 브랜치 범위 확정
+- [x] 다음 작업 브랜치 범위 확정
+
+이번 `docs/cicd-deploy-guide` 브랜치는 배포 파일을 바로 추가하지 않고, 아래 산출물을 PR로 제출하는 문서 정리 단위로 제한한다.
+
+- 기존 배포 설계서의 오래된 Frontend/Vite 기준을 현재 Next.js 기준으로 정정
+- Ubuntu VM + Jenkins + Docker Compose 계획서의 구현 전 보완 체크와 단계별 작업 계획 확인
+- 브랜치 구현 기록과 PR 작성안 작성
+- 전체 체크리스트의 운영/배포 문서 진행 상태 갱신
 
 ### 2단계. 환경변수 분리
 
