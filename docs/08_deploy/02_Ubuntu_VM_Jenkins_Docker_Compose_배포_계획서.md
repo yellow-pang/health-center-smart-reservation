@@ -738,31 +738,33 @@ GitHub 보호 규칙 추천:
 - [x] 루트 `.env.example` 작성
 - [x] 루트 `.gitignore`에 `.env` 제외 확인
 - [x] backend `application.properties` 환경변수 placeholder 적용
-- [ ] frontend `.env.example`과 루트 `.env.example` 기준 정렬
+- [x] frontend `.env.example`과 루트 `.env.example` 기준 정렬
 - [x] `NEXT_PUBLIC_API_BASE_URL`을 VM IP 기준으로 정리
 - [ ] `.env` 주입 방식 결정: Jenkins Credentials 또는 VM 로컬 파일
 - [x] backend CORS 허용 Origin 설정 확인
 - [x] Maven compile/test-compile 확인
-- [ ] Next build 확인
+- [x] Next build 확인
 
 ### 3단계. Dockerfile 작성
 
 - [x] `backend/Dockerfile` 작성
-- [ ] `frontend/Dockerfile` 작성
+- [x] `frontend/Dockerfile` 작성
 - [x] backend `.dockerignore` 작성
+- [x] frontend `.dockerignore` 작성
 - [x] 로컬에서 backend `docker build` 기준 문서화
+- [x] 로컬에서 frontend `docker build` 기준 문서화
 
 ### 4단계. docker-compose.yml 확장
 
-- [ ] postgresql/backend/frontend 서비스 구성
+- [x] postgresql/backend/frontend 서비스 구성
 - [x] postgresql 서비스 `.env` 기반 구성
 - [x] backend 서비스 build/env_file/depends_on/network/restart 구성
-- [ ] frontend network, volume, env_file, restart 정책 추가
-- [ ] postgres healthcheck 추가
+- [x] frontend service build/env_file/depends_on/network/restart 구성
+- [x] postgres healthcheck 추가
 - [ ] PostgreSQL init SQL 마운트 방식 결정
 - [ ] DB volume 초기화/재생성 방법 문서화
 - [ ] backend DB 연결 확인
-- [ ] frontend API base URL 확인
+- [x] frontend API base URL 확인
 - [ ] 수동 `docker compose --env-file .env up -d --build` 성공
 - [ ] `docker compose logs` 확인 명령 문서화
 - [ ] 컨테이너 healthcheck 확인 명령 문서화
