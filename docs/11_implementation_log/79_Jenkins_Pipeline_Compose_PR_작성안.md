@@ -51,12 +51,14 @@ Ubuntu VM에서 Jenkins 컨테이너가 main 브랜치 변경을 기준으로 ba
 
 - Jenkins image build, Jenkins Compose 실행, Jenkins UI 초기 설정, Credentials 등록, Pipeline 실행은 프로젝트 운영 기준상 사용자가 직접 수행합니다.
 - Docker socket mount는 로컬 VM 학습 환경용이며, 운영 환경에서는 별도 권한 검토가 필요합니다.
+- Jenkins가 배포하는 위치는 Jenkins 컨테이너가 마운트한 Docker socket의 host입니다. Ubuntu VM 배포 검증은 Ubuntu VM 내부 Jenkins에서 수행해야 합니다.
 
 ## 사용자 확인 체크리스트
 
 - [ ] `docker compose -f infra/jenkins/docker-compose.jenkins.yml up -d --build`
 - [ ] `docker logs health-center-jenkins`로 초기 비밀번호 확인
 - [ ] `http://<ubuntu-vm-ip>:8081` 접속
+- [ ] Jenkins가 Ubuntu VM 내부 Docker에서 실행 중인지 확인
 - [ ] 추천 플러그인 설치
 - [ ] Secret file credential 등록: `health-center-env-file`
 - [ ] Jenkins 컨테이너에서 `docker compose version` 확인
@@ -68,6 +70,7 @@ Ubuntu VM에서 Jenkins 컨테이너가 main 브랜치 변경을 기준으로 ba
 
 - Jenkins 수동 실행 결과와 트러블슈팅 기록
 - dev to main 배포 전 확인 체크리스트 기준으로 main merge 전 점검
+- Ubuntu VM Jenkins 배포 운영 가이드 기준으로 Jenkins 실행 위치 확인
 - README 배포 섹션 작성
 - Notion 정리용 배포 문서 초안 작성
 - Jenkinsfile 실패 로그 확인 절차 문서화

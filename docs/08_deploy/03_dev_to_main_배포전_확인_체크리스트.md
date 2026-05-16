@@ -15,13 +15,25 @@
 dev 최신화
   -> 정적 빌드 확인
   -> Docker Compose 설정 확인
-  -> Jenkins 설정 확인
+  -> Jenkins 실행 위치 확인
+  -> Ubuntu VM Jenkins 설정 확인
   -> dev -> main PR 생성
   -> main merge
   -> Jenkins Pipeline 실행
   -> Ubuntu VM 컨테이너 상태 확인
   -> 브라우저/Swagger 대표 흐름 확인
 ```
+
+중요:
+
+```text
+Jenkins가 배포하는 위치는 Jenkins 컨테이너가 마운트한 /var/run/docker.sock의 Docker host다.
+```
+
+Windows 로컬 Docker에서 Jenkins를 실행하면 애플리케이션 컨테이너도 Windows 로컬 Docker에 생성된다.
+Ubuntu VM에 배포하려면 Jenkins 컨테이너도 Ubuntu VM 내부 Docker Engine 위에서 실행해야 한다.
+
+상세 기준은 `docs/08_deploy/04_Jenkins_VM_배포_운영_가이드.md`를 함께 본다.
 
 ---
 
@@ -110,11 +122,26 @@ frontend   : 3000
 
 ---
 
-## 5. Jenkins 설정 확인
+## 5. Jenkins 실행 위치와 설정 확인
 
 Jenkins UI와 Ubuntu VM 터미널에서 확인한다.
 
-### 5.1 Jenkins 컨테이너 상태
+### 5.1 Jenkins 실행 위치 확인
+
+Ubuntu VM 터미널에서 확인한다.
+
+```bash
+docker ps --filter "name=health-center-jenkins"
+docker exec -it health-center-jenkins sh -lc "hostname && docker info --format '{{.Name}} / {{.OperatingSystem}}'"
+```
+
+확인 기준:
+
+- `health-center-jenkins` 컨테이너가 Ubuntu VM Docker Engine에서 실행 중이다.
+- Jenkins UI 주소가 `http://<ubuntu-vm-ip>:8081`이다.
+- Windows 로컬 Docker Desktop의 Jenkins UI가 아니라 VM Jenkins UI에서 Job을 설정한다.
+
+### 5.2 Jenkins 컨테이너 상태
 
 ```bash
 docker ps --filter "name=health-center-jenkins"
@@ -125,7 +152,7 @@ docker ps --filter "name=health-center-jenkins"
 - `health-center-jenkins` 컨테이너가 실행 중이다.
 - Jenkins UI가 `http://<ubuntu-vm-ip>:8081`에서 열린다.
 
-### 5.2 Jenkins 컨테이너 도구 확인
+### 5.3 Jenkins 컨테이너 도구 확인
 
 ```bash
 docker exec -it health-center-jenkins docker version
@@ -142,7 +169,7 @@ docker exec -it health-center-jenkins npm --version
 - Maven 확인 성공
 - Node.js와 npm 확인 성공
 
-### 5.3 Jenkins Credentials 확인
+### 5.4 Jenkins Credentials 확인
 
 Jenkins UI에서 확인한다.
 
@@ -159,8 +186,9 @@ Jenkins 관리
 - Kind는 `Secret file`이다.
 - 업로드한 파일은 실제 배포용 `.env`이다.
 - `.env.example`이 아니라 실제 값이 들어간 `.env`를 사용한다.
+- Windows 로컬 Jenkins에 등록한 Credentials는 VM Jenkins로 자동 이전되지 않는다.
 
-### 5.4 Pipeline Job 확인
+### 5.5 Pipeline Job 확인
 
 Job 설정에서 확인한다.
 
@@ -186,6 +214,7 @@ Poll SCM: H/5 * * * *
 - `Jenkinsfile` 경로가 정확하다.
 - GitHub repo가 public이면 Git credential은 없어도 된다.
 - private repo로 바꾸면 별도 GitHub credential이 필요하다.
+- Job은 Ubuntu VM Jenkins에 생성되어 있어야 한다.
 
 ---
 
@@ -197,6 +226,7 @@ PR 본문에 아래 내용을 남긴다.
 - [ ] frontend build 통과
 - [ ] `git diff --check` 통과
 - [ ] `docker compose --env-file .env config` 확인
+- [ ] Jenkins가 Ubuntu VM 내부 Docker에서 실행 중인지 확인
 - [ ] Jenkins credential `health-center-env-file` 확인
 - [ ] Jenkins Job이 `*/main`과 `Jenkinsfile`을 바라보는지 확인
 - [ ] Docker/Jenkins 런타임 확인은 main merge 후 수행한다고 명시
@@ -309,6 +339,13 @@ Jenkins:  http://<ubuntu-vm-ip>:8081
 - Job의 `Branch Specifier`가 `*/main`인지 확인
 - main 브랜치에 `Jenkinsfile`이 merge되었는지 확인
 - `Script Path`가 `Jenkinsfile`인지 확인
+
+### 10.1.1 Jenkins는 성공했는데 VM에 배포되지 않는 경우
+
+- Jenkins UI 주소가 `http://<ubuntu-vm-ip>:8081`인지 확인
+- Ubuntu VM에서 `docker ps --filter "name=health-center-jenkins"`로 Jenkins 실행 위치 확인
+- Windows 로컬 Jenkins에서 실행한 Pipeline은 Windows 로컬 Docker에 배포된 것으로 판단
+- VM 배포가 필요하면 Ubuntu VM Jenkins에서 Credentials와 Pipeline Job을 다시 설정
 
 ### 10.2 Credentials 오류
 

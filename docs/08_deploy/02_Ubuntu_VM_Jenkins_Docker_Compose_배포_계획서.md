@@ -41,6 +41,7 @@ feature/* 브랜치
 - `NEXT_PUBLIC_API_BASE_URL`은 Docker 내부 주소가 아니라 브라우저 기준 주소다. Windows 브라우저에서 접속한다면 `http://<ubuntu-vm-ip>:8080`처럼 VM IP를 기준으로 잡는다.
 - Jenkins 컨테이너에서 `docker compose`를 실행하려면 Docker CLI뿐 아니라 Docker Compose v2 플러그인이 필요하다. Jenkins용 커스텀 이미지를 만드는 것을 기본 방향으로 둔다.
 - Jenkins workspace에는 Git에 올리지 않는 `.env`가 없으므로, `.env` 주입 방식은 반드시 먼저 결정한다.
+- Jenkins가 실제로 배포하는 위치는 Jenkins 컨테이너가 마운트한 `/var/run/docker.sock`의 Docker host다. Windows 로컬 Docker에서 Jenkins를 실행하면 Windows 로컬에 배포되고, Ubuntu VM에 배포하려면 Jenkins도 Ubuntu VM 내부 Docker에서 실행해야 한다.
 
 ---
 
@@ -110,6 +111,18 @@ flowchart TD
 | Jenkins | Ubuntu VM 내부 Docker 컨테이너 |
 | Docker Compose 실행 | Jenkins Pipeline 또는 수동 터미널 |
 | 서비스 접근 | Windows 브라우저에서 Ubuntu VM IP로 접근 |
+
+배포 대상 기준:
+
+```text
+Windows 작업 폴더
+  -> GitHub push
+  -> Ubuntu VM 내부 Jenkins checkout
+  -> Ubuntu VM Docker Engine에 docker compose build/up
+```
+
+로컬 Windows Jenkins에서 만든 관리자 계정, Credentials, Pipeline Job은 Ubuntu VM Jenkins로 자동 이전되지 않는다.
+VM 배포를 시작할 때는 Ubuntu VM에서 Jenkins Compose를 실행한 뒤 Jenkins UI 설정을 한 번 다시 진행한다.
 
 예시 접속:
 
@@ -219,6 +232,8 @@ docker run hello-world
 Jenkins는 애플리케이션 Compose와 분리하는 것을 추천한다.
 또한 Jenkins 컨테이너 안에서 `docker compose`를 실행해야 하므로 기본 `jenkins/jenkins:lts-jdk17` 이미지를 그대로 쓰기보다 Jenkins용 커스텀 이미지를 만든다.
 
+이 Compose는 Ubuntu VM 내부에서 실행한다. Windows 로컬에서 실행하면 Jenkins가 Windows Docker socket을 사용하므로 VM 배포가 아니다.
+
 추천 파일:
 
 ```text
@@ -287,6 +302,14 @@ volumes:
 docker exec -it health-center-jenkins docker version
 docker exec -it health-center-jenkins docker compose version
 ```
+
+배포 대상 확인:
+
+```bash
+docker exec -it health-center-jenkins sh -lc "hostname && docker info --format '{{.Name}} / {{.OperatingSystem}}'"
+```
+
+위 명령은 Ubuntu VM 터미널에서 실행하며, Docker host가 Ubuntu VM인지 확인한다.
 
 ### 7.2 Jenkins 최초 설정
 
@@ -830,6 +853,12 @@ GitHub 보호 규칙 추천:
 8. Jenkins Job 또는 Multibranch Pipeline 생성
 9. GitHub repository 연결
 10. Poll SCM 설정
+
+주의:
+
+- 위 작업은 Ubuntu VM Jenkins에서 진행한다.
+- Windows 로컬 Jenkins에서 진행한 UI 설정은 VM Jenkins에 자동 반영되지 않는다.
+- Git에 저장되는 것은 `Jenkinsfile`과 Jenkins Compose 파일이며, Jenkins UI 설정은 각 Jenkins home volume에 저장된다.
 
 ### 16.2 일반 개발 흐름
 

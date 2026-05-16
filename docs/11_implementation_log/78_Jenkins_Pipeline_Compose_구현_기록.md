@@ -61,6 +61,7 @@
 | Jenkins 실행 포트 | Host `8081` -> container `8080` |
 | Docker 실행 방식 | Jenkins 컨테이너에 Docker socket mount |
 | 테스트 명령 | backend `mvn -q test-compile`, frontend `npm ci && npm run build` |
+| 배포 대상 기준 | Jenkins 컨테이너가 마운트한 `/var/run/docker.sock`의 Docker host |
 
 ## 5. 구현 내용
 
@@ -88,6 +89,7 @@
 - Jenkins 실행, Docker socket 확인, Pipeline 실행은 프로젝트 운영 기준상 사용자가 직접 수행한다.
 - Jenkinsfile은 `health-center-env-file` ID의 secret file credential이 등록되어 있어야 동작한다.
 - `Docker socket` mount는 로컬 VM 학습 환경용이며 운영 환경에서는 권한 위험을 별도 검토해야 한다.
+- Windows 로컬 Jenkins에서 Pipeline을 실행하면 Windows 로컬 Docker에 배포된다. Ubuntu VM 배포는 Ubuntu VM 내부에서 실행한 Jenkins 컨테이너로 확인한다.
 
 ## 7. 사용자 확인 안내
 
@@ -139,6 +141,7 @@ Jenkins Credentials:
 | Jenkins 이미지 작성 중 | Maven과 Node.js 20을 Jenkins 이미지에 포함 | Jenkinsfile의 backend/frontend 빌드 단계를 같은 agent에서 실행하기 위함 | 이번 브랜치에서 반영 |
 | Jenkinsfile 작성 중 | `.env`는 Jenkins secret file credentials로 주입 | Git checkout workspace에는 `.env`가 없고 민감 정보를 Git에 올리지 않기 위함 | 이번 브랜치에서 반영 |
 | Jenkinsfile 작성 중 | `docker compose down` 대신 `up -d --remove-orphans` 사용 | 배포 중 불필요한 전체 중단을 줄이고 Compose가 필요한 컨테이너만 갱신하게 하기 위함 | 이번 브랜치에서 반영 |
+| Jenkins 수동 설정 확인 중 | VM 배포 기준 문서 보강 필요 | Jenkins UI 설정은 Jenkins home volume별로 분리되고, 배포 대상은 Docker socket이 가리키는 host로 결정됨 | `docs/08_deploy/04_Jenkins_VM_배포_운영_가이드.md` 추가 |
 
 ## 9. 브랜치 종료 전 체크리스트
 
