@@ -9,9 +9,9 @@ import java.util.Map;
 
 import javax.crypto.SecretKey;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import egovframework.com.cmm.service.EgovProperties;
 import egovframework.com.jwt.InvalidJwtException;
 import egovframework.healthcenter.member.domain.MemberRole;
 import egovframework.healthcenter.member.mapper.MemberVO;
@@ -23,8 +23,16 @@ import io.jsonwebtoken.security.Keys;
 @Component
 public class HealthcenterJwtTokenProvider {
 
-	private static final long ACCESS_TOKEN_VALIDITY_SECONDS = 60 * 60;
-	private static final String SECRET_KEY_STRING = EgovProperties.getProperty("Globals.jwt.secret");
+	private final String secretKeyString;
+	private final long accessTokenValiditySeconds;
+
+	public HealthcenterJwtTokenProvider(
+		@Value("${Globals.jwt.secret}") String secretKeyString,
+		@Value("${Globals.jwt.access-token-validity-seconds:3600}") long accessTokenValiditySeconds
+	) {
+		this.secretKeyString = secretKeyString;
+		this.accessTokenValiditySeconds = accessTokenValiditySeconds;
+	}
 
 	public String generateAccessToken(MemberVO member) {
 		Map<String, Object> claims = new HashMap<>();
@@ -39,7 +47,7 @@ public class HealthcenterJwtTokenProvider {
 			.claims(claims)
 			.subject(member.getEmail())
 			.issuedAt(new Date(System.currentTimeMillis()))
-			.expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_VALIDITY_SECONDS * 1000))
+			.expiration(new Date(System.currentTimeMillis() + accessTokenValiditySeconds * 1000))
 			.signWith(getSecretKey())
 			.compact();
 	}
@@ -71,11 +79,11 @@ public class HealthcenterJwtTokenProvider {
 	}
 
 	public LocalDateTime accessTokenExpiresAt() {
-		return LocalDateTime.now().plusSeconds(ACCESS_TOKEN_VALIDITY_SECONDS);
+		return LocalDateTime.now().plusSeconds(accessTokenValiditySeconds);
 	}
 
 	private SecretKey getSecretKey() {
-		return Keys.hmacShaKeyFor(SECRET_KEY_STRING.getBytes(StandardCharsets.UTF_8));
+		return Keys.hmacShaKeyFor(secretKeyString.getBytes(StandardCharsets.UTF_8));
 	}
 
 	private Long toLongOrNull(Object value) {

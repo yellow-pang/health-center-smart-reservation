@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.springframework.boot.web.servlet.MultipartConfigFactory;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -71,9 +72,9 @@ public class SecurityConfig {
             "/webjars/**", // Swagger UI 정적 리소스
 
     };
-    private static final String[] ORIGINS_WHITELIST = {
-            "http://localhost:3000",
-    };
+
+    @Value("${Globals.Allow.Origin:http://localhost:3000}")
+    private String allowedOrigins;
 
     @Bean
     public JwtAuthenticationFilter authenticationTokenFilterBean() throws Exception {
@@ -97,15 +98,21 @@ public class SecurityConfig {
     protected CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
         configuration.setAllowedMethods(Arrays.asList("HEAD", "POST", "GET", "DELETE", "PUT", "PATCH"));
-        configuration.setAllowedOrigins(Arrays.asList(ORIGINS_WHITELIST));
+        configuration.setAllowedOrigins(parseAllowedOrigins());
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    private java.util.List<String> parseAllowedOrigins() {
+        return Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isBlank())
+                .toList();
     }
 
     @Bean

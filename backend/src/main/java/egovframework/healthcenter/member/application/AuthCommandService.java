@@ -3,6 +3,7 @@ package egovframework.healthcenter.member.application;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,14 +21,18 @@ import egovframework.let.utl.sim.service.EgovFileScrty;
 @Service
 public class AuthCommandService {
 
-	private static final int REFRESH_TOKEN_VALIDITY_DAYS = 14;
-
 	private final MemberMapper memberMapper;
 	private final HealthcenterJwtTokenProvider jwtTokenProvider;
+	private final long refreshTokenValiditySeconds;
 
-	public AuthCommandService(MemberMapper memberMapper, HealthcenterJwtTokenProvider jwtTokenProvider) {
+	public AuthCommandService(
+		MemberMapper memberMapper,
+		HealthcenterJwtTokenProvider jwtTokenProvider,
+		@Value("${Globals.jwt.refresh-token-validity-seconds:1209600}") long refreshTokenValiditySeconds
+	) {
 		this.memberMapper = memberMapper;
 		this.jwtTokenProvider = jwtTokenProvider;
+		this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
 	}
 
 	@Transactional
@@ -46,7 +51,7 @@ public class AuthCommandService {
 		memberMapper.insertRefreshToken(
 			member.getId(),
 			refreshToken,
-			LocalDateTime.now().plusDays(REFRESH_TOKEN_VALIDITY_DAYS)
+			LocalDateTime.now().plusSeconds(refreshTokenValiditySeconds)
 		);
 
 		return new LoginResponse(accessToken, refreshToken, MemberResponse.from(member));
@@ -70,7 +75,7 @@ public class AuthCommandService {
 		memberMapper.insertRefreshToken(
 			member.getId(),
 			refreshToken,
-			LocalDateTime.now().plusDays(REFRESH_TOKEN_VALIDITY_DAYS)
+			LocalDateTime.now().plusSeconds(refreshTokenValiditySeconds)
 		);
 
 		return new LoginResponse(accessToken, refreshToken, MemberResponse.from(member));
