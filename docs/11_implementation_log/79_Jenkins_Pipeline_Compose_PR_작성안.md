@@ -67,6 +67,7 @@ Ubuntu VM에서 Jenkins 컨테이너가 main 브랜치 변경을 기준으로 ba
 ## 후속 작업
 
 - Jenkins 수동 실행 결과와 트러블슈팅 기록
+- dev to main 배포 전 확인 체크리스트 기준으로 main merge 전 점검
 - README 배포 섹션 작성
 - Notion 정리용 배포 문서 초안 작성
 - Jenkinsfile 실패 로그 확인 절차 문서화

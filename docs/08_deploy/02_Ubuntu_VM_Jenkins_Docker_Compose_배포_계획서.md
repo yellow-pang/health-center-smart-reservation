@@ -73,6 +73,7 @@ feature/* 브랜치
 | Jenkins Pipeline | `Jenkinsfile` | main merge 후 빌드/배포 자동화 |
 | README 배포 섹션 | `README.md` | 로컬 Ubuntu VM 배포 요약 |
 | Notion 정리 문서 | `docs/08_deploy/03_Notion_배포_정리_초안.md` 후보 | 포트폴리오 설명용 |
+| dev to main 확인 체크리스트 | `docs/08_deploy/03_dev_to_main_배포전_확인_체크리스트.md` | main merge 전 정적 검증과 Jenkins 배포 전제 확인 |
 
 이번 문서는 계획서이므로 위 파일을 바로 만들지는 않는다.  
 다음 브랜치부터 작은 단위로 하나씩 추가한다.
@@ -792,6 +793,7 @@ GitHub 보호 규칙 추천:
 ### 7단계. README/Notion 문서 정리
 
 - [ ] README 배포 섹션 추가
+- [x] dev to main 배포 전 확인 체크리스트 작성
 - [ ] Notion 정리용 문서 초안 작성
 - [ ] 트러블슈팅 기록 양식 작성
 - [ ] 최종 배포 흐름도 정리
