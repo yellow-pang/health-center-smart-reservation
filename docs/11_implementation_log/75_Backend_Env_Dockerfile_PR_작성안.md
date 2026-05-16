@@ -38,6 +38,8 @@ Ubuntu VM + Jenkins + Docker Compose 배포 준비를 위해 백엔드 실행 �
 - refresh token 만료 시간을 환경변수 주입으로 전환하되 기본값은 기존 14일과 동일하게 유지
 - `backend/Dockerfile` 추가
 - `backend/.dockerignore` 추가
+- 로컬 실행용 `.env` 생성
+- 루트 `docker-compose.yml`의 PostgreSQL 설정을 `.env` 기반으로 변경
 - 브랜치 구현 기록과 PR 작성안 추가
 - 전체 체크리스트와 배포 계획서 진행 상태 갱신
 
@@ -51,6 +53,7 @@ Ubuntu VM + Jenkins + Docker Compose 배포 준비를 위해 백엔드 실행 �
 - [x] `mvn.cmd -q -DskipTests compile`
 - [x] `mvn.cmd -q test-compile`
 - [x] `git diff --check`
+- [x] `.env`가 `.gitignore`로 제외되는지 확인
 
 ## 미검증 사유
 
@@ -61,6 +64,7 @@ Ubuntu VM + Jenkins + Docker Compose 배포 준비를 위해 백엔드 실행 �
 ## 사용자 확인 체크리스트
 
 - [ ] `.env.example`을 `.env`로 복사하고 실제 DB/JWT/VM IP 값으로 수정
+- [ ] `docker compose --env-file .env config`로 Compose 변수 치환 확인
 - [ ] `docker build -t health-center-backend:local ./backend` 실행
 - [ ] Spring Boot Dashboard로 backend 실행
 - [ ] Swagger `POST /api/auth/login` 대표 예시 확인
@@ -124,5 +128,6 @@ chore: 백엔드 환경변수와 Dockerfile 정리
 - backend application.properties의 DB/JWT/CORS 값을 환경변수 placeholder로 변경
 - CORS 허용 Origin과 JWT 만료 설정을 Spring 환경변수 주입으로 정리
 - Maven 기반 backend Dockerfile과 .dockerignore 추가
+- docker-compose.yml의 PostgreSQL 설정을 .env 기반으로 변경
 - 브랜치 구현 기록, PR 작성안, 전체 체크리스트 갱신
 ```

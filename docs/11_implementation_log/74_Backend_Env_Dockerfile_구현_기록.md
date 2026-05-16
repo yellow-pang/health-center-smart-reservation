@@ -30,6 +30,8 @@
 - [x] backend CORS 허용 Origin을 `CORS_ALLOWED_ORIGINS` 기준으로 정리
 - [x] `backend/Dockerfile` 작성
 - [x] `backend/.dockerignore` 작성
+- [x] 로컬 실행용 `.env` 생성
+- [x] 루트 `docker-compose.yml`의 PostgreSQL 설정을 `.env` 기반으로 변경
 - [x] Maven compile/test-compile 확인
 - [x] 브랜치 구현 기록과 PR 문서 초안 작성
 - [x] 전체 체크리스트 갱신
@@ -83,6 +85,8 @@ blast radius는 Auth 로그인/토큰 검증/CORS 진입부에 걸리므로 `MED
 | `backend/src/main/java/egovframework/healthcenter/member/application/AuthCommandService.java` | refresh token 만료 시간을 `Globals.jwt.refresh-token-validity-seconds`로 주입 |
 | `backend/Dockerfile` | Maven builder + Java 17 JRE runtime 멀티 스테이지 Dockerfile 추가 |
 | `backend/.dockerignore` | Docker build context에서 target/log/git 등 제외 |
+| `.env` | Git에 올리지 않는 로컬 실행용 환경변수 파일 생성 |
+| `docker-compose.yml` | PostgreSQL DB명/계정/비밀번호/포트를 `.env` 변수로 주입하고 서비스명을 `postgresql`로 정렬 |
 
 ## 7. 검증 체크리스트
 
@@ -91,6 +95,7 @@ blast radius는 Auth 로그인/토큰 검증/CORS 진입부에 걸리므로 `MED
 - [x] `mvn.cmd -q -DskipTests compile`
 - [x] `mvn.cmd -q test-compile`
 - [x] `git diff --check`
+- [x] `.env`가 `.gitignore`로 제외되는지 확인
 - [ ] GitNexus `detect_changes`
 - [ ] Docker build
 - [ ] Docker Compose 실행
@@ -147,6 +152,7 @@ Spring Boot Dashboard로 backend를 실행한 뒤 Swagger에서 확인할 대표
 |---|---|---|---|
 | JWT placeholder 적용 중 | `HealthcenterJwtTokenProvider`의 `EgovProperties` raw 읽기 제거 | `${JWT_SECRET:...}` placeholder가 그대로 secret으로 쓰이지 않게 하기 위함 | 이번 브랜치에서 Spring `@Value` 주입으로 변경 |
 | Dockerfile 작성 중 | `backend/.dockerignore` 추가 | `target`, 로그, Git 메타데이터가 Docker build context에 들어가지 않게 하기 위함 | 이번 브랜치에서 추가 |
+| Compose 환경변수화 중 | `docker-compose.yml`의 PostgreSQL 설정을 `.env` 기반으로 변경 | 로컬/VM 배포에서 DB명, 계정, 비밀번호, 포트를 파일로 분리하기 위함 | 이번 브랜치에서 반영 |
 | GitNexus 확인 중 | CLI analyze/impact 실패 | 로컬 CLI가 repo 인식 또는 repo 지정 후 impact 응답을 정상 반환하지 못함 | Maven/rg/git diff 검증으로 보완, 후속 GitNexus 상태 재점검 필요 |
 
 ## 11. 브랜치 종료 전 체크리스트

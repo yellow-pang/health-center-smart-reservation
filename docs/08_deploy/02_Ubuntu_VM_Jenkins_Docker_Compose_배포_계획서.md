@@ -755,7 +755,8 @@ GitHub 보호 규칙 추천:
 ### 4단계. docker-compose.yml 확장
 
 - [ ] postgresql/backend/frontend 서비스 구성
-- [ ] network, volume, env_file, restart 정책 추가
+- [x] postgresql 서비스 `.env` 기반 구성
+- [ ] backend/frontend network, volume, env_file, restart 정책 추가
 - [ ] postgres healthcheck 추가
 - [ ] PostgreSQL init SQL 마운트 방식 결정
 - [ ] DB volume 초기화/재생성 방법 문서화
