@@ -392,7 +392,7 @@ PostgreSQL 공식 이미지는 컨테이너 최초 초기화 시 `/docker-entryp
 postgresql:
   image: pgvector/pgvector:0.8.2-pg18
   volumes:
-    - health-center-postgres-data:/var/lib/postgresql/data
+    - health-center-postgres-data:/var/lib/postgresql
     - ./database/init:/docker-entrypoint-initdb.d:ro
 ```
 
@@ -756,7 +756,8 @@ GitHub 보호 규칙 추천:
 
 - [ ] postgresql/backend/frontend 서비스 구성
 - [x] postgresql 서비스 `.env` 기반 구성
-- [ ] backend/frontend network, volume, env_file, restart 정책 추가
+- [x] backend 서비스 build/env_file/depends_on/network/restart 구성
+- [ ] frontend network, volume, env_file, restart 정책 추가
 - [ ] postgres healthcheck 추가
 - [ ] PostgreSQL init SQL 마운트 방식 결정
 - [ ] DB volume 초기화/재생성 방법 문서화

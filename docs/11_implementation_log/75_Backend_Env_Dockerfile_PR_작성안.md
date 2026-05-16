@@ -40,6 +40,8 @@ Ubuntu VM + Jenkins + Docker Compose 배포 준비를 위해 백엔드 실행 �
 - `backend/.dockerignore` 추가
 - 로컬 실행용 `.env` 생성
 - 루트 `docker-compose.yml`의 PostgreSQL 설정을 `.env` 기반으로 변경
+- 루트 `docker-compose.yml`에 backend 이미지 build 서비스 추가
+- PostgreSQL 18 기준 volume mount 경로를 `/var/lib/postgresql`로 설정
 - 브랜치 구현 기록과 PR 작성안 추가
 - 전체 체크리스트와 배포 계획서 진행 상태 갱신
 
@@ -129,5 +131,6 @@ chore: 백엔드 환경변수와 Dockerfile 정리
 - CORS 허용 Origin과 JWT 만료 설정을 Spring 환경변수 주입으로 정리
 - Maven 기반 backend Dockerfile과 .dockerignore 추가
 - docker-compose.yml의 PostgreSQL 설정을 .env 기반으로 변경
+- docker-compose.yml에 backend 이미지 build 서비스 추가
 - 브랜치 구현 기록, PR 작성안, 전체 체크리스트 갱신
 ```

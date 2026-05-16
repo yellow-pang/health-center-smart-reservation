@@ -32,6 +32,7 @@
 - [x] `backend/.dockerignore` 작성
 - [x] 로컬 실행용 `.env` 생성
 - [x] 루트 `docker-compose.yml`의 PostgreSQL 설정을 `.env` 기반으로 변경
+- [x] 루트 `docker-compose.yml`에 backend 이미지 build 서비스 추가
 - [x] Maven compile/test-compile 확인
 - [x] 브랜치 구현 기록과 PR 문서 초안 작성
 - [x] 전체 체크리스트 갱신
@@ -86,7 +87,7 @@ blast radius는 Auth 로그인/토큰 검증/CORS 진입부에 걸리므로 `MED
 | `backend/Dockerfile` | Maven builder + Java 17 JRE runtime 멀티 스테이지 Dockerfile 추가 |
 | `backend/.dockerignore` | Docker build context에서 target/log/git 등 제외 |
 | `.env` | Git에 올리지 않는 로컬 실행용 환경변수 파일 생성 |
-| `docker-compose.yml` | PostgreSQL DB명/계정/비밀번호/포트를 `.env` 변수로 주입하고 서비스명을 `postgresql`로 정렬 |
+| `docker-compose.yml` | PostgreSQL DB명/계정/비밀번호/포트를 `.env` 변수로 주입하고, `./backend` Dockerfile 기반 backend build 서비스를 추가 |
 
 ## 7. 검증 체크리스트
 
@@ -153,6 +154,9 @@ Spring Boot Dashboard로 backend를 실행한 뒤 Swagger에서 확인할 대표
 | JWT placeholder 적용 중 | `HealthcenterJwtTokenProvider`의 `EgovProperties` raw 읽기 제거 | `${JWT_SECRET:...}` placeholder가 그대로 secret으로 쓰이지 않게 하기 위함 | 이번 브랜치에서 Spring `@Value` 주입으로 변경 |
 | Dockerfile 작성 중 | `backend/.dockerignore` 추가 | `target`, 로그, Git 메타데이터가 Docker build context에 들어가지 않게 하기 위함 | 이번 브랜치에서 추가 |
 | Compose 환경변수화 중 | `docker-compose.yml`의 PostgreSQL 설정을 `.env` 기반으로 변경 | 로컬/VM 배포에서 DB명, 계정, 비밀번호, 포트를 파일로 분리하기 위함 | 이번 브랜치에서 반영 |
+| Backend Compose 추가 중 | `docker-compose.yml`에 backend build 서비스 추가 | 전체 Compose 확장 전 backend 이미지를 먼저 compose에서 빌드/기동할 수 있게 하기 위함 | 이번 브랜치에서 반영 |
+| PostgreSQL healthcheck 확인 중 | healthcheck가 컨테이너 내부 환경변수와 초기화 대기 시간을 사용하도록 보정 | Compose 치환값보다 컨테이너 실제 env 기준으로 확인하고, PostgreSQL 초기화 중 false unhealthy를 줄이기 위함 | 이번 브랜치에서 반영 |
+| PostgreSQL 18 volume 오류 확인 중 | volume mount 경로를 `/var/lib/postgresql`로 변경 | PostgreSQL 18 Docker 이미지는 major-version-specific data directory를 사용하므로 `/var/lib/postgresql/data` 직접 마운트 시 컨테이너가 시작되지 않음 | 이번 브랜치에서 반영 |
 | GitNexus 확인 중 | CLI analyze/impact 실패 | 로컬 CLI가 repo 인식 또는 repo 지정 후 impact 응답을 정상 반환하지 못함 | Maven/rg/git diff 검증으로 보완, 후속 GitNexus 상태 재점검 필요 |
 
 ## 11. 브랜치 종료 전 체크리스트

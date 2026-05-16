@@ -11,9 +11,44 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
-      - health-center-postgres-data:/var/lib/postgresql/data
+      - health-center-postgres-data:/var/lib/postgresql
     networks:
       - health-center-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      start_period: 30s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: health-center-backend:local
+    container_name: health-center-backend
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      DB_HOST: ${DB_HOST:-postgresql}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME:-health_center}
+      DB_USERNAME: ${DB_USERNAME:-health}
+      DB_PASSWORD: ${DB_PASSWORD:-health1234}
+      JWT_SECRET: ${JWT_SECRET:-change-this-to-a-long-random-secret-at-least-32-bytes}
+      JWT_ACCESS_EXPIRE: ${JWT_ACCESS_EXPIRE:-3600}
+      JWT_REFRESH_EXPIRE: ${JWT_REFRESH_EXPIRE:-1209600}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    networks:
+      - health-center-network
+    restart: unless-stopped
 
 volumes:
   health-center-postgres-data:
