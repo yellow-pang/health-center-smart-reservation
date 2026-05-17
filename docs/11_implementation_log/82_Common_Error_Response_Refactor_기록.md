@@ -10,10 +10,12 @@
 
 GitNexus MCP 도구는 현재 세션에 노출되어 있지 않았다.
 
-CLI 확인 결과:
+GitNexus CLI 기준:
 
-- `npm.cmd exec -- gitnexus status`: stale index
-- 정확한 그래프 기반 impact 분석은 수행하지 못함
+- 사용자 로컬 환경에서는 프로젝트에 설치된 GitNexus CLI를 직접 실행한다.
+- 관계 파악이 필요한 경우 `gitnexus analyze`를 우선 실행한다.
+- 현재 설치 버전에는 `detect-change` 계열 명령이 없으므로 GitNexus 기반 변경 감지는 수행 대상에서 제외한다.
+- 정확한 MCP 그래프 기반 impact 분석은 현재 세션에서 수행하지 못했다.
 
 대체 확인:
 
@@ -75,14 +77,14 @@ Blast radius:
 - [x] `npm.cmd run build`
 - [x] Controller의 반복 `try/catch` 제거 확인
 - [x] `frontend/next-env.d.ts` 생성 변경 원복
-- [ ] `gitnexus detect-changes`
+- [x] GitNexus `detect-change` 계열 명령 미제공 확인 및 대체 검증 기준 정리
 - [ ] Swagger 런타임 대표 오류 응답 확인
 
-GitNexus 변경 감지:
+GitNexus 변경 범위 확인:
 
-- `npm.cmd exec -- gitnexus detect_changes`: 여러 저장소가 인덱싱되어 repo 지정 필요 오류
-- `npm.cmd exec -- gitnexus detect-changes --scope all --repo health-center-smart-reservation`: 출력 없이 exit code 1
-- 따라서 GitNexus detect_changes는 완료하지 못했고, `rg`, Maven compile/test-compile, Next build로 보완했다.
+- 현재 설치된 GitNexus CLI 버전에는 `detect-change`, `detect-changes`, `detect_changes` 명령이 없다.
+- 따라서 변경 범위 확인은 `rg`, `git diff`, Maven compile/test-compile, Next build로 보완했다.
+- 인덱스 갱신과 관계 파악이 필요한 경우 사용자 로컬 환경에서 `gitnexus analyze`를 직접 실행한다.
 
 ## 7. 사용자 확인 안내
 
