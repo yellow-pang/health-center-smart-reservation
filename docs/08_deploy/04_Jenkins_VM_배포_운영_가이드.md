@@ -91,6 +91,104 @@ docker logs health-center-jenkins
 http://<ubuntu-vm-ip>:8081
 ```
 
+### 4.1 VirtualBox NAT 포트 포워딩
+
+VirtualBox 네트워크가 `NAT` 방식이면 Windows 브라우저에서 Ubuntu VM의 포트로 바로 접근할 수 없다.
+
+이 경우 접속 흐름은 아래처럼 된다.
+
+```text
+Windows 브라우저
+  -> VirtualBox NAT 포트 포워딩
+  -> Ubuntu VM host port
+  -> Docker Compose port mapping
+  -> container port
+```
+
+예를 들어 Jenkins는 두 단계가 모두 필요하다.
+
+```text
+Windows localhost:8081
+  -> VirtualBox Host 8081 / Guest 8081
+  -> Docker Compose 8081:8080
+  -> Jenkins container 8080
+```
+
+VirtualBox 설정 위치:
+
+```text
+VirtualBox
+  -> 대상 VM 선택
+  -> Settings
+  -> Network
+  -> Adapter 1
+  -> Attached to: NAT
+  -> Advanced
+  -> Port Forwarding
+```
+
+권장 포트 포워딩 규칙:
+
+| Name | Protocol | Host IP | Host Port | Guest IP | Guest Port | 용도 | 필수 여부 |
+|---|---|---|---:|---|---:|---|---|
+| SSH | TCP | `127.0.0.1` | 2222 | 비움 | 22 | Windows에서 VM SSH 접속 | 선택 |
+| Frontend | TCP | `127.0.0.1` | 3000 | 비움 | 3000 | Next.js 화면 접속 | 권장 |
+| Backend | TCP | `127.0.0.1` | 8080 | 비움 | 8080 | API/Swagger 접속 | 권장 |
+| Jenkins | TCP | `127.0.0.1` | 8081 | 비움 | 8081 | Jenkins UI 접속 | 필수 |
+| PostgreSQL | TCP | `127.0.0.1` | 5432 | 비움 | 5432 | Windows DB client 직접 접속 | 선택 |
+| Jenkins Agent | TCP | `127.0.0.1` | 50000 | 비움 | 50000 | 외부 Jenkins agent 연결 | 보통 불필요 |
+
+Jenkins UI만 먼저 확인하려면 아래 하나만 있어도 된다.
+
+```text
+Jenkins / TCP / Host IP 127.0.0.1 / Host Port 8081 / Guest Port 8081
+```
+
+NAT 방식에서 Windows 브라우저 접속 URL:
+
+```text
+Frontend: http://localhost:3000
+Backend:  http://localhost:8080
+Swagger:  http://localhost:8080/swagger-ui/index.html
+Jenkins:  http://localhost:8081
+```
+
+SSH 접속 예시:
+
+```bash
+ssh -p 2222 <ubuntu-user>@127.0.0.1
+```
+
+주의:
+
+- VirtualBox 포트 포워딩의 Guest Port는 Docker Compose의 host port와 맞춘다.
+- Jenkins Compose는 `8081:8080`이므로 VirtualBox Guest Port는 `8081`이다.
+- Backend Compose는 `8080:8080`이므로 VirtualBox Guest Port는 `8080`이다.
+- Frontend Compose는 `3000:3000`이므로 VirtualBox Guest Port는 `3000`이다.
+- PostgreSQL은 외부 DB client가 필요할 때만 열고, 평소에는 열지 않아도 된다.
+- 외부 PC에서도 접속하게 하려면 Host IP를 비우거나 `0.0.0.0`으로 둘 수 있지만, 개인 학습 VM에서는 `127.0.0.1`을 우선 사용한다.
+
+NAT 방식에서는 `.env`의 브라우저 기준 URL도 `localhost` 기준으로 맞춘다.
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
+CORS_ALLOWED_ORIGINS=http://localhost:3000
+```
+
+Bridged Adapter 방식에서는 VM IP 기준으로 맞춘다.
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://<ubuntu-vm-ip>:8080
+CORS_ALLOWED_ORIGINS=http://<ubuntu-vm-ip>:3000,http://localhost:3000
+```
+
+둘 중 하나를 선택한다.
+
+| 네트워크 방식 | Windows 접속 주소 | `.env` 브라우저 기준 URL |
+|---|---|---|
+| NAT + 포트 포워딩 | `http://localhost:<port>` | `localhost` 기준 |
+| Bridged Adapter | `http://<ubuntu-vm-ip>:<port>` | VM IP 기준 |
+
 ---
 
 ## 5. VM Jenkins 최초 설정
@@ -207,6 +305,27 @@ Jenkins가 Windows 로컬 Docker socket을 사용하면 Windows 로컬 Docker에
 Ubuntu VM 내부에서 Jenkins Compose를 다시 실행하고, VM Jenkins UI에서 Credentials와 Pipeline Job을 다시 만든다.
 ```
 
+### 8.1.1 VM Jenkins 컨테이너는 실행 중인데 브라우저 접속이 안 되는 경우
+
+VirtualBox 네트워크 방식을 확인한다.
+
+- `Bridged Adapter`면 `http://<ubuntu-vm-ip>:8081`로 접속한다.
+- `NAT`면 VirtualBox Port Forwarding에 Jenkins 규칙을 추가하고 `http://localhost:8081`로 접속한다.
+
+NAT Jenkins 포트 포워딩 규칙:
+
+```text
+Name: Jenkins
+Protocol: TCP
+Host IP: 127.0.0.1
+Host Port: 8081
+Guest IP: 비움
+Guest Port: 8081
+```
+
+Jenkins만 접속되지 않는다면 먼저 위 규칙만 확인한다.
+Frontend, Backend, Swagger까지 확인하려면 `4.1 VirtualBox NAT 포트 포워딩`의 전체 규칙을 적용한다.
+
 ### 8.2 VM Jenkins에서 Credentials가 없다
 
 정상이다.
@@ -231,6 +350,7 @@ dev에서 검증한 뒤 main에 merge되면 Jenkins 배포가 실행된다.
 ## 9. 완료 기준
 
 - [ ] Ubuntu VM 내부에서 Jenkins 컨테이너 실행
+- [ ] VirtualBox NAT 사용 시 Jenkins 8081 포트 포워딩 설정
 - [ ] VM Jenkins UI 접속
 - [ ] VM Jenkins Credentials `health-center-env-file` 등록
 - [ ] VM Jenkins Pipeline Job 생성

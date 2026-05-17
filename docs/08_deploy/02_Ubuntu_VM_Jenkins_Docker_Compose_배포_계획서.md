@@ -182,6 +182,8 @@ Jenkins는 Docker 컨테이너로 실행한다.
 Bridged Adapter를 쓰면 Windows 브라우저에서 Ubuntu VM IP로 접속하기 쉽다.  
 NAT를 쓸 경우 포트 포워딩을 별도로 잡아야 한다.
 
+NAT를 유지하는 경우 Jenkins, Frontend, Backend/Swagger 접속을 위해 VirtualBox Port Forwarding 규칙이 필요하다. 상세 규칙은 `docs/08_deploy/04_Jenkins_VM_배포_운영_가이드.md`의 `4.1 VirtualBox NAT 포트 포워딩`을 따른다.
+
 ### 6.2 Ubuntu 기본 패키지 설치
 
 ```bash

@@ -140,6 +140,7 @@ docker exec -it health-center-jenkins sh -lc "hostname && docker info --format '
 - `health-center-jenkins` 컨테이너가 Ubuntu VM Docker Engine에서 실행 중이다.
 - Jenkins UI 주소가 `http://<ubuntu-vm-ip>:8081`이다.
 - Windows 로컬 Docker Desktop의 Jenkins UI가 아니라 VM Jenkins UI에서 Job을 설정한다.
+- VirtualBox가 NAT 방식이면 Jenkins UI 주소는 포트 포워딩 후 `http://localhost:8081`일 수 있다.
 
 ### 5.2 Jenkins 컨테이너 상태
 
@@ -306,6 +307,15 @@ Swagger:  http://<ubuntu-vm-ip>:8080/swagger-ui/index.html
 Jenkins:  http://<ubuntu-vm-ip>:8081
 ```
 
+VirtualBox NAT + 포트 포워딩 방식이면 Windows 브라우저에서 아래 주소를 사용한다.
+
+```text
+Frontend: http://localhost:3000
+Backend:  http://localhost:8080
+Swagger:  http://localhost:8080/swagger-ui/index.html
+Jenkins:  http://localhost:8081
+```
+
 대표 확인 흐름:
 
 1. Frontend 접속
@@ -346,6 +356,13 @@ Jenkins:  http://<ubuntu-vm-ip>:8081
 - Ubuntu VM에서 `docker ps --filter "name=health-center-jenkins"`로 Jenkins 실행 위치 확인
 - Windows 로컬 Jenkins에서 실행한 Pipeline은 Windows 로컬 Docker에 배포된 것으로 판단
 - VM 배포가 필요하면 Ubuntu VM Jenkins에서 Credentials와 Pipeline Job을 다시 설정
+
+### 10.1.2 VM Jenkins 컨테이너는 실행 중인데 UI 접속이 안 되는 경우
+
+- VirtualBox 네트워크가 NAT인지 확인
+- NAT라면 Host `8081` -> Guest `8081` 포트 포워딩 추가
+- 접속 주소를 `http://localhost:8081`로 확인
+- 전체 NAT 포트 포워딩 규칙은 `docs/08_deploy/04_Jenkins_VM_배포_운영_가이드.md`를 참고
 
 ### 10.2 Credentials 오류
 
