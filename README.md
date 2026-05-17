@@ -147,6 +147,7 @@ GET /api/congestion/current
 
 MVP는 종료 상태로 보고, 후속 작업은 아래 순서로 진행합니다.
 
-1. 포트폴리오 스토리라인과 시연 자료 정리
-2. 객체 단위 권한, 예외 응답, 트랜잭션 경계 재점검
-3. Actuator, Micrometer, Prometheus/Grafana, Loki, k6 같은 운영성 고도화
+1. 객체 단위 권한, 예외 응답, 트랜잭션 경계 재점검
+2. Actuator, Micrometer, Prometheus/Grafana, Loki, k6 같은 운영성 고도화
+3. 소셜 로그인 연결 추가
+4. 챗봇 기능 추가로 ux 향상
