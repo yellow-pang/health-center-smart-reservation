@@ -22,21 +22,22 @@
 14. `08_deploy/02_Ubuntu_VM_Jenkins_Docker_Compose_배포_계획서.md`
 15. `08_deploy/03_dev_to_main_배포전_확인_체크리스트.md`
 16. `08_deploy/04_Jenkins_VM_배포_운영_가이드.md`
-17. `10_backend_transition/01_eGovFrame_백엔드_템플릿_전환_현황.md`
-18. `10_backend_transition/02_PostgreSQL_전환_준비_완료_및_다음_작업.md`
-19. `10_backend_transition/03_샘플_코드_정리_범위_및_안전_절차.md`
-20. `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
-21. `09_agent/01_코드_에이전트_작업_가이드.md`
-22. `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
-23. `09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`
-24. `09_agent/05_문서기반_자동진행_운영가이드.md`
-25. `09_agent/06_새대화_시작_가이드.md`
-26. `09_agent/04_다음_작업_프롬프트.md`
-27. `13_schedule/01_남은_일정_단계별_진행_계획.md`
-28. `13_schedule/02_전체_작업_체크리스트.md`
-29. `14_deferred_cleanup/01_보류_정리_목록.md`
-30. `11_implementation_log/00_브랜치_작업_기록_가이드.md`
-31. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
+17. `08_deploy/05_외부_시연_접속_작업_리스트.md`
+18. `10_backend_transition/01_eGovFrame_백엔드_템플릿_전환_현황.md`
+19. `10_backend_transition/02_PostgreSQL_전환_준비_완료_및_다음_작업.md`
+20. `10_backend_transition/03_샘플_코드_정리_범위_및_안전_절차.md`
+21. `10_backend_transition/04_DB_접근_방식_JPA_MyBatis_판단.md`
+22. `09_agent/01_코드_에이전트_작업_가이드.md`
+23. `09_agent/02_에이전트_프롬프트_및_코드작성_지침.md`
+24. `09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`
+25. `09_agent/05_문서기반_자동진행_운영가이드.md`
+26. `09_agent/06_새대화_시작_가이드.md`
+27. `09_agent/04_다음_작업_프롬프트.md`
+28. `13_schedule/01_남은_일정_단계별_진행_계획.md`
+29. `13_schedule/02_전체_작업_체크리스트.md`
+30. `14_deferred_cleanup/01_보류_정리_목록.md`
+31. `11_implementation_log/00_브랜치_작업_기록_가이드.md`
+32. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
 
 ## 코드 작성 전 반드시 확인할 문서
 
@@ -50,6 +51,7 @@
 - `08_deploy/02_Ubuntu_VM_Jenkins_Docker_Compose_배포_계획서.md`
 - `08_deploy/03_dev_to_main_배포전_확인_체크리스트.md`
 - `08_deploy/04_Jenkins_VM_배포_운영_가이드.md`
+- `08_deploy/05_외부_시연_접속_작업_리스트.md`
 - `14_deferred_cleanup/01_보류_정리_목록.md`
 - `11_implementation_log/00_브랜치_작업_기록_가이드.md`
 - `02_domain/04_공통코드_관리_설계서.md`
