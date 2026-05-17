@@ -133,7 +133,7 @@ Cloudflare 공식 문서 기준으로, 도메인을 Cloudflare에 추가하면 C
 
 - Cloudflare nameserver 변경: https://developers.cloudflare.com/dns/nameservers/update-nameservers/
 - Cloudflare Tunnel: https://developers.cloudflare.com/tunnel/
-- Cloudflare Tunnel routing: https://developers.cloudflare.com/tunnel/routing/
+- Cloudflare Tunnel routing / published application routes: https://developers.cloudflare.com/tunnel/routing/
 - 가비아 네임서버 설정 페이지: https://domain.gabia.com/manage/changeinfo/nameserver
 
 ---
@@ -203,21 +203,92 @@ yyyy.ns.cloudflare.com
 
 Ubuntu VM 안에서 진행한다. Windows 로컬이 아니라 실제 Docker Compose가 실행되는 VM에 설치한다.
 
-확인:
+### 7.1 설치 전 위치 확인
+
+아래 명령은 `cloudflared` 설치 명령이 아니다.
+Cloudflare Tunnel을 붙이기 전에 Ubuntu VM에서 repository 위치와 현재 떠 있는 컨테이너를 확인하는 명령이다.
+
+중요:
+
+- `git clone` 직후에는 `.env`가 없다. `.env`는 Git 추적 대상이 아니므로 `docker compose --env-file .env ps`를 바로 실행해도 의미가 없거나 실패한다.
+- `docker compose --env-file .env ps`는 `.env`를 만든 뒤 수동 배포를 확인할 때, 또는 Jenkins Pipeline이 `Prepare Env` 단계에서 `.env`를 workspace에 복사한 뒤에만 사용한다.
+- Jenkins Pipeline 안에서는 `.env`가 `Prepare Env` 단계에서 Jenkins Credentials로 workspace에 복사된 뒤에만 존재한다.
+- Jenkins 컨테이너에 직접 접속해서 아무 위치에서 실행하면 `docker-compose.yml` 또는 `.env`를 찾지 못하는 것이 정상이다.
+
+먼저 Ubuntu VM 터미널에서 repository 루트와 Docker 상태만 확인한다.
 
 ```bash
+cd ~/apps/health-center-smart-reservation
 hostname
+pwd
+ls -la docker-compose.yml .env.example
 docker ps
+```
+
+이미 Jenkins 또는 수동 배포로 애플리케이션 컨테이너가 떠 있다면 `docker ps`에서 아래 컨테이너를 확인한다.
+
+```text
+health-center-postgres
+health-center-backend
+health-center-frontend
+```
+
+`.env`가 아직 없다면 아래 흐름 중 하나를 먼저 끝낸 뒤 Compose 명령을 사용한다.
+
+| 상황 | 먼저 할 일 |
+|---|---|
+| VM에서 수동 실행 | `.env.example`을 복사해 `.env`를 만들고 실제 값 입력 |
+| Jenkins로 배포 | Jenkins Credentials `health-center-env-file` 등록 후 Pipeline 실행 |
+
+수동 실행을 선택한 경우에만 아래처럼 확인한다.
+
+```bash
+cp .env.example .env
+vi .env
+docker compose --env-file .env config
+docker compose --env-file .env up -d --build
 docker compose --env-file .env ps
 ```
 
-설치 방식은 Cloudflare 공식 문서의 Linux 설치 기준을 따른다. 설치 후 아래를 확인한다.
+Jenkins Pipeline을 선택한 경우에는 Jenkinsfile의 `Deploy` 단계처럼 checkout된 workspace 루트에서 실행된다.
+
+```groovy
+stage('Deploy') {
+  steps {
+    sh 'docker compose --env-file .env up -d --remove-orphans'
+    sh 'docker compose --env-file .env ps'
+  }
+}
+```
+
+수동으로 Jenkins 컨테이너 안에서 확인해야 한다면 먼저 workspace 위치와 `.env` 존재 여부를 확인한다.
+
+```bash
+pwd
+ls -la
+find /var/jenkins_home/workspace -maxdepth 3 -name docker-compose.yml
+```
+
+Jenkins workspace에는 `.env`가 Git에 없으므로, Pipeline의 `Prepare Env` 단계가 실행되기 전에는 `.env`가 없을 수 있다. 이 경우 Jenkins Credentials `health-center-env-file` 등록과 Pipeline 실행으로 확인한다.
+
+### 7.2 cloudflared 설치
+
+설치 방식은 Cloudflare 공식 문서의 Linux 설치 기준을 우선한다. Ubuntu amd64 VM에서는 아래 예시처럼 `.deb` 패키지를 받아 설치할 수 있다.
+
+```bash
+curl -L --output cloudflared.deb \
+  https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+
+sudo dpkg -i cloudflared.deb
+```
+
+설치 후 아래를 확인한다.
 
 ```bash
 cloudflared --version
 ```
 
-로그인:
+Cloudflare 계정으로 로그인한다.
 
 ```bash
 cloudflared tunnel login
@@ -239,9 +310,34 @@ cloudflared tunnel create health-center-demo
 
 Tunnel 이름은 포트폴리오 프로젝트명을 드러내되 너무 길지 않게 둔다.
 
-### 8.2 Public hostname 연결
+### 8.1.1 설정 위치 구분
 
-Cloudflare Dashboard Zero Trust에서 public hostname을 추가한다.
+Cloudflare Zero Trust UI에는 비슷해 보이는 설정이 두 군데 있다.
+
+| 메뉴 | 역할 | 이 프로젝트에서의 사용 |
+|---|---|---|
+| `Networks > Tunnels` | `cloudflared` connector와 local service를 연결하고 외부 hostname route를 만든다. | 먼저 여기에서 `demo.<domain>`, `api.<domain>`을 local service에 연결한다. |
+| `Access controls > Applications` | 이미 route된 hostname 앞에 로그인, 이메일 제한, 정책 같은 Access 보호를 붙인다. | 선택 사항이다. 외부 시연을 누구나 열람하게 할 때는 처음에는 사용하지 않는다. |
+
+즉, 외부 접속 경로를 만드는 1차 위치는 `Networks > Tunnels`다.
+`Access controls > Applications > Self-hosted`는 Tunnel route를 만든 뒤, 그 주소에 Cloudflare Access 로그인 정책을 걸고 싶을 때 추가로 사용한다.
+
+포트폴리오 시연에서 면접관이나 지인에게 바로 URL을 보여주려면:
+
+```text
+Networks > Tunnels > 해당 tunnel > Published application routes
+```
+
+에서 먼저 route를 만든다.
+
+관리자 화면, Swagger, Jenkins처럼 보호가 필요한 주소에만 나중에 `Access controls > Applications`를 검토한다.
+
+### 8.2 Published application routes 연결
+
+Cloudflare Dashboard Zero Trust에서 `Networks > Tunnels`로 이동한 뒤, 생성한 Tunnel 상세 화면에서 `Published application routes`를 추가한다.
+
+이 화면은 예전 문서에서 `Public hostname` 또는 `Public hostnames`라고 부르던 설정과 같은 역할이다.
+Cloudflare 공식 문서 기준으로, Published application route는 외부 공개 hostname을 `cloudflared` 뒤의 local service로 프록시하는 설정이다.
 
 권장 라우팅:
 
@@ -249,6 +345,23 @@ Cloudflare Dashboard Zero Trust에서 public hostname을 추가한다.
 |---|---|
 | `demo.<domain>` | `http://localhost:3000` |
 | `api.<domain>` | `http://localhost:8080` |
+
+화면 입력 기준:
+
+| 항목 | Frontend | Backend |
+|---|---|---|
+| Subdomain | `demo` | `api` |
+| Domain | 가비아에서 구매하고 Cloudflare에 연결한 도메인 | 가비아에서 구매하고 Cloudflare에 연결한 도메인 |
+| Path | 비움 | 비움 |
+| Service Type | `HTTP` | `HTTP` |
+| Service URL | `localhost:3000` | `localhost:8080` |
+
+주의:
+
+- Path는 `/blog` 같은 특정 경로만 보낼 때 쓰는 값이다. 이 프로젝트는 전체 frontend/backend를 각각 subdomain으로 나누므로 비워둔다.
+- Service URL 칸 앞에 `://`가 보이는 UI에서는 Type을 `HTTP`로 고르고 URL에는 `localhost:3000`처럼 host와 port만 입력한다.
+- Domain 드롭다운에 구매한 도메인이 보이지 않으면 Cloudflare에 zone이 아직 추가되지 않았거나, 가비아 nameserver 변경/Cloudflare 활성화가 끝나지 않은 상태일 수 있다.
+- `www.<domain>`을 frontend로 써도 되지만, backend와 구분하기 위해 포트폴리오 시연에서는 `demo.<domain>`과 `api.<domain>` 조합을 우선 추천한다.
 
 VM에서 Docker Compose가 host port를 아래처럼 열고 있으므로 Tunnel은 VM의 localhost로 접근하면 된다.
 
