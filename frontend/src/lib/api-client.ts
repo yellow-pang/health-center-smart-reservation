@@ -1,6 +1,7 @@
 export interface ApiErrorBody {
   code: string;
   message: string;
+  traceId?: string;
 }
 
 export interface ApiResponse<T> {

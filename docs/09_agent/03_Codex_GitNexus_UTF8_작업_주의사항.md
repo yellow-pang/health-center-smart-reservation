@@ -46,19 +46,26 @@ rg --files docs
 
 권장 명령:
 
-```bash
-npm.cmd exec -- gitnexus status
+```powershell
+gitnexus status
 ```
 
 인덱스가 없거나 오래된 경우:
 
-```bash
-npm.cmd exec -- gitnexus analyze
+```powershell
+gitnexus analyze
+```
+
+인덱싱된 저장소 목록 확인이 필요한 경우:
+
+```powershell
+gitnexus list
 ```
 
 주의:
 
-- PowerShell 실행 정책에 따라 `npm` 대신 `npm.cmd`를 사용해야 할 수 있다.
+- 이 프로젝트는 로컬에 설치된 GitNexus CLI를 직접 사용하므로 `npm.cmd exec -- gitnexus ...` 또는 `npx gitnexus ...`를 기본 명령으로 쓰지 않는다.
+- 현재 설치된 GitNexus CLI 버전에는 `detect-change`, `detect-changes`, `detect_changes` 명령이 없으므로 변경 범위 확인은 `git status`, `git diff --stat`, `git diff --check`, `rg`, Maven/Next build로 보완한다.
 - GitNexus가 stale 상태이거나 실패하면 작업을 중단하지 말고 실패 이유를 기록한다.
 - GitNexus 결과만 믿지 않고 `rg`, 파일 직접 확인, 테스트를 함께 사용한다.
 - 문서만 수정하는 작업에서는 GitNexus가 필수는 아니다.

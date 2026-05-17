@@ -55,13 +55,8 @@ public class AdminOfficeController {
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
 	public ResponseEntity<ApiResponse<StaffResponse>> createStaff(@RequestBody StaffCreateRequest request) {
-		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(officeCommandService.createStaff(request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("STAFF_INVALID_REQUEST", e.getMessage()));
-		}
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(ApiResponse.success(officeCommandService.createStaff(request)));
 	}
 
 	@PutMapping("/staff/{id}")
@@ -73,12 +68,7 @@ public class AdminOfficeController {
 	public ResponseEntity<ApiResponse<StaffResponse>> updateStaff(
 			@PathVariable Long id,
 			@RequestBody StaffUpdateRequest request) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(officeCommandService.updateStaff(id, request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("STAFF_INVALID_REQUEST", e.getMessage()));
-		}
+		return ResponseEntity.ok(ApiResponse.success(officeCommandService.updateStaff(id, request)));
 	}
 
 	@PatchMapping("/staff/{id}/deactivate")
@@ -87,13 +77,8 @@ public class AdminOfficeController {
 		description = "관리자가 직원 계정을 삭제하지 않고 비활성화한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<StaffResponse>> deactivateStaff(@PathVariable Long id) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(officeCommandService.deactivateStaff(id)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("STAFF_INVALID_REQUEST", e.getMessage()));
-		}
+	public ApiResponse<StaffResponse> deactivateStaff(@PathVariable Long id) {
+		return ApiResponse.success(officeCommandService.deactivateStaff(id));
 	}
 
 	@GetMapping("/service-windows")
@@ -114,13 +99,8 @@ public class AdminOfficeController {
 	)
 	public ResponseEntity<ApiResponse<ServiceWindowResponse>> createServiceWindow(
 			@RequestBody ServiceWindowUpsertRequest request) {
-		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(officeCommandService.createServiceWindow(request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("SERVICE_WINDOW_INVALID_REQUEST", e.getMessage()));
-		}
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(ApiResponse.success(officeCommandService.createServiceWindow(request)));
 	}
 
 	@PutMapping("/service-windows/{id}")
@@ -132,12 +112,7 @@ public class AdminOfficeController {
 	public ResponseEntity<ApiResponse<ServiceWindowResponse>> updateServiceWindow(
 			@PathVariable Long id,
 			@RequestBody ServiceWindowUpsertRequest request) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(officeCommandService.updateServiceWindow(id, request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("SERVICE_WINDOW_INVALID_REQUEST", e.getMessage()));
-		}
+		return ResponseEntity.ok(ApiResponse.success(officeCommandService.updateServiceWindow(id, request)));
 	}
 
 	@PatchMapping("/service-windows/{id}/deactivate")
@@ -146,12 +121,7 @@ public class AdminOfficeController {
 		description = "관리자가 창구를 삭제하지 않고 비활성화한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<ServiceWindowResponse>> deactivateServiceWindow(@PathVariable Long id) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(officeCommandService.deactivateServiceWindow(id)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("SERVICE_WINDOW_INVALID_REQUEST", e.getMessage()));
-		}
+	public ApiResponse<ServiceWindowResponse> deactivateServiceWindow(@PathVariable Long id) {
+		return ApiResponse.success(officeCommandService.deactivateServiceWindow(id));
 	}
 }

@@ -1,6 +1,5 @@
 package egovframework.healthcenter.reservation.api;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -14,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 import egovframework.healthcenter.common.response.ApiResponse;
+import egovframework.healthcenter.common.security.AuthenticatedPrincipal;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.reservation.application.ReservationCommandService;
 import egovframework.healthcenter.reservation.application.ReservationQueryService;
@@ -45,13 +45,9 @@ public class ReservationController {
 		description = "현재 로그인한 사용자의 예약 목록을 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<List<ReservationResponse>>> findMyReservations(Authentication authentication) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-		}
-
-		return ResponseEntity.ok(ApiResponse.success(reservationQueryService.findMyReservations(principal)));
+	public ApiResponse<List<ReservationResponse>> findMyReservations(Authentication authentication) {
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(reservationQueryService.findMyReservations(principal));
 	}
 
 	@GetMapping("/{reservationId}")
@@ -60,22 +56,11 @@ public class ReservationController {
 		description = "예약자 본인 또는 같은 보건소의 직원/관리자가 예약 상세를 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<ReservationResponse>> findReservationDetail(
+	public ApiResponse<ReservationResponse> findReservationDetail(
 			Authentication authentication,
 			@PathVariable Long reservationId) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-		}
-
-		try {
-			return ResponseEntity.ok(ApiResponse.success(
-				reservationQueryService.findReservationDetail(principal, reservationId)
-			));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(resolveStatus(e.getMessage()))
-				.body(ApiResponse.failure(resolveErrorCode(e.getMessage()), e.getMessage()));
-		}
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(reservationQueryService.findReservationDetail(principal, reservationId));
 	}
 
 	@PostMapping
@@ -85,20 +70,11 @@ public class ReservationController {
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
 	public ResponseEntity<ApiResponse<ReservationCreateResponse>> createReservation(
-			Authentication authentication,
-			@RequestBody ReservationCreateRequest request) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-		}
-
-		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(reservationCommandService.createReservation(principal, request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure(resolveErrorCode(e.getMessage()), e.getMessage()));
-		}
+		Authentication authentication,
+		@RequestBody ReservationCreateRequest request) {
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ResponseEntity.status(201)
+			.body(ApiResponse.success(reservationCommandService.createReservation(principal, request)));
 	}
 
 	@DeleteMapping("/{reservationId}")
@@ -110,58 +86,8 @@ public class ReservationController {
 	public ResponseEntity<ApiResponse<Void>> cancelReservation(
 			Authentication authentication,
 			@PathVariable Long reservationId) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-		}
-
-		try {
-			reservationCommandService.cancelReservation(principal, reservationId);
-			return ResponseEntity.ok(ApiResponse.success(null));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(resolveStatus(e.getMessage()))
-				.body(ApiResponse.failure(resolveErrorCode(e.getMessage()), e.getMessage()));
-		}
-	}
-
-	private String resolveErrorCode(String message) {
-		if (message != null && message.contains("권한")) {
-			return "FORBIDDEN";
-		}
-		if (message != null && message.contains("예약 정보를 찾을 수 없습니다")) {
-			return "RESERVATION_NOT_FOUND";
-		}
-		if (message != null && message.contains("마감")) {
-			return "RESERVATION_SLOT_FULL";
-		}
-		if (message != null && message.contains("이미 예약")) {
-			return "RESERVATION_DUPLICATED";
-		}
-		if (message != null && message.contains("1시간 전")) {
-			return "RESERVATION_CANCEL_TIME_EXPIRED";
-		}
-		if (message != null && message.contains("취소")) {
-			return "RESERVATION_CANCEL_INVALID_STATUS";
-		}
-		if (message != null && message.contains("슬롯")) {
-			return "RESERVATION_SLOT_NOT_FOUND";
-		}
-		return "RESERVATION_INVALID_REQUEST";
-	}
-
-	private HttpStatus resolveStatus(String message) {
-		if (message != null && message.contains("권한")) {
-			return HttpStatus.FORBIDDEN;
-		}
-		if (message != null && message.contains("예약 정보를 찾을 수 없습니다")) {
-			return HttpStatus.NOT_FOUND;
-		}
-		if (message != null && message.contains("1시간 전")) {
-			return HttpStatus.CONFLICT;
-		}
-		if (message != null && message.contains("취소")) {
-			return HttpStatus.CONFLICT;
-		}
-		return HttpStatus.BAD_REQUEST;
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		reservationCommandService.cancelReservation(principal, reservationId);
+		return ResponseEntity.ok(ApiResponse.success(null));
 	}
 }

@@ -47,17 +47,10 @@ public class ReservationSlotController {
 		description = "업무 유형과 날짜 기준으로 활성 예약 슬롯을 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<List<ReservationSlotResponse>>> findReservationSlots(
+	public ApiResponse<List<ReservationSlotResponse>> findReservationSlots(
 			@RequestParam Long serviceTypeId,
 			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(
-				reservationSlotQueryService.findAvailableSlots(serviceTypeId, date)
-			));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("RESERVATION_SLOT_INVALID_REQUEST", e.getMessage()));
-		}
+		return ApiResponse.success(reservationSlotQueryService.findAvailableSlots(serviceTypeId, date));
 	}
 
 	@PostMapping("/admin/reservation-slots")
@@ -68,13 +61,8 @@ public class ReservationSlotController {
 	)
 	public ResponseEntity<ApiResponse<ReservationSlotResponse>> createReservationSlot(
 			@RequestBody ReservationSlotCreateRequest request) {
-		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(reservationSlotCommandService.createSlot(request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("RESERVATION_SLOT_INVALID_REQUEST", e.getMessage()));
-		}
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(ApiResponse.success(reservationSlotCommandService.createSlot(request)));
 	}
 
 	@PutMapping("/admin/reservation-slots/{id}")
@@ -86,12 +74,7 @@ public class ReservationSlotController {
 	public ResponseEntity<ApiResponse<ReservationSlotResponse>> updateReservationSlot(
 			@PathVariable Long id,
 			@RequestBody ReservationSlotUpdateRequest request) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(reservationSlotCommandService.updateSlot(id, request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("RESERVATION_SLOT_INVALID_REQUEST", e.getMessage()));
-		}
+		return ResponseEntity.ok(ApiResponse.success(reservationSlotCommandService.updateSlot(id, request)));
 	}
 
 	@PatchMapping("/admin/reservation-slots/{id}/deactivate")
@@ -100,12 +83,7 @@ public class ReservationSlotController {
 		description = "관리자가 예약 슬롯을 삭제하지 않고 비활성화한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<ReservationSlotResponse>> deactivateReservationSlot(@PathVariable Long id) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(reservationSlotCommandService.deactivateSlot(id)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("RESERVATION_SLOT_INVALID_REQUEST", e.getMessage()));
-		}
+	public ApiResponse<ReservationSlotResponse> deactivateReservationSlot(@PathVariable Long id) {
+		return ApiResponse.success(reservationSlotCommandService.deactivateSlot(id));
 	}
 }

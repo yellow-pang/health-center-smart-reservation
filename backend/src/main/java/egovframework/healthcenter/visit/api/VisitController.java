@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import egovframework.healthcenter.common.response.ApiResponse;
+import egovframework.healthcenter.common.security.AuthenticatedPrincipal;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.visit.application.VisitCommandService;
 import egovframework.healthcenter.visit.dto.VisitCheckInRequest;
@@ -39,18 +40,9 @@ public class VisitController {
 	public ResponseEntity<ApiResponse<VisitCheckInResponse>> checkIn(
 			Authentication authentication,
 			@RequestBody VisitCheckInRequest request) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-		}
-
-		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(visitCommandService.checkIn(principal, request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(resolveStatus(e.getMessage()))
-				.body(ApiResponse.failure(resolveErrorCode(e.getMessage()), e.getMessage()));
-		}
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(ApiResponse.success(visitCommandService.checkIn(principal, request)));
 	}
 
 	@PostMapping("/walk-in")
@@ -62,46 +54,8 @@ public class VisitController {
 	public ResponseEntity<ApiResponse<VisitWalkInResponse>> walkIn(
 			Authentication authentication,
 			@RequestBody VisitWalkInRequest request) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-		}
-
-		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(visitCommandService.walkIn(principal, request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(resolveStatus(e.getMessage()))
-				.body(ApiResponse.failure(resolveErrorCode(e.getMessage()), e.getMessage()));
-		}
-	}
-
-	private String resolveErrorCode(String message) {
-		if (message != null && message.contains("권한")) {
-			return "FORBIDDEN";
-		}
-		if (message != null && message.contains("업무 유형")) {
-			return "SERVICE_TYPE_NOT_FOUND";
-		}
-		if (message != null && message.contains("찾을 수 없습니다")) {
-			return "RESERVATION_NOT_FOUND";
-		}
-		if (message != null && message.contains("이미 체크인")) {
-			return "ALREADY_CHECKED_IN";
-		}
-		return "VISIT_INVALID_REQUEST";
-	}
-
-	private HttpStatus resolveStatus(String message) {
-		if (message != null && message.contains("권한")) {
-			return HttpStatus.FORBIDDEN;
-		}
-		if (message != null && message.contains("찾을 수 없습니다")) {
-			return HttpStatus.NOT_FOUND;
-		}
-		if (message != null && message.contains("이미 체크인")) {
-			return HttpStatus.CONFLICT;
-		}
-		return HttpStatus.BAD_REQUEST;
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(ApiResponse.success(visitCommandService.walkIn(principal, request)));
 	}
 }
