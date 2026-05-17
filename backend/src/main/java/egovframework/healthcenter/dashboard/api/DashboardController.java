@@ -3,8 +3,6 @@ package egovframework.healthcenter.dashboard.api;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import egovframework.healthcenter.common.response.ApiResponse;
+import egovframework.healthcenter.common.security.AuthenticatedPrincipal;
 import egovframework.healthcenter.dashboard.application.DashboardQueryService;
 import egovframework.healthcenter.dashboard.dto.DashboardSummaryResponse;
 import egovframework.healthcenter.dashboard.dto.HourlyVisitResponse;
@@ -40,19 +39,11 @@ public class DashboardController {
 		description = "관리자가 날짜별 방문자 수, 현재 대기 인원, 평균 대기시간, 노쇼율을 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<DashboardSummaryResponse>> findSummary(
+	public ApiResponse<DashboardSummaryResponse> findSummary(
 			Authentication authentication,
 			@RequestParam(required = false) LocalDate date) {
-		MemberPrincipal principal = resolvePrincipal(authentication);
-		if (principal == null) {
-			return unauthorized();
-		}
-
-		try {
-			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findSummary(principal, date)));
-		} catch (IllegalArgumentException e) {
-			return badRequest(e);
-		}
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(dashboardQueryService.findSummary(principal, date));
 	}
 
 	@GetMapping("/hourly-visits")
@@ -61,19 +52,11 @@ public class DashboardController {
 		description = "관리자가 날짜별 시간대 방문자 수를 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<List<HourlyVisitResponse>>> findHourlyVisits(
+	public ApiResponse<List<HourlyVisitResponse>> findHourlyVisits(
 			Authentication authentication,
 			@RequestParam(required = false) LocalDate date) {
-		MemberPrincipal principal = resolvePrincipal(authentication);
-		if (principal == null) {
-			return unauthorized();
-		}
-
-		try {
-			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findHourlyVisits(principal, date)));
-		} catch (IllegalArgumentException e) {
-			return badRequest(e);
-		}
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(dashboardQueryService.findHourlyVisits(principal, date));
 	}
 
 	@GetMapping("/service-wait-times")
@@ -82,19 +65,11 @@ public class DashboardController {
 		description = "관리자가 날짜별 업무 유형 평균 대기시간을 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<List<ServiceWaitTimeResponse>>> findServiceWaitTimes(
+	public ApiResponse<List<ServiceWaitTimeResponse>> findServiceWaitTimes(
 			Authentication authentication,
 			@RequestParam(required = false) LocalDate date) {
-		MemberPrincipal principal = resolvePrincipal(authentication);
-		if (principal == null) {
-			return unauthorized();
-		}
-
-		try {
-			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findServiceWaitTimes(principal, date)));
-		} catch (IllegalArgumentException e) {
-			return badRequest(e);
-		}
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(dashboardQueryService.findServiceWaitTimes(principal, date));
 	}
 
 	@GetMapping("/visit-type-ratio")
@@ -103,19 +78,11 @@ public class DashboardController {
 		description = "관리자가 날짜별 예약 방문과 현장 접수 비율을 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<VisitTypeRatioResponse>> findVisitTypeRatio(
+	public ApiResponse<VisitTypeRatioResponse> findVisitTypeRatio(
 			Authentication authentication,
 			@RequestParam(required = false) LocalDate date) {
-		MemberPrincipal principal = resolvePrincipal(authentication);
-		if (principal == null) {
-			return unauthorized();
-		}
-
-		try {
-			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findVisitTypeRatio(principal, date)));
-		} catch (IllegalArgumentException e) {
-			return badRequest(e);
-		}
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(dashboardQueryService.findVisitTypeRatio(principal, date));
 	}
 
 	@GetMapping("/no-show-rate")
@@ -124,35 +91,10 @@ public class DashboardController {
 		description = "관리자가 날짜별 취소 예약 제외 기준 노쇼율을 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<NoShowRateResponse>> findNoShowRate(
+	public ApiResponse<NoShowRateResponse> findNoShowRate(
 			Authentication authentication,
 			@RequestParam(required = false) LocalDate date) {
-		MemberPrincipal principal = resolvePrincipal(authentication);
-		if (principal == null) {
-			return unauthorized();
-		}
-
-		try {
-			return ResponseEntity.ok(ApiResponse.success(dashboardQueryService.findNoShowRate(principal, date)));
-		} catch (IllegalArgumentException e) {
-			return badRequest(e);
-		}
-	}
-
-	private MemberPrincipal resolvePrincipal(Authentication authentication) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return null;
-		}
-		return principal;
-	}
-
-	private <T> ResponseEntity<ApiResponse<T>> unauthorized() {
-		return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-			.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-	}
-
-	private <T> ResponseEntity<ApiResponse<T>> badRequest(IllegalArgumentException e) {
-		return ResponseEntity.badRequest()
-			.body(ApiResponse.failure("DASHBOARD_INVALID_REQUEST", e.getMessage()));
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(dashboardQueryService.findNoShowRate(principal, date));
 	}
 }

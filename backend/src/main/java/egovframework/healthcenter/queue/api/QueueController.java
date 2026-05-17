@@ -2,7 +2,6 @@ package egovframework.healthcenter.queue.api;
 
 import java.util.List;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import egovframework.healthcenter.common.response.ApiResponse;
+import egovframework.healthcenter.common.security.AuthenticatedPrincipal;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.queue.application.QueueCommandService;
 import egovframework.healthcenter.queue.application.QueueQueryService;
@@ -40,23 +40,12 @@ public class QueueController {
 		description = "오늘 대기표 목록을 업무 유형과 상태 기준으로 조회한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<List<QueueTicketResponse>>> findQueueTickets(
+	public ApiResponse<List<QueueTicketResponse>> findQueueTickets(
 			Authentication authentication,
 			@RequestParam(required = false) Long serviceTypeId,
 			@RequestParam(required = false) String status) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-		}
-
-		try {
-			return ResponseEntity.ok(ApiResponse.success(
-				queueQueryService.findQueueTickets(principal, serviceTypeId, status)
-			));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(resolveStatus(e.getMessage()))
-				.body(ApiResponse.failure(resolveErrorCode(e.getMessage()), e.getMessage()));
-		}
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(queueQueryService.findQueueTickets(principal, serviceTypeId, status));
 	}
 
 	@PostMapping("/{queueTicketId}/call")
@@ -132,54 +121,19 @@ public class QueueController {
 	}
 
 	private ResponseEntity<ApiResponse<QueueTicketResponse>> handleCommand(
-			Authentication authentication,
-			Long queueTicketId,
-			QueueAction action) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof MemberPrincipal principal)) {
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-				.body(ApiResponse.failure("AUTH_REQUIRED", "로그인이 필요합니다."));
-		}
-
-		try {
-			QueueTicketResponse response = switch (action) {
-				case CALL -> queueCommandService.call(principal, queueTicketId);
-				case START -> queueCommandService.start(principal, queueTicketId);
-				case COMPLETE -> queueCommandService.complete(principal, queueTicketId);
-				case HOLD -> queueCommandService.hold(principal, queueTicketId);
-				case NO_SHOW -> queueCommandService.noShow(principal, queueTicketId);
-				case CANCEL -> queueCommandService.cancel(principal, queueTicketId);
-			};
-			return ResponseEntity.ok(ApiResponse.success(response));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.status(resolveStatus(e.getMessage()))
-				.body(ApiResponse.failure(resolveErrorCode(e.getMessage()), e.getMessage()));
-		}
-	}
-
-	private String resolveErrorCode(String message) {
-		if (message != null && message.contains("권한")) {
-			return "FORBIDDEN";
-		}
-		if (message != null && message.contains("찾을 수 없습니다")) {
-			return "QUEUE_TICKET_NOT_FOUND";
-		}
-		if (message != null && message.contains("상태")) {
-			return "QUEUE_INVALID_STATUS";
-		}
-		return "QUEUE_INVALID_REQUEST";
-	}
-
-	private HttpStatus resolveStatus(String message) {
-		if (message != null && message.contains("권한")) {
-			return HttpStatus.FORBIDDEN;
-		}
-		if (message != null && message.contains("찾을 수 없습니다")) {
-			return HttpStatus.NOT_FOUND;
-		}
-		if (message != null && message.contains("상태")) {
-			return HttpStatus.CONFLICT;
-		}
-		return HttpStatus.BAD_REQUEST;
+		Authentication authentication,
+		Long queueTicketId,
+		QueueAction action) {
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		QueueTicketResponse response = switch (action) {
+			case CALL -> queueCommandService.call(principal, queueTicketId);
+			case START -> queueCommandService.start(principal, queueTicketId);
+			case COMPLETE -> queueCommandService.complete(principal, queueTicketId);
+			case HOLD -> queueCommandService.hold(principal, queueTicketId);
+			case NO_SHOW -> queueCommandService.noShow(principal, queueTicketId);
+			case CANCEL -> queueCommandService.cancel(principal, queueTicketId);
+		};
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	private enum QueueAction {

@@ -59,13 +59,8 @@ public class ServiceTypeController {
 	)
 	public ResponseEntity<ApiResponse<ServiceTypeResponse>> createServiceType(
 			@RequestBody ServiceTypeCreateRequest request) {
-		try {
-			return ResponseEntity.status(HttpStatus.CREATED)
-				.body(ApiResponse.success(officeCommandService.createServiceType(request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("SERVICE_TYPE_INVALID_REQUEST", e.getMessage()));
-		}
+		return ResponseEntity.status(HttpStatus.CREATED)
+			.body(ApiResponse.success(officeCommandService.createServiceType(request)));
 	}
 
 	@PutMapping("/api/admin/service-types/{id}")
@@ -77,12 +72,7 @@ public class ServiceTypeController {
 	public ResponseEntity<ApiResponse<ServiceTypeResponse>> updateServiceType(
 			@PathVariable Long id,
 			@RequestBody ServiceTypeUpdateRequest request) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(officeCommandService.updateServiceType(id, request)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("SERVICE_TYPE_INVALID_REQUEST", e.getMessage()));
-		}
+		return ResponseEntity.ok(ApiResponse.success(officeCommandService.updateServiceType(id, request)));
 	}
 
 	@PatchMapping("/api/admin/service-types/{id}/deactivate")
@@ -91,13 +81,8 @@ public class ServiceTypeController {
 		description = "관리자가 업무 유형을 삭제하지 않고 비활성화한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<ServiceTypeResponse>> deactivateServiceType(@PathVariable Long id) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(officeCommandService.deactivateServiceType(id)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("SERVICE_TYPE_INVALID_REQUEST", e.getMessage()));
-		}
+	public ApiResponse<ServiceTypeResponse> deactivateServiceType(@PathVariable Long id) {
+		return ApiResponse.success(officeCommandService.deactivateServiceType(id));
 	}
 
 	@PatchMapping("/api/admin/service-types/{id}/activate")
@@ -106,12 +91,7 @@ public class ServiceTypeController {
 		description = "관리자가 비활성화된 업무 유형을 다시 활성화한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
-	public ResponseEntity<ApiResponse<ServiceTypeResponse>> activateServiceType(@PathVariable Long id) {
-		try {
-			return ResponseEntity.ok(ApiResponse.success(officeCommandService.activateServiceType(id)));
-		} catch (IllegalArgumentException e) {
-			return ResponseEntity.badRequest()
-				.body(ApiResponse.failure("SERVICE_TYPE_INVALID_REQUEST", e.getMessage()));
-		}
+	public ApiResponse<ServiceTypeResponse> activateServiceType(@PathVariable Long id) {
+		return ApiResponse.success(officeCommandService.activateServiceType(id));
 	}
 }
