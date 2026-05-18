@@ -63,6 +63,66 @@
 		  AND m.active = true
 	</select>
 
+	<select id="selectActiveMemberBySocialAccount" parameterType="map" resultMap="Member">
+		SELECT
+			m.id,
+			m.health_center_id,
+			m.email,
+			m.password,
+			m.name,
+			m.phone,
+			m.role,
+			m.active
+		FROM social_accounts sa
+		INNER JOIN members m
+			ON m.id = sa.member_id
+		WHERE sa.provider = #{provider}
+		  AND sa.provider_user_id = #{providerUserId}
+		  AND m.active = true
+	</select>
+
+	<insert id="insertSocialMember" parameterType="map">
+		INSERT INTO members (
+			health_center_id,
+			email,
+			password,
+			name,
+			phone,
+			role,
+			active,
+			created_at
+		) VALUES (
+			NULL,
+			#{email},
+			#{password},
+			#{name},
+			'',
+			'CITIZEN',
+			true,
+			CURRENT_TIMESTAMP
+		)
+		ON CONFLICT (email) DO NOTHING
+	</insert>
+
+	<insert id="insertSocialAccount" parameterType="map">
+		INSERT INTO social_accounts (
+			member_id,
+			provider,
+			provider_user_id,
+			provider_email,
+			linked_at,
+			created_at
+		) VALUES (
+			#{memberId},
+			#{provider},
+			#{providerUserId},
+			#{providerEmail},
+			#{linkedAt},
+			CURRENT_TIMESTAMP
+		)
+		ON CONFLICT (provider, provider_user_id) DO NOTHING
+	</insert>
+
 	<insert id="insertRefreshToken" parameterType="map">
 		INSERT INTO refresh_tokens (
 			member_id,

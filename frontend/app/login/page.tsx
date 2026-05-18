@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/src/contexts/auth-context';
+import { AUTO_LOGIN_STORAGE_KEY, getApiBaseUrl } from '@/src/lib/api-client';
 import type { UserRole } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 
@@ -70,7 +71,13 @@ export default function LoginPage() {
   };
 
   const handleSocialLogin = (providerName: string) => {
-    toast.info(`${providerName} 로그인은 준비 중입니다`);
+    if (autoLogin) {
+      window.localStorage.setItem(AUTO_LOGIN_STORAGE_KEY, 'true');
+    } else {
+      window.localStorage.removeItem(AUTO_LOGIN_STORAGE_KEY);
+    }
+
+    window.location.href = `${getApiBaseUrl()}/api/auth/social/${providerName}/authorize`;
   };
 
   const isCheckingSession = isLoading && !user;
@@ -185,7 +192,7 @@ export default function LoginPage() {
                   type="button"
                   variant="outline"
                   className="h-11 w-full border-[#FEE500] bg-[#FEE500] text-[#191919] transition-all hover:border-[#191919]/20 hover:bg-[#FEE500] hover:text-[#191919] hover:shadow-md active:scale-[0.98] active:bg-[#FEE500]"
-                  onClick={() => handleSocialLogin('카카오')}
+                  onClick={() => handleSocialLogin('kakao')}
                   disabled={isLoading}
                 >
                   <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5" fill="currentColor" aria-hidden="true">
@@ -197,7 +204,7 @@ export default function LoginPage() {
                   type="button"
                   variant="outline"
                   className="h-11 w-full border-[#03C75A] bg-[#03C75A] text-white transition-all hover:border-white/30 hover:bg-[#03C75A] hover:text-white hover:shadow-md active:scale-[0.98] active:bg-[#03C75A]"
-                  onClick={() => handleSocialLogin('네이버')}
+                  onClick={() => handleSocialLogin('naver')}
                   disabled={isLoading}
                 >
                   <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5" fill="currentColor" aria-hidden="true">
@@ -209,7 +216,7 @@ export default function LoginPage() {
                   type="button"
                   variant="outline"
                   className="h-11 w-full border-gray-300 bg-white text-[#3c4043] transition-all hover:border-[#4285F4] hover:bg-white hover:text-[#3c4043] hover:shadow-md active:scale-[0.98] active:bg-white"
-                  onClick={() => handleSocialLogin('구글')}
+                  onClick={() => handleSocialLogin('google')}
                   disabled={isLoading}
                 >
                   <svg viewBox="0 0 24 24" className="mr-2 h-5 w-5" aria-hidden="true">

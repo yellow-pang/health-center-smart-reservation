@@ -62,6 +62,8 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | POST | /api/auth/login | 로그인 | PUBLIC |
 | POST | /api/auth/reissue | 토큰 재발급 | PUBLIC |
 | POST | /api/auth/logout | 로그아웃 | 로그인 사용자 |
+| GET | /api/auth/social/{provider}/authorize | 소셜 로그인 시작 | PUBLIC |
+| GET | /api/auth/social/{provider}/callback | 소셜 로그인 콜백 | PUBLIC |
 | GET | /api/members/me | 내 회원 정보 조회 | 로그인 사용자 |
 | GET | /api/service-types | 업무 유형 조회 | PUBLIC |
 | GET | /api/reservation-slots | 예약 가능 시간 조회 | 로그인 사용자 |
@@ -127,6 +129,32 @@ Response:
   "error": null
 }
 ```
+
+### 4.1.1 소셜 로그인
+
+`GET /api/auth/social/{provider}/authorize`
+
+Path:
+
+| 이름 | 설명 | 예시 |
+|---|---|---|
+| provider | 소셜 로그인 제공자 | `kakao`, `naver`, `google` |
+
+동작:
+
+- 백엔드가 제공자별 OAuth 인증 URL로 302 redirect한다.
+- 실제 사용 전 OAuth 환경변수와 제공자 개발자 콘솔 Redirect URI가 일치해야 한다.
+
+Callback:
+
+`GET /api/auth/social/{provider}/callback?code={authorizationCode}`
+
+동작:
+
+- 백엔드가 provider access token과 프로필을 조회한다.
+- `social_accounts` 매핑 또는 이메일 기준으로 회원을 찾고, 없으면 `CITIZEN` 회원을 생성한다.
+- 프로젝트 JWT access token과 refresh token을 발급한다.
+- 프론트 `/login/social/callback#accessToken=...&refreshToken=...&role=...`로 302 redirect한다.
 
 ### 4.2 토큰 재발급
 
