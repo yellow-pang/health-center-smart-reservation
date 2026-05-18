@@ -11,6 +11,10 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface LoginOptions {
+  rememberLogin?: boolean;
+}
+
 interface MemberResponse {
   id: number;
   healthCenterId: number | null;
@@ -37,7 +41,10 @@ const testAccountCredentials: Record<UserRole, LoginCredentials> = {
   ADMIN: { email: 'admin@test.com', password: 'password1234' },
 };
 
-export async function login(credentials: LoginCredentials): Promise<AuthResult> {
+export async function login(
+  credentials: LoginCredentials,
+  options: LoginOptions = {},
+): Promise<AuthResult> {
   try {
     const result = await apiRequest<LoginApiResponse>('/api/auth/login', {
       method: 'POST',
@@ -49,7 +56,7 @@ export async function login(credentials: LoginCredentials): Promise<AuthResult> 
       },
     });
 
-    setAuthTokens(result.accessToken, result.refreshToken);
+    setAuthTokens(result.accessToken, result.refreshToken, options.rememberLogin === true);
 
     return {
       success: true,

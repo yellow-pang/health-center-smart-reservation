@@ -43,6 +43,7 @@ export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
 
 export const ACCESS_TOKEN_STORAGE_KEY = 'healthcenter.accessToken';
 export const REFRESH_TOKEN_STORAGE_KEY = 'healthcenter.refreshToken';
+export const AUTO_LOGIN_STORAGE_KEY = 'healthcenter.autoLogin';
 
 const DEFAULT_API_BASE_URL = 'http://localhost:8080';
 
@@ -55,7 +56,7 @@ export function getAccessToken(): string | null {
     return null;
   }
 
-  return window.localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
+  return getStoredToken(ACCESS_TOKEN_STORAGE_KEY);
 }
 
 export function getRefreshToken(): string | null {
@@ -63,18 +64,29 @@ export function getRefreshToken(): string | null {
     return null;
   }
 
-  return window.localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+  return getStoredToken(REFRESH_TOKEN_STORAGE_KEY);
 }
 
-export function setAuthTokens(accessToken: string, refreshToken?: string): void {
+export function setAuthTokens(
+  accessToken: string,
+  refreshToken?: string,
+  rememberLogin = false,
+): void {
   if (typeof window === 'undefined') {
     return;
   }
 
-  window.localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+  clearAuthTokens();
+
+  const storage = rememberLogin ? window.localStorage : window.sessionStorage;
+  storage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
 
   if (refreshToken) {
-    window.localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+    storage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+  }
+
+  if (rememberLogin) {
+    window.localStorage.setItem(AUTO_LOGIN_STORAGE_KEY, 'true');
   }
 }
 
@@ -85,6 +97,24 @@ export function clearAuthTokens(): void {
 
   window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(AUTO_LOGIN_STORAGE_KEY);
+  window.sessionStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+  window.sessionStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+}
+
+function getStoredToken(key: string): string | null {
+  const sessionToken = window.sessionStorage.getItem(key);
+  if (sessionToken) {
+    return sessionToken;
+  }
+
+  if (window.localStorage.getItem(AUTO_LOGIN_STORAGE_KEY) !== 'true') {
+    window.localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+    window.localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
+    return null;
+  }
+
+  return window.localStorage.getItem(key);
 }
 
 export async function apiRequest<T>(
