@@ -14,7 +14,7 @@ interface DashboardSummaryApiResponse {
 }
 
 interface HourlyVisitorsApiResponse {
-  hour: number;
+  hour: number | string;
   visitCount: number;
 }
 
@@ -69,9 +69,32 @@ export async function getHourlyVisitors(
   );
 
   return visitors.map((item) => ({
-    hour: `${String(item.hour).padStart(2, '0')}:00`,
+    hour: formatHourLabel(item.hour),
     count: item.visitCount,
   }));
+}
+
+function formatHourLabel(hour: number | string): string {
+  const normalizedHour = normalizeHour(hour);
+
+  return `${String(normalizedHour).padStart(2, '0')}시`;
+}
+
+function normalizeHour(hour: number | string): number {
+  if (typeof hour === 'number' && Number.isFinite(hour)) {
+    return clampHour(Math.trunc(hour));
+  }
+
+  const parsedHour = Number.parseInt(String(hour), 10);
+  if (Number.isFinite(parsedHour)) {
+    return clampHour(parsedHour);
+  }
+
+  return 0;
+}
+
+function clampHour(hour: number): number {
+  return Math.max(0, Math.min(23, hour));
 }
 
 export async function getServiceWaitTimes(
