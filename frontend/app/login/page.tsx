@@ -14,6 +14,7 @@ import type { UserRole } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 
 const REMEMBERED_LOGIN_EMAIL_KEY = 'healthcenter.rememberedLoginEmail';
+const AUTO_LOGIN_CHECKED_KEY = 'healthcenter.autoLogin';
 
 const roleRedirects: Record<UserRole, string> = {
   CITIZEN: '/citizen/reservations/new',
@@ -27,6 +28,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberEmail, setRememberEmail] = useState(false);
+  const [autoLogin, setAutoLogin] = useState(false);
 
   useEffect(() => {
     const rememberedEmail = window.localStorage.getItem(REMEMBERED_LOGIN_EMAIL_KEY);
@@ -34,6 +36,8 @@ export default function LoginPage() {
       setEmail(rememberedEmail);
       setRememberEmail(true);
     }
+
+    setAutoLogin(window.localStorage.getItem(AUTO_LOGIN_CHECKED_KEY) === 'true');
   }, []);
 
   useEffect(() => {
@@ -45,12 +49,17 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedEmail = email.trim();
-    const result = await login(normalizedEmail, password);
+    const result = await login(normalizedEmail, password, autoLogin);
     if (result.success && result.user) {
       if (rememberEmail) {
         window.localStorage.setItem(REMEMBERED_LOGIN_EMAIL_KEY, normalizedEmail);
       } else {
         window.localStorage.removeItem(REMEMBERED_LOGIN_EMAIL_KEY);
+      }
+      if (autoLogin) {
+        window.localStorage.setItem(AUTO_LOGIN_CHECKED_KEY, 'true');
+      } else {
+        window.localStorage.removeItem(AUTO_LOGIN_CHECKED_KEY);
       }
       toast.success('로그인 성공');
       router.push(roleRedirects[result.user.role]);
@@ -102,7 +111,7 @@ export default function LoginPage() {
                   disabled={isLoading}
                 />
               </div>
-              <div className="flex items-center justify-between gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="remember-email"
@@ -114,9 +123,17 @@ export default function LoginPage() {
                     아이디 기억
                   </Label>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  로그인 상태는 자동 유지됩니다
-                </p>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="auto-login"
+                    checked={autoLogin}
+                    onCheckedChange={(checked) => setAutoLogin(checked === true)}
+                    disabled={isLoading}
+                  />
+                  <Label htmlFor="auto-login" className="cursor-pointer text-sm font-normal">
+                    자동 로그인
+                  </Label>
+                </div>
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

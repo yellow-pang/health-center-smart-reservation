@@ -14,7 +14,7 @@ import {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<AuthResult>;
+  login: (email: string, password: string, rememberLogin?: boolean) => Promise<AuthResult>;
   loginWithRole: (role: UserRole) => Promise<AuthResult>;
   logout: () => Promise<void>;
 }
@@ -48,10 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const login = useCallback(async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string, rememberLogin = false) => {
     setIsLoading(true);
     try {
-      const result = await loginService({ email, password });
+      const result = await loginService({ email, password }, { rememberLogin });
       if (result.success && result.user) {
         setUser(result.user);
         return result;
