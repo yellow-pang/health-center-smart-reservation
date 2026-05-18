@@ -16,6 +16,8 @@
   - [x] 카카오/네이버/구글 token/profile 조회 흐름 추가
   - [x] `social_accounts` 테이블과 MyBatis 매핑 추가
   - [x] 소셜 계정 매핑 또는 이메일 기준 기존 회원 조회, 없으면 `CITIZEN` 회원 생성
+  - [x] provider 이메일 미제공 시 추가 정보 입력 화면으로 이동
+  - [x] 추가 정보 입력 완료 API와 프론트 화면 추가
   - [x] 현재 프로젝트 JWT/Refresh Token 발급 흐름 재사용
   - [x] 로그인 페이지 소셜 버튼을 백엔드 OAuth 시작 URL로 연결
   - [x] `/login/social/callback` 프론트 콜백 화면 추가
@@ -50,6 +52,7 @@ HIGH/CRITICAL 위험은 없었다.
 - `backend/src/main/java/egovframework/healthcenter/member/api/SocialAuthController.java`
 - `backend/src/main/java/egovframework/healthcenter/member/application/SocialLoginService.java`
 - `backend/src/main/java/egovframework/healthcenter/member/application/AuthCommandService.java`
+- `backend/src/main/java/egovframework/healthcenter/member/dto/SocialSignupRequest.java`
 - `backend/src/main/java/egovframework/healthcenter/member/mapper/MemberMapper.java`
 - `backend/src/main/resources/egovframework/mapper/healthcenter/member/Member_SQL_postgresql.xml`
 - `backend/src/main/resources/db/postgresql/schema.sql`
@@ -59,6 +62,8 @@ HIGH/CRITICAL 위험은 없었다.
 - `.env.example`
 - `frontend/app/login/page.tsx`
 - `frontend/app/login/social/callback/page.tsx`
+- `frontend/app/login/social/complete/page.tsx`
+- `frontend/src/lib/social-auth-api.ts`
 - `frontend/app/social-login/page.tsx` 제거
 - `frontend/README.md`
 - `docs/04_api/01_API_명세서.md`
@@ -70,6 +75,9 @@ HIGH/CRITICAL 위험은 없었다.
 - provider callback에서 authorization code로 provider access token을 받고 프로필을 조회한다.
 - `social_accounts(provider, provider_user_id)`로 기존 연결을 찾고, 없으면 이메일 기준 회원을 찾는다.
 - 기존 회원이 없으면 `CITIZEN` 역할의 소셜 회원을 생성한다.
+- provider가 이메일을 제공하지 않으면 10분 만료 추가 정보 입력 토큰을 발급해 `/login/social/complete`로 이동시킨다.
+- 추가 정보 입력 완료 시 이메일/이름으로 신규 `CITIZEN` 회원을 생성하고 소셜 계정을 연결한다.
+- 이미 가입된 이메일은 임의 계정 연결을 막기 위해 추가 정보 입력 완료 단계에서 거부한다.
 - 프로젝트 내부 access token/refresh token은 기존 `HealthcenterJwtTokenProvider`와 `refresh_tokens` 테이블을 재사용한다.
 - 프론트 콜백은 URL fragment의 token을 받아 자동 로그인 체크 여부에 따라 localStorage/sessionStorage에 저장한다.
 
@@ -106,12 +114,14 @@ GOOGLE_REDIRECT_URI=http://localhost:8080/api/auth/social/google/callback
 3. 백엔드와 프론트엔드를 실행한다.
 4. `/login`에서 카카오/네이버/구글 버튼을 클릭한다.
 5. provider 인증 후 `/login/social/callback`을 거쳐 역할별 첫 화면으로 이동하는지 확인한다.
+6. provider 이메일이 없는 경우 `/login/social/complete`에서 이메일과 이름 입력 후 역할별 첫 화면으로 이동하는지 확인한다.
 
 ## 8. 남은 위험
 
 - `state` 값은 현재 난수 생성 후 provider로 전달하지만 서버 저장 검증은 하지 않는다. 운영 보안 강화를 위해 서명 state 또는 별도 저장소 검증을 후속으로 검토해야 한다.
 - 소셜 신규 회원은 기본 `CITIZEN`으로 생성한다. 직원/관리자 소셜 계정 연결 정책은 후속 결정이 필요하다.
-- provider가 이메일을 주지 않으면 `{provider}_{id}@social.local` 형태의 내부 이메일을 사용한다.
+- provider가 이메일을 주지 않으면 추가 정보 입력 화면으로 이동한다. 입력 이메일 소유 확인은 아직 없으므로 운영 전 이메일 인증 또는 계정 연결 정책을 검토해야 한다.
+- 추가 정보 입력 완료 토큰은 JWT secret으로 서명하고 10분 뒤 만료하지만, 서버 저장형 일회성 토큰은 아니다.
 
 ## 9. 커밋 메시지 초안
 
@@ -120,8 +130,8 @@ feat: 카카오 네이버 구글 소셜 로그인 연동 추가
 
 - 소셜 로그인 authorize/callback API 추가
 - provider 프로필 조회 후 기존 JWT 발급 흐름 재사용
+- 이메일 미제공 소셜 계정의 추가 정보 입력 흐름 추가
 - social_accounts 테이블과 MyBatis 매핑 추가
 - 로그인 화면 소셜 버튼을 백엔드 OAuth 시작 URL로 연결
 - 소셜 로그인 콜백 화면 추가 및 mock 소셜 로그인 페이지 제거
 ```
-

@@ -64,6 +64,7 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | POST | /api/auth/logout | 로그아웃 | 로그인 사용자 |
 | GET | /api/auth/social/{provider}/authorize | 소셜 로그인 시작 | PUBLIC |
 | GET | /api/auth/social/{provider}/callback | 소셜 로그인 콜백 | PUBLIC |
+| POST | /api/auth/social/signup | 소셜 로그인 추가 정보 입력 완료 | PUBLIC |
 | GET | /api/members/me | 내 회원 정보 조회 | 로그인 사용자 |
 | GET | /api/service-types | 업무 유형 조회 | PUBLIC |
 | GET | /api/reservation-slots | 예약 가능 시간 조회 | 로그인 사용자 |
@@ -155,6 +156,28 @@ Callback:
 - `social_accounts` 매핑 또는 이메일 기준으로 회원을 찾고, 없으면 `CITIZEN` 회원을 생성한다.
 - 프로젝트 JWT access token과 refresh token을 발급한다.
 - 프론트 `/login/social/callback#accessToken=...&refreshToken=...&role=...`로 302 redirect한다.
+- provider가 이메일을 제공하지 않아 신규 회원을 바로 만들 수 없으면 프론트 `/login/social/callback#profileRequired=true&completionToken=...`로 302 redirect한다.
+
+추가 정보 입력 완료:
+
+`POST /api/auth/social/signup`
+
+Request:
+
+```json
+{
+  "completionToken": "social-signup-token",
+  "email": "citizen@example.com",
+  "name": "홍길동"
+}
+```
+
+동작:
+
+- `completionToken`을 검증해 provider와 provider 사용자 식별자를 확인한다.
+- 입력받은 이메일과 이름으로 `CITIZEN` 회원을 생성하고 `social_accounts`에 연결한다.
+- 이미 가입된 이메일이면 기존 계정 임의 연결을 막기 위해 실패 처리한다.
+- 성공 시 일반 로그인과 동일하게 access token과 refresh token을 반환한다.
 
 ### 4.2 토큰 재발급
 

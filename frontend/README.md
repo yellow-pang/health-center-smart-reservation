@@ -21,6 +21,7 @@
 |---|---|---|
 | 공통 | 로그인 | `/login` |
 | 공통 | 소셜 로그인 콜백 | `/login/social/callback` |
+| 공통 | 소셜 로그인 추가 정보 입력 | `/login/social/complete` |
 | 시민 | 예약 신청 | `/citizen/reservations/new` |
 | 시민 | 내 예약 | `/citizen/reservations` |
 | 시민 | 현재 혼잡도 | `/citizen/congestion` |
@@ -101,7 +102,7 @@ http://localhost:3000/login
 
 기본 테스트 계정 비밀번호는 `password1234`입니다. `자동 로그인`을 선택하면 토큰을 브라우저 localStorage에 저장해 다음 브라우저 실행 후에도 로그인 상태를 복원합니다. 선택하지 않으면 토큰은 sessionStorage에만 저장되어 현재 브라우저 세션 동안만 유지됩니다. `아이디 기억`을 선택하면 이메일만 브라우저 localStorage에 저장합니다.
 
-소셜 로그인 버튼은 카카오, 네이버, 구글을 제공하며 백엔드 `/api/auth/social/{provider}/authorize`로 이동합니다. 실제 사용 전에는 백엔드 OAuth 환경변수와 각 제공자 개발자 콘솔의 Redirect URI를 맞춰야 합니다.
+소셜 로그인 버튼은 카카오, 네이버, 구글을 제공하며 백엔드 `/api/auth/social/{provider}/authorize`로 이동합니다. provider가 이메일을 제공하지 않으면 `/login/social/complete`에서 이메일과 이름을 입력해 회원가입을 완료합니다. 실제 사용 전에는 백엔드 OAuth 환경변수와 각 제공자 개발자 콘솔의 Redirect URI를 맞춰야 합니다.
 
 ## API 연동 상태
 

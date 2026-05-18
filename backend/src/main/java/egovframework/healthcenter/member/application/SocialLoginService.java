@@ -1,10 +1,13 @@
 package egovframework.healthcenter.member.application;
 
+import java.nio.charset.StandardCharsets;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
+import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -20,21 +23,31 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import egovframework.healthcenter.member.dto.LoginResponse;
+import egovframework.healthcenter.member.dto.SocialSignupRequest;
 import egovframework.healthcenter.member.mapper.MemberMapper;
 import egovframework.healthcenter.member.mapper.MemberVO;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 
 @Service
 public class SocialLoginService {
 
+	private static final long COMPLETION_TOKEN_VALIDITY_MILLIS = 10 * 60 * 1000;
+	private static final String COMPLETION_TOKEN_TYPE = "SOCIAL_SIGNUP";
+
 	private final MemberMapper memberMapper;
 	private final AuthCommandService authCommandService;
 	private final RestTemplate restTemplate = new RestTemplate();
+	private final String jwtSecret;
 	private final String frontendCallbackUrl;
 	private final Map<SocialProvider, ProviderProperties> providers;
 
 	public SocialLoginService(
 		MemberMapper memberMapper,
 		AuthCommandService authCommandService,
+		@Value("${Globals.jwt.secret}") String jwtSecret,
 		@Value("${Globals.oauth.frontend-callback-url:http://localhost:3000/login/social/callback}") String frontendCallbackUrl,
 		@Value("${Globals.oauth.kakao.client-id:}") String kakaoClientId,
 		@Value("${Globals.oauth.kakao.client-secret:}") String kakaoClientSecret,
@@ -48,6 +61,7 @@ public class SocialLoginService {
 	) {
 		this.memberMapper = memberMapper;
 		this.authCommandService = authCommandService;
+		this.jwtSecret = jwtSecret;
 		this.frontendCallbackUrl = frontendCallbackUrl;
 		this.providers = Map.of(
 			SocialProvider.KAKAO, new ProviderProperties(kakaoClientId, kakaoClientSecret, kakaoRedirectUri),
@@ -93,6 +107,9 @@ public class SocialLoginService {
 		String providerAccessToken = requestAccessToken(provider, properties, code);
 		SocialProfile profile = requestProfile(provider, providerAccessToken);
 		MemberVO member = findOrCreateMember(provider, profile);
+		if (member == null) {
+			return buildFrontendProfileRequiredRedirect(provider, profile);
+		}
 		LoginResponse loginResponse = authCommandService.issueTokenFor(member);
 
 		String fragment = UriComponentsBuilder.newInstance()
@@ -103,6 +120,46 @@ public class SocialLoginService {
 			.getQuery();
 
 		return URI.create(frontendCallbackUrl + "#" + fragment);
+	}
+
+	@Transactional
+	public LoginResponse completeSignup(SocialSignupRequest request) {
+		if (request == null || request.completionToken() == null || request.completionToken().isBlank()) {
+			throw new IllegalArgumentException("소셜 회원가입 완료 토큰이 없습니다.");
+		}
+		if (request.email() == null || request.email().isBlank()) {
+			throw new IllegalArgumentException("이메일을 입력해 주세요.");
+		}
+
+		PendingSocialProfile profile = parseCompletionToken(request.completionToken());
+		SocialProvider provider = SocialProvider.from(profile.provider());
+		MemberVO linkedMember = memberMapper.selectActiveMemberBySocialAccount(provider.name(), profile.providerUserId());
+		if (linkedMember != null) {
+			return authCommandService.issueTokenFor(linkedMember);
+		}
+
+		String email = request.email().trim();
+		if (memberMapper.selectActiveMemberByEmail(email) != null) {
+			throw new IllegalArgumentException("이미 가입된 이메일입니다. 이메일 로그인 후 계정 연결 기능을 이용해 주세요.");
+		}
+
+		String name = stringValue(request.name()).isBlank()
+			? defaultName(profile.name())
+			: request.name().trim();
+		memberMapper.insertSocialMember(email, "{SOCIAL}" + UUID.randomUUID(), name);
+		MemberVO member = memberMapper.selectActiveMemberByEmail(email);
+		if (member == null) {
+			throw new IllegalStateException("소셜 로그인 회원 생성에 실패했습니다.");
+		}
+
+		memberMapper.insertSocialAccount(
+			member.getId(),
+			provider.name(),
+			profile.providerUserId(),
+			email,
+			LocalDateTime.now()
+		);
+		return authCommandService.issueTokenFor(member);
 	}
 
 	private String requestAccessToken(SocialProvider provider, ProviderProperties properties, String code) {
@@ -188,15 +245,17 @@ public class SocialLoginService {
 			return member;
 		}
 
-		String email = profile.email().isBlank()
-			? provider.name().toLowerCase() + "_" + profile.providerUserId() + "@social.local"
-			: profile.email();
+		if (profile.email().isBlank()) {
+			return null;
+		}
+
+		String email = profile.email();
 		member = memberMapper.selectActiveMemberByEmail(email);
 		if (member == null) {
 			memberMapper.insertSocialMember(
 				email,
 				"{SOCIAL}" + UUID.randomUUID(),
-				profile.name().isBlank() ? "소셜 로그인 사용자" : profile.name()
+				defaultName(profile.name())
 			);
 			member = memberMapper.selectActiveMemberByEmail(email);
 		}
@@ -233,6 +292,64 @@ public class SocialLoginService {
 		return URI.create(frontendCallbackUrl + "#" + fragment);
 	}
 
+	private URI buildFrontendProfileRequiredRedirect(SocialProvider provider, SocialProfile profile) {
+		String fragment = UriComponentsBuilder.newInstance()
+			.queryParam("profileRequired", "true")
+			.queryParam("provider", provider.pathName)
+			.queryParam("name", profile.name())
+			.queryParam("completionToken", generateCompletionToken(provider, profile))
+			.build()
+			.getQuery();
+		return URI.create(frontendCallbackUrl + "#" + fragment);
+	}
+
+	private String generateCompletionToken(SocialProvider provider, SocialProfile profile) {
+		Map<String, Object> claims = new HashMap<>();
+		claims.put("type", COMPLETION_TOKEN_TYPE);
+		claims.put("provider", provider.pathName);
+		claims.put("providerUserId", profile.providerUserId());
+		claims.put("name", profile.name());
+
+		return Jwts.builder()
+			.claims(claims)
+			.subject(profile.providerUserId())
+			.issuedAt(new java.util.Date(System.currentTimeMillis()))
+			.expiration(new java.util.Date(System.currentTimeMillis() + COMPLETION_TOKEN_VALIDITY_MILLIS))
+			.signWith(getSecretKey())
+			.compact();
+	}
+
+	private PendingSocialProfile parseCompletionToken(String token) {
+		try {
+			Claims claims = Jwts.parser()
+				.verifyWith(getSecretKey())
+				.build()
+				.parseSignedClaims(token)
+				.getPayload();
+
+			if (!COMPLETION_TOKEN_TYPE.equals(stringValue(claims.get("type")))) {
+				throw new IllegalArgumentException("소셜 회원가입 완료 토큰이 올바르지 않습니다.");
+			}
+
+			String provider = stringValue(claims.get("provider"));
+			String providerUserId = stringValue(claims.get("providerUserId"));
+			if (provider.isBlank() || providerUserId.isBlank()) {
+				throw new IllegalArgumentException("소셜 회원가입 완료 토큰 정보가 부족합니다.");
+			}
+			return new PendingSocialProfile(provider, providerUserId, stringValue(claims.get("name")));
+		} catch (JwtException | IllegalArgumentException e) {
+			throw new IllegalArgumentException("소셜 회원가입 완료 토큰을 확인할 수 없습니다.");
+		}
+	}
+
+	private SecretKey getSecretKey() {
+		return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+	}
+
+	private String defaultName(String name) {
+		return name.isBlank() ? "소셜 로그인 사용자" : name;
+	}
+
 	private Map<?, ?> mapValue(Object value) {
 		if (value instanceof Map<?, ?> map) {
 			return map;
@@ -248,6 +365,9 @@ public class SocialLoginService {
 	}
 
 	private record SocialProfile(String providerUserId, String email, String name) {
+	}
+
+	private record PendingSocialProfile(String provider, String providerUserId, String name) {
 	}
 
 	private enum SocialProvider {

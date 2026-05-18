@@ -17,6 +17,10 @@ const roleRedirects: Record<UserRole, string> = {
   ADMIN: '/admin/dashboard',
 };
 
+const SOCIAL_COMPLETION_TOKEN_KEY = 'healthcenter.socialCompletionToken';
+const SOCIAL_COMPLETION_PROVIDER_KEY = 'healthcenter.socialCompletionProvider';
+const SOCIAL_COMPLETION_NAME_KEY = 'healthcenter.socialCompletionName';
+
 export default function SocialLoginCallbackPage() {
   const router = useRouter();
   const [message, setMessage] = useState('소셜 로그인 결과를 확인하고 있습니다.');
@@ -28,6 +32,23 @@ export default function SocialLoginCallbackPage() {
       toast.error(error);
       setMessage(error);
       router.replace('/login');
+      return;
+    }
+
+    if (params.get('profileRequired') === 'true') {
+      const completionToken = params.get('completionToken');
+      if (!completionToken) {
+        toast.error('소셜 회원가입 완료 정보를 확인할 수 없습니다.');
+        setMessage('소셜 회원가입 완료 정보를 확인할 수 없습니다.');
+        router.replace('/login');
+        return;
+      }
+
+      window.sessionStorage.setItem(SOCIAL_COMPLETION_TOKEN_KEY, completionToken);
+      window.sessionStorage.setItem(SOCIAL_COMPLETION_PROVIDER_KEY, params.get('provider') || '');
+      window.sessionStorage.setItem(SOCIAL_COMPLETION_NAME_KEY, params.get('name') || '');
+      setMessage('추가 정보 입력 화면으로 이동합니다.');
+      router.replace('/login/social/complete');
       return;
     }
 
