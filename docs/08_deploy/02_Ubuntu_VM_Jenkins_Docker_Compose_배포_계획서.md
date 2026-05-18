@@ -372,25 +372,32 @@ http://<ubuntu-vm-ip>:8081
 POSTGRES_DB=health_center
 POSTGRES_USER=health
 POSTGRES_PASSWORD=change-me
+POSTGRES_PORT=5432
+DB_TIME_ZONE=Asia/Seoul
 
 SPRING_PROFILES_ACTIVE=prod
+BACKEND_PORT=8080
 DB_HOST=postgresql
 DB_PORT=5432
 DB_NAME=health_center
 DB_USERNAME=health
 DB_PASSWORD=change-me
+APP_TIME_ZONE=Asia/Seoul
+JAVA_TOOL_OPTIONS=-Duser.timezone=Asia/Seoul
 JWT_SECRET=change-this-to-long-random-secret
 JWT_ACCESS_EXPIRE=3600
 JWT_REFRESH_EXPIRE=1209600
 
 NEXT_PUBLIC_API_BASE_URL=http://<ubuntu-vm-ip>:8080
 BACKEND_INTERNAL_URL=http://backend:8080
+FRONTEND_PORT=3000
 CORS_ALLOWED_ORIGINS=http://<ubuntu-vm-ip>:3000,http://localhost:3000
 ```
 
 실제 `.env`는 Git에 올리지 않는다.
 `NEXT_PUBLIC_API_BASE_URL`은 브라우저가 호출할 주소이므로 VM 외부에서 접속하는 Windows 기준 URL을 적는다.
 `BACKEND_INTERNAL_URL`은 향후 Next.js 서버 측 fetch가 필요할 때 컨테이너 내부 통신 주소로 사용한다.
+`APP_TIME_ZONE`과 `DB_TIME_ZONE`은 접수/체크인 저장 시각과 대시보드 시간대별 집계 기준을 맞추기 위해 `Asia/Seoul`을 기본값으로 둔다.
 
 ### 8.1 `.env` 주입 방식
 

@@ -110,6 +110,7 @@ docker compose --env-file .env config
 - PostgreSQL volume mount가 PostgreSQL 18 기준 `/var/lib/postgresql`로 되어 있다.
 - backend `DB_HOST`가 `postgresql`이다.
 - frontend `NEXT_PUBLIC_API_BASE_URL`이 브라우저 기준 backend URL이다.
+- `APP_TIME_ZONE`과 `DB_TIME_ZONE`이 `Asia/Seoul`로 설정되어 접수 저장 시각과 대시보드 시간대별 집계 기준이 일치한다.
 - host port가 충돌하지 않는다.
 
 예상 서비스:
