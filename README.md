@@ -86,7 +86,11 @@ Ubuntu VM이나 외부 공개 환경에서는 `.env`의 아래 값을 접속 기
 ```text
 NEXT_PUBLIC_API_BASE_URL=http://<backend-host>:8080
 CORS_ALLOWED_ORIGINS=http://<frontend-host>:3000
+APP_TIME_ZONE=Asia/Seoul
+DB_TIME_ZONE=Asia/Seoul
 ```
+
+`APP_TIME_ZONE`과 `DB_TIME_ZONE`은 접수/체크인 저장 시각과 대시보드 시간대별 집계 기준을 맞추기 위한 값입니다.
 
 Cloudflare Tunnel 공개 시에는 예를 들어 아래처럼 설정합니다.
 
