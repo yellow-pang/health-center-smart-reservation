@@ -1,23 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Building2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/src/contexts/auth-context';
 import type { UserRole } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 
-const testAccounts: { role: UserRole; label: string; description: string }[] = [
-  { role: 'CITIZEN', label: '시민으로 로그인', description: '예약 신청, 조회, 취소' },
-  { role: 'STAFF', label: '직원으로 로그인', description: '체크인, 현장접수, 대기열 관리' },
-  { role: 'ADMIN', label: '관리자로 로그인', description: '대시보드, 설정 관리' },
-];
+const REMEMBERED_LOGIN_EMAIL_KEY = 'healthcenter.rememberedLoginEmail';
 
 const roleRedirects: Record<UserRole, string> = {
   CITIZEN: '/citizen/reservations/new',
@@ -27,24 +23,35 @@ const roleRedirects: Record<UserRole, string> = {
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, loginWithRole, isLoading } = useAuth();
+  const { user, login, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberEmail, setRememberEmail] = useState(false);
+
+  useEffect(() => {
+    const rememberedEmail = window.localStorage.getItem(REMEMBERED_LOGIN_EMAIL_KEY);
+    if (rememberedEmail) {
+      setEmail(rememberedEmail);
+      setRememberEmail(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      router.replace(roleRedirects[user.role]);
+    }
+  }, [isLoading, router, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await login(email, password);
+    const normalizedEmail = email.trim();
+    const result = await login(normalizedEmail, password);
     if (result.success && result.user) {
-      toast.success('로그인 성공');
-      router.push(roleRedirects[result.user.role]);
-    } else {
-      toast.error(result.error || '로그인 실패');
-    }
-  };
-
-  const handleTestLogin = async (role: UserRole) => {
-    const result = await loginWithRole(role);
-    if (result.success && result.user) {
+      if (rememberEmail) {
+        window.localStorage.setItem(REMEMBERED_LOGIN_EMAIL_KEY, normalizedEmail);
+      } else {
+        window.localStorage.removeItem(REMEMBERED_LOGIN_EMAIL_KEY);
+      }
       toast.success('로그인 성공');
       router.push(roleRedirects[result.user.role]);
     } else {
@@ -68,7 +75,7 @@ export default function LoginPage() {
           <CardHeader className="space-y-1">
             <CardTitle className="text-lg">로그인</CardTitle>
             <CardDescription>
-              이메일과 비밀번호를 입력하거나 테스트 계정을 선택하세요
+              이메일과 비밀번호를 입력하세요
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -95,6 +102,22 @@ export default function LoginPage() {
                   disabled={isLoading}
                 />
               </div>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="remember-email"
+                    checked={rememberEmail}
+                    onCheckedChange={(checked) => setRememberEmail(checked === true)}
+                    disabled={isLoading}
+                  />
+                  <Label htmlFor="remember-email" className="cursor-pointer text-sm font-normal">
+                    아이디 기억
+                  </Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  로그인 상태는 자동 유지됩니다
+                </p>
+              </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 로그인
@@ -113,14 +136,7 @@ export default function LoginPage() {
               </Link>
             </div>
 
-            <div className="relative my-6">
-              <Separator />
-              <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-                또는 테스트 계정 선택
-              </span>
-            </div>
-
-            <div className="space-y-2">
+            <div className="mt-6">
               <Button
                 asChild
                 variant="secondary"
@@ -134,20 +150,6 @@ export default function LoginPage() {
                   </div>
                 </Link>
               </Button>
-              {testAccounts.map((account) => (
-                <Button
-                  key={account.role}
-                  variant="outline"
-                  className="w-full justify-start h-auto py-3"
-                  onClick={() => handleTestLogin(account.role)}
-                  disabled={isLoading}
-                >
-                  <div className="text-left">
-                    <p className="font-medium">{account.label}</p>
-                    <p className="text-xs text-muted-foreground">{account.description}</p>
-                  </div>
-                </Button>
-              ))}
             </div>
           </CardContent>
         </Card>
