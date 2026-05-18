@@ -52,6 +52,21 @@ CREATE TABLE IF NOT EXISTS members (
 CREATE INDEX IF NOT EXISTS idx_members_role_active
     ON members (role, active);
 
+CREATE TABLE IF NOT EXISTS social_accounts (
+    id BIGSERIAL PRIMARY KEY,
+    member_id BIGINT NOT NULL REFERENCES members(id),
+    provider VARCHAR(30) NOT NULL,
+    provider_user_id VARCHAR(100) NOT NULL,
+    provider_email VARCHAR(100),
+    linked_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    CONSTRAINT uk_social_accounts_provider_user UNIQUE (provider, provider_user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_social_accounts_member
+    ON social_accounts (member_id);
+
 CREATE TABLE IF NOT EXISTS service_types (
     id BIGSERIAL PRIMARY KEY,
     health_center_id BIGINT NOT NULL REFERENCES health_centers(id),

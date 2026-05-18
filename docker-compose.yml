@@ -43,6 +43,16 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-this-to-a-long-random-secret-at-least-32-bytes}
       JWT_ACCESS_EXPIRE: ${JWT_ACCESS_EXPIRE:-3600}
       JWT_REFRESH_EXPIRE: ${JWT_REFRESH_EXPIRE:-1209600}
+      OAUTH_FRONTEND_CALLBACK_URL: ${OAUTH_FRONTEND_CALLBACK_URL:-http://localhost:3000/login/social/callback}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:-http://localhost:8080/api/auth/social/kakao/callback}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      NAVER_REDIRECT_URI: ${NAVER_REDIRECT_URI:-http://localhost:8080/api/auth/social/naver/callback}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-http://localhost:8080/api/auth/social/google/callback}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
       APP_TIME_ZONE: ${APP_TIME_ZONE:-Asia/Seoul}
       DB_TIME_ZONE: ${DB_TIME_ZONE:-Asia/Seoul}

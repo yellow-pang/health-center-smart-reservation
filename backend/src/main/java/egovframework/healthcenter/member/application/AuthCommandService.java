@@ -46,15 +46,7 @@ public class AuthCommandService {
 			throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
 		}
 
-		String accessToken = jwtTokenProvider.generateAccessToken(member);
-		String refreshToken = UUID.randomUUID().toString();
-		memberMapper.insertRefreshToken(
-			member.getId(),
-			refreshToken,
-			LocalDateTime.now().plusSeconds(refreshTokenValiditySeconds)
-		);
-
-		return new LoginResponse(accessToken, refreshToken, MemberResponse.from(member));
+		return issueTokenFor(member);
 	}
 
 	@Transactional
@@ -69,6 +61,15 @@ public class AuthCommandService {
 		}
 
 		memberMapper.revokeRefreshTokenByToken(request.refreshToken());
+
+		return issueTokenFor(member);
+	}
+
+	@Transactional
+	public LoginResponse issueTokenFor(MemberVO member) {
+		if (member == null) {
+			throw new IllegalArgumentException("회원 정보를 확인할 수 없습니다.");
+		}
 
 		String accessToken = jwtTokenProvider.generateAccessToken(member);
 		String refreshToken = UUID.randomUUID().toString();
