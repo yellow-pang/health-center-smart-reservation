@@ -169,7 +169,7 @@ export default function AdminDashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">시간대별 방문자 수</CardTitle>
-                <CardDescription>오늘 시간대별 방문자 추이</CardDescription>
+                <CardDescription>선택 날짜의 체크인 시간대별 방문자 추이</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="h-64">

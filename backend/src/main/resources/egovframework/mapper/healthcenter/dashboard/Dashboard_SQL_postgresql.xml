@@ -18,7 +18,7 @@
 	</resultMap>
 
 	<resultMap id="HourlyVisit" type="egovframework.healthcenter.dashboard.mapper.HourlyVisitVO">
-		<id property="hour" column="hour"/>
+		<id property="hour" column="visit_hour"/>
 		<result property="visitCount" column="visit_count"/>
 	</resultMap>
 
@@ -109,15 +109,15 @@
 
 	<select id="selectHourlyVisits" parameterType="map" resultMap="HourlyVisit">
 		SELECT
-			h.hour::integer AS hour,
+			h.visit_hour::integer AS visit_hour,
 			COUNT(v.id)::integer AS visit_count
-		FROM generate_series(0, 23) h(hour)
+		FROM generate_series(0, 23) h(visit_hour)
 		LEFT JOIN visits v
-			ON EXTRACT(HOUR FROM v.checked_in_at)::integer = h.hour
+			ON EXTRACT(HOUR FROM v.checked_in_at)::integer = h.visit_hour
 		   AND v.health_center_id = #{healthCenterId}
 		   AND v.checked_in_at::date = #{targetDate}
-		GROUP BY h.hour
-		ORDER BY h.hour
+		GROUP BY h.visit_hour
+		ORDER BY h.visit_hour
 	</select>
 
 	<select id="selectServiceWaitTimes" parameterType="map" resultMap="ServiceWaitTime">
