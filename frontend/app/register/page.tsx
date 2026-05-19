@@ -9,10 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { normalizePhoneNumberInput } from '@/src/lib/phone-number';
 
 export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [phone, setPhone] = useState('');
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -73,7 +75,17 @@ export default function RegisterPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="phone">휴대폰 번호</Label>
-                  <Input id="phone" name="phone" type="tel" placeholder="010-1234-5678" required disabled={isSubmitting} />
+                  <Input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    inputMode="numeric"
+                    placeholder="01012345678"
+                    value={phone}
+                    onChange={(event) => setPhone(normalizePhoneNumberInput(event.target.value))}
+                    required
+                    disabled={isSubmitting}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">이메일</Label>

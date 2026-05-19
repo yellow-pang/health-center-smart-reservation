@@ -16,6 +16,7 @@ import {
   getReservationSlots, 
   createReservation 
 } from '@/src/lib/reservation-api';
+import { normalizePhoneNumberInput } from '@/src/lib/phone-number';
 import type { ServiceType, ReservationSlot, Reservation } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -292,9 +293,10 @@ export default function NewReservationPage() {
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="010-1234-5678"
+                  inputMode="numeric"
+                  placeholder="01012345678"
                   value={visitorPhone}
-                  onChange={(e) => setVisitorPhone(e.target.value)}
+                  onChange={(e) => setVisitorPhone(normalizePhoneNumberInput(e.target.value))}
                 />
               </div>
 

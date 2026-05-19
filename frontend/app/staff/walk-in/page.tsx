@@ -11,6 +11,7 @@ import { PageHeader } from '@/src/components/common/page-header';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { registerWalkIn, getServiceTypes } from '@/src/lib/staff-api';
 import { getServiceTypeName } from '@/src/lib/mock-data';
+import { normalizePhoneNumberInput } from '@/src/lib/phone-number';
 import type { QueueEntry, ServiceType } from '@/src/lib/mock-data';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
@@ -143,9 +144,10 @@ export default function WalkInPage() {
                   <Input
                     id="phone"
                     type="tel"
-                    placeholder="010-1234-5678"
+                    inputMode="numeric"
+                    placeholder="01012345678"
                     value={visitorPhone}
-                    onChange={(e) => setVisitorPhone(e.target.value)}
+                    onChange={(e) => setVisitorPhone(normalizePhoneNumberInput(e.target.value))}
                     disabled={state === 'loading'}
                   />
                 </div>
