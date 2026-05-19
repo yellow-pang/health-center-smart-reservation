@@ -31,6 +31,7 @@ import { PageHeader } from '@/src/components/common/page-header';
 import { DataTable, type Column } from '@/src/components/common/data-table';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
+import { normalizePhoneNumberInput } from '@/src/lib/phone-number';
 import {
   createAdminStaff,
   deactivateAdminStaff,
@@ -308,8 +309,9 @@ export default function StaffManagementPage() {
                     id="phone"
                     type="tel"
                     value={formPhone}
-                    onChange={(e) => setFormPhone(e.target.value)}
-                    placeholder="010-1234-5678"
+                    onChange={(e) => setFormPhone(normalizePhoneNumberInput(e.target.value))}
+                    inputMode="numeric"
+                    placeholder="01012345678"
                   />
                 </div>
                 <div className="space-y-2">
