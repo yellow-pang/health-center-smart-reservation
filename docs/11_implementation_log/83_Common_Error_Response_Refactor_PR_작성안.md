@@ -9,7 +9,7 @@
 | 작업 트리 | 공통 예외/오류 응답 리팩터링 진행 |
 | GitNexus | 로컬 설치 CLI는 `gitnexus status/analyze` 직접 실행 기준. 현재 설치 버전은 `detect-change` 계열 명령 미제공. MCP impact 도구 미노출로 `rg` 기반 영향 범위 확인 |
 | 정적 확인 | `mvn.cmd -q -DskipTests compile`, `mvn.cmd -q test-compile`, `npm.cmd run build` 통과 |
-| 실행/API 확인 | 사용자가 Swagger에서 대표 오류 응답 확인 필요 |
+| 실행/API 확인 | 사용자가 Docker 실행 환경에서 Swagger 대표 오류 응답 확인 완료 |
 
 ## PR 제목
 
@@ -45,11 +45,11 @@ Controller별로 반복되던 `try/catch`, 오류 코드 결정, 인증 실패 �
 - [x] Controller 반복 `try/catch` 제거 확인
 - [x] Next build 생성 파일 원복
 - [x] GitNexus `detect-change` 계열 명령 미제공 확인 및 대체 검증 기준 정리
-- [ ] Swagger 대표 오류 응답 확인
+- [x] Swagger 대표 오류 응답 확인
 
 ## 미검증 사유
 
-- 서버 기동, Docker 실행, Swagger 런타임 호출은 프로젝트 운영 기준상 사용자가 직접 확인합니다.
+- 서버 기동, Docker 실행, Swagger 런타임 호출은 프로젝트 운영 기준상 사용자가 직접 확인하며, 2026-05-20 사용자 확인 결과 대표 오류 응답 확인을 완료했습니다.
 - GitNexus MCP impact 도구가 현재 세션에 없습니다. 사용자 로컬 환경에서는 프로젝트에 설치된 GitNexus CLI를 `gitnexus status`, `gitnexus analyze`, `gitnexus list`처럼 직접 실행합니다.
 - 현재 설치 버전에는 `detect-change`, `detect-changes`, `detect_changes` 명령이 없으므로 해당 검증은 요구하지 않습니다. 변경 범위 확인은 `rg`, `git diff`, Maven, Next build로 보완했습니다.
 
