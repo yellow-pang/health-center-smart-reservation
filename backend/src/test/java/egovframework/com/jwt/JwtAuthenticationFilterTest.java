@@ -1,6 +1,8 @@
 package egovframework.com.jwt;
 
-import egovframework.com.cmm.LoginVO;
+import egovframework.healthcenter.member.domain.MemberRole;
+import egovframework.healthcenter.member.security.HealthcenterJwtTokenProvider;
+import egovframework.healthcenter.member.security.MemberPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,7 @@ public class JwtAuthenticationFilterTest {
     private JwtAuthenticationFilter filter;
 
     @MockBean
-    private EgovJwtTokenUtil jwtTokenUtil;
+    private HealthcenterJwtTokenProvider healthcenterJwtTokenProvider;
 
     private MockHttpServletRequest request;
     private MockHttpServletResponse response;
@@ -44,18 +46,25 @@ public class JwtAuthenticationFilterTest {
     @Test
     public void testValidTokenSetsAuthentication() throws Exception {
         String fakeToken = "valid.jwt.token";
+        MemberPrincipal principal = new MemberPrincipal(
+                1L,
+                1L,
+                "user1@test.com",
+                "테스트 사용자",
+                MemberRole.ADMIN
+        );
 
-        LoginVO loginVO = new LoginVO();
-        loginVO.setId("user1");
-        loginVO.setGroupNm("ROLE_ADMIN");
-
-        request.addHeader("Authorization", fakeToken);
-        when(jwtTokenUtil.getLoginVOFromToken(fakeToken)).thenReturn(loginVO);
+        request.addHeader("Authorization", "Bearer " + fakeToken);
+        when(healthcenterJwtTokenProvider.getPrincipalFromToken(fakeToken)).thenReturn(principal);
 
         filter.doFilterInternal(request, response, filterChain);
 
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
-        assertEquals("user1", ((LoginVO) SecurityContextHolder.getContext().getAuthentication().getPrincipal()).getId());
+        assertEquals(principal, SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        assertEquals(
+                "ROLE_ADMIN",
+                SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator().next().getAuthority()
+        );
     }
 
     @DisplayName("유효하지 않은 토큰이 주어지면 인증 객체가 설정되지 않는다")
@@ -64,12 +73,11 @@ public class JwtAuthenticationFilterTest {
         String invalidToken = "invalid.jwt.token";
         request.addHeader("Authorization", invalidToken);
 
-        when(jwtTokenUtil.getLoginVOFromToken(invalidToken))
-                .thenThrow(new InvalidJwtException("Invalid token"));
+        when(healthcenterJwtTokenProvider.getPrincipalFromToken(invalidToken))
+                .thenThrow(new InvalidJwtException("Invalid healthcenter token"));
 
         filter.doFilterInternal(request, response, filterChain);
 
         assertNull(SecurityContextHolder.getContext().getAuthentication());
     }
 }
-
