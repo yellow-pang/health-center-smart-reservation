@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.exception.BusinessException;
+import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.common.logging.AuditLogSupport;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.queue.dto.QueueTicketResponse;
@@ -30,7 +32,7 @@ public class QueueCommandService {
 		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
 		queueTicketPolicy.validateCall(ticket);
 		if (queueTicketMapper.markCalled(queueTicketId) == 0) {
-			throw new IllegalArgumentException("호출할 수 없는 대기 상태입니다.");
+			throw new BusinessException(ErrorCode.QUEUE_INVALID_STATUS, "호출할 수 없는 대기 상태입니다.");
 		}
 		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
 		logTransition(principal, "queue.called", ticket, response);
@@ -42,7 +44,7 @@ public class QueueCommandService {
 		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
 		queueTicketPolicy.validateStart(ticket);
 		if (queueTicketMapper.markInProgress(queueTicketId) == 0) {
-			throw new IllegalArgumentException("처리 시작할 수 없는 대기 상태입니다.");
+			throw new BusinessException(ErrorCode.QUEUE_INVALID_STATUS, "처리 시작할 수 없는 대기 상태입니다.");
 		}
 		queueTicketMapper.markVisitInProgress(queueTicketId);
 		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
@@ -55,7 +57,7 @@ public class QueueCommandService {
 		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
 		queueTicketPolicy.validateComplete(ticket);
 		if (queueTicketMapper.markCompleted(queueTicketId) == 0) {
-			throw new IllegalArgumentException("완료할 수 없는 대기 상태입니다.");
+			throw new BusinessException(ErrorCode.QUEUE_INVALID_STATUS, "완료할 수 없는 대기 상태입니다.");
 		}
 		queueTicketMapper.markVisitCompleted(queueTicketId);
 		queueTicketMapper.markReservationCompleted(queueTicketId);
@@ -69,7 +71,7 @@ public class QueueCommandService {
 		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
 		queueTicketPolicy.validateHold(ticket);
 		if (queueTicketMapper.markHold(queueTicketId) == 0) {
-			throw new IllegalArgumentException("보류할 수 없는 대기 상태입니다.");
+			throw new BusinessException(ErrorCode.QUEUE_INVALID_STATUS, "보류할 수 없는 대기 상태입니다.");
 		}
 		QueueTicketResponse response = QueueTicketResponse.from(queueTicketMapper.selectQueueTicketById(queueTicketId));
 		logTransition(principal, "queue.held", ticket, response);
@@ -81,7 +83,7 @@ public class QueueCommandService {
 		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
 		queueTicketPolicy.validateNoShow(ticket);
 		if (queueTicketMapper.markNoShow(queueTicketId) == 0) {
-			throw new IllegalArgumentException("최종 미응답 처리할 수 없는 대기 상태입니다.");
+			throw new BusinessException(ErrorCode.QUEUE_INVALID_STATUS, "최종 미응답 처리할 수 없는 대기 상태입니다.");
 		}
 		queueTicketMapper.markVisitNoShow(queueTicketId);
 		queueTicketMapper.markReservationNoShow(queueTicketId);
@@ -95,7 +97,7 @@ public class QueueCommandService {
 		QueueTicketVO ticket = loadTicket(principal, queueTicketId);
 		queueTicketPolicy.validateCancel(ticket);
 		if (queueTicketMapper.markCanceled(queueTicketId) == 0) {
-			throw new IllegalArgumentException("취소할 수 없는 대기 상태입니다.");
+			throw new BusinessException(ErrorCode.QUEUE_INVALID_STATUS, "취소할 수 없는 대기 상태입니다.");
 		}
 		queueTicketMapper.markVisitCanceled(queueTicketId);
 		queueTicketMapper.markReservationCanceled(queueTicketId);
@@ -107,7 +109,7 @@ public class QueueCommandService {
 	private QueueTicketVO loadTicket(MemberPrincipal principal, Long queueTicketId) {
 		queueTicketPolicy.validateStaff(principal);
 		if (queueTicketId == null) {
-			throw new IllegalArgumentException("대기표 ID를 입력하세요.");
+			throw new BusinessException(ErrorCode.QUEUE_INVALID_REQUEST, "대기표 ID를 입력하세요.");
 		}
 		QueueTicketVO ticket = queueTicketMapper.selectQueueTicketById(queueTicketId);
 		queueTicketPolicy.validateAccess(principal, ticket);

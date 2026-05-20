@@ -35,6 +35,7 @@ public enum ErrorCode {
 	VISIT_ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "VISIT_ALREADY_CHECKED_IN", "이미 체크인했거나 체크인할 수 없는 예약입니다."),
 	ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "ALREADY_CHECKED_IN", "이미 체크인했거나 체크인할 수 없는 예약입니다."),
 	QUEUE_TICKET_NOT_FOUND(HttpStatus.NOT_FOUND, "QUEUE_TICKET_NOT_FOUND", "대기표 정보를 찾을 수 없습니다."),
+	QUEUE_FORBIDDEN(HttpStatus.FORBIDDEN, "QUEUE_FORBIDDEN", "대기열을 처리할 권한이 없습니다."),
 	QUEUE_INVALID_STATUS(HttpStatus.CONFLICT, "QUEUE_INVALID_STATUS", "현재 대기 상태에서는 요청을 처리할 수 없습니다."),
 	QUEUE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "QUEUE_INVALID_REQUEST", "대기열 요청 값이 올바르지 않습니다."),
 	DASHBOARD_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "DASHBOARD_INVALID_REQUEST", "대시보드 요청 값이 올바르지 않습니다."),
@@ -75,6 +76,9 @@ public enum ErrorCode {
 		}
 		if ((contains(message, "방문") || contains(message, "체크인") || contains(message, "현장 접수")) && contains(message, "권한")) {
 			return VISIT_FORBIDDEN;
+		}
+		if ((contains(message, "대기표") || contains(message, "대기열")) && contains(message, "권한")) {
+			return QUEUE_FORBIDDEN;
 		}
 		if (contains(message, "권한")) {
 			return FORBIDDEN;
