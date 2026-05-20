@@ -78,7 +78,7 @@ Blast radius:
 - [x] Controller의 반복 `try/catch` 제거 확인
 - [x] `frontend/next-env.d.ts` 생성 변경 원복
 - [x] GitNexus `detect-change` 계열 명령 미제공 확인 및 대체 검증 기준 정리
-- [ ] Swagger 런타임 대표 오류 응답 확인
+- [x] Swagger 런타임 대표 오류 응답 확인
 
 GitNexus 변경 범위 확인:
 
@@ -87,6 +87,8 @@ GitNexus 변경 범위 확인:
 - 인덱스 갱신과 관계 파악이 필요한 경우 사용자 로컬 환경에서 `gitnexus analyze`를 직접 실행한다.
 
 ## 7. 사용자 확인 안내
+
+2026-05-20 사용자 확인 결과, 실제 Docker 실행 환경에서 Swagger 대표 오류 응답 확인을 완료했다.
 
 서버 기동 후 Swagger에서 아래 오류 흐름을 1개 이상 확인한다.
 
