@@ -1,6 +1,5 @@
 package egovframework.com.jwt;
 
-import egovframework.com.cmm.LoginVO;
 import egovframework.healthcenter.member.security.HealthcenterJwtTokenProvider;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.let.utl.fcc.service.EgovStringUtil;
@@ -31,8 +30,6 @@ import java.util.Arrays;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
-    private EgovJwtTokenUtil jwtTokenUtil;
-    @Autowired
     private HealthcenterJwtTokenProvider healthcenterJwtTokenProvider;
     public static final String HEADER_STRING = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
@@ -61,36 +58,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authentication);
             logger.debug("healthcenter authentication ===>>> " + authentication);
         } catch (InvalidJwtException e) {
-            setLegacyAuthentication(req, jwtToken);
+            logger.debug(e.getMessage());
         }
 
         chain.doFilter(req, res);
-    }
-
-    private void setLegacyAuthentication(HttpServletRequest req, String jwtToken) {
-        try {
-            LoginVO loginVO = jwtTokenUtil.getLoginVOFromToken(jwtToken);
-            logger.debug("===>>> id = " + loginVO.getId());
-            logger.debug("jwtToken validated");
-            logger.debug("===>>> loginVO.getUserSe() = "+loginVO.getUserSe());
-
-            String role = isAdmin(loginVO) ? "ROLE_ADMIN" : "ROLE_USER";
-
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    loginVO, null, Arrays.asList(new SimpleGrantedAuthority(role))
-            );
-
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-
-            logger.debug("authentication ===>>> " + authentication);
-        } catch (InvalidJwtException e) {
-            logger.debug(e.getMessage());
-        }
-    }
-
-    private boolean isAdmin(LoginVO loginVO) {
-        return "ROLE_ADMIN".equals(loginVO.getGroupNm());
     }
 
     private String resolveToken(String authorizationHeader) {
