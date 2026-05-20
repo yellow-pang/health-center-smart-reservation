@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import egovframework.healthcenter.common.logging.AuditLogSupport;
+import egovframework.healthcenter.member.domain.MemberRole;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.reservation.dto.ReservationCreateRequest;
 import egovframework.healthcenter.reservation.dto.ReservationCreateResponse;
@@ -46,7 +47,7 @@ public class ReservationCommandService {
 		validateRequest(request);
 
 		ReservationSlotVO slot = reservationSlotMapper.selectSlotById(request.reservationSlotId());
-		validateReservableSlot(slot, request);
+		validateReservableSlot(principal, slot, request);
 		validateDuplicatedReservation(principal.memberId(), request.reservationSlotId());
 
 		int increased = reservationSlotMapper.increaseReservedCountIfAvailable(request.reservationSlotId());
@@ -124,9 +125,13 @@ public class ReservationCommandService {
 		}
 	}
 
-	private void validateReservableSlot(ReservationSlotVO slot, ReservationCreateRequest request) {
+	private void validateReservableSlot(MemberPrincipal principal, ReservationSlotVO slot, ReservationCreateRequest request) {
 		if (slot == null || !slot.isActive()) {
 			throw new IllegalArgumentException("예약 슬롯을 찾을 수 없습니다.");
+		}
+		if (hasStaffOrAdminRole(principal)
+				&& (principal.healthCenterId() == null || !principal.healthCenterId().equals(slot.getHealthCenterId()))) {
+			throw new IllegalArgumentException("해당 보건소 예약 슬롯으로 예약할 권한이 없습니다.");
 		}
 		if (!request.serviceTypeId().equals(slot.getServiceTypeId())) {
 			throw new IllegalArgumentException("업무 유형과 예약 슬롯이 일치하지 않습니다.");
@@ -155,5 +160,9 @@ public class ReservationCommandService {
 
 	private boolean isBlank(String value) {
 		return value == null || value.isBlank();
+	}
+
+	private boolean hasStaffOrAdminRole(MemberPrincipal principal) {
+		return principal.role() == MemberRole.STAFF || principal.role() == MemberRole.ADMIN;
 	}
 }

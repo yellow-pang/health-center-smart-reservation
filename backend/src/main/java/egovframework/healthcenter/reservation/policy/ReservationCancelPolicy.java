@@ -36,7 +36,11 @@ public class ReservationCancelPolicy {
 		if (principal.memberId().equals(reservation.getMemberId())) {
 			return true;
 		}
-		return principal.role() == MemberRole.ADMIN && principal.healthCenterId() != null
+		return isStaffOrAdmin(principal) && principal.healthCenterId() != null
 			&& principal.healthCenterId().equals(reservation.getHealthCenterId());
+	}
+
+	private boolean isStaffOrAdmin(MemberPrincipal principal) {
+		return principal.role() == MemberRole.STAFF || principal.role() == MemberRole.ADMIN;
 	}
 }
