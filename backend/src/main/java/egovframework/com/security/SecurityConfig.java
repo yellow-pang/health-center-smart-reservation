@@ -25,6 +25,7 @@ import org.springframework.web.filter.CharacterEncodingFilter;
 import org.springframework.web.multipart.support.MultipartFilter;
 
 import egovframework.com.cmm.filter.HTMLTagFilter;
+import egovframework.com.jwt.JwtAccessDeniedHandler;
 import egovframework.com.jwt.JwtAuthenticationEntryPoint;
 import egovframework.com.jwt.JwtAuthenticationFilter;
 import egovframework.healthcenter.common.logging.RequestLoggingFilter;
@@ -175,7 +176,8 @@ public class SecurityConfig {
                 .addFilterAfter(requestLoggingFilter(), JwtAuthenticationFilter.class)
                 .addFilterBefore(multipartFilter(), CsrfFilter.class)
                 .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
+                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                        .accessDeniedHandler(new JwtAccessDeniedHandler()))
                 .build();
     }
 

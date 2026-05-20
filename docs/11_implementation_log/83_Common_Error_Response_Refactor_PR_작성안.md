@@ -84,7 +84,7 @@ Content-Type: application/json
 ## 후속 작업
 
 - 서비스/정책 계층의 주요 `IllegalArgumentException`을 `BusinessException(ErrorCode.X)`로 점진 교체
-- Spring Security filter 단계 인증/인가 실패 응답도 공통 응답으로 정리
+- Spring Security filter 단계 인증/인가 실패 응답은 `fix/security-filter-error-response` 브랜치에서 공통 응답으로 정리
 - 프론트 오류 화면이나 관리자 디버그 영역에서 `traceId` 표시 여부 검토
 ```
 
