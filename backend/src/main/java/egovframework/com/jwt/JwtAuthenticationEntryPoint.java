@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import egovframework.com.cmm.ResponseCode;
-import egovframework.com.cmm.service.ResultVO;
+import egovframework.healthcenter.common.exception.ErrorCode;
+import egovframework.healthcenter.common.response.ApiResponse;
 
 /**
  * fileName       : JwtAuthenticationEntryPoint
@@ -30,24 +30,15 @@ import egovframework.com.cmm.service.ResultVO;
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException {
 
-        ResultVO resultVO = new ResultVO();
-        resultVO.setResultCode(ResponseCode.AUTH_ERROR.getCode());
-        resultVO.setResultMessage(ResponseCode.AUTH_ERROR.getMessage());
-        ObjectMapper mapper = new ObjectMapper();
-
-        //Convert object to JSON string
-        String jsonInString = mapper.writeValueAsString(resultVO);
-
-
-
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType(MediaType.APPLICATION_JSON.toString());
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().println(jsonInString);
+        response.getWriter().println(objectMapper.writeValueAsString(ApiResponse.failure(ErrorCode.AUTH_REQUIRED)));
 
     }
 }

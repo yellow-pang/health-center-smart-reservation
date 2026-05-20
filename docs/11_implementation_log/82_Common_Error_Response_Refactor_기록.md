@@ -124,7 +124,7 @@ Expected: 401
 
 - 기존 서비스/정책의 `IllegalArgumentException` 메시지가 변경되면 `ErrorCode.fromMessage` 매핑도 함께 점검해야 한다.
 - 다음 고도화 단계에서는 자주 발생하는 도메인 오류부터 `BusinessException(ErrorCode.X)`로 점진 교체하는 것이 좋다.
-- Spring Security filter에서 직접 발생하는 인증/인가 실패 응답은 별도 브랜치에서 공통 응답으로 맞출 수 있다.
+- Spring Security filter에서 직접 발생하는 인증/인가 실패 응답은 `docs/11_implementation_log/100_Security_Filter_Error_Response_구현_기록.md`에서 공통 응답으로 정리했다.
 
 ## 9. 브랜치 종료 전 체크리스트
 
