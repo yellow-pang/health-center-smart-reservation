@@ -1,4 +1,4 @@
-# 예약 도메인 비즈니스 예외 명시화 Pull Request 작성안
+# 보건소 도메인 비즈니스 예외 명시화 Pull Request 작성안
 
 ## 브랜치 상태 확인
 
@@ -6,15 +6,15 @@
 |---|---|
 | 현재 브랜치 | `refactor/reservation-business-exceptions` |
 | base 브랜치 | `dev` |
-| 작업 트리 | 예약 도메인 `BusinessException` 전환 진행 |
-| GitNexus | stale 상태였으나 `impact --repo health-center-smart-reservation`로 수정 대상 영향 확인. 모두 LOW |
+| 작업 트리 | 보건소 주요 도메인 `BusinessException` 전환 완료 |
+| GitNexus | stale 상태였으나 `impact --repo health-center-smart-reservation`로 주요 수정 대상 영향 확인. 대부분 LOW, `SocialLoginService`는 인덱스 미탐지로 정적 확인 보완 |
 | 정적 확인 | `mvn.cmd -q -DskipTests compile`, `mvn.cmd -q test-compile`, `git diff --check` 통과 |
-| 실행/API 확인 | 사용자가 Docker 실행 환경에서 Swagger 대표 오류 응답 확인 필요 |
+| 실행/API 확인 | 서버 기동, Docker 실행, Swagger 런타임 호출은 사용자가 직접 확인 |
 
 ## PR 제목
 
 ```text
-refactor: 예약 도메인 예외 코드를 명시화
+refactor: 보건소 도메인 예외 코드를 명시화
 ```
 
 ## PR 본문
@@ -22,21 +22,24 @@ refactor: 예약 도메인 예외 코드를 명시화
 ```markdown
 ## 개요
 
-예약 도메인의 주요 `IllegalArgumentException`을 `BusinessException(ErrorCode.X)`로 교체해 메시지 기반 오류 코드 매핑 의존을 줄입니다.
+보건소 주요 서비스/정책 계층의 `IllegalArgumentException`을 `BusinessException(ErrorCode.X)`로 교체해 메시지 기반 오류 코드 매핑 의존을 줄입니다.
 
-응답 형식은 기존 `success + data + error` 구조를 유지하며, 예약 생성/조회/취소/예약 슬롯 관리의 오류 코드가 더 명시적으로 내려가도록 정리합니다.
+응답 형식은 기존 `success + data + error` 구조를 유지하며, 예약/방문/대기/오피스/대시보드/인증/소셜 로그인 오류 코드가 더 명시적으로 내려가도록 정리합니다.
 
 ## 변경 내용
 
-- `RESERVATION_FORBIDDEN`, `RESERVATION_SLOT_DUPLICATED` 오류 코드 추가
-- 예약 생성/취소 검증 예외를 `BusinessException`으로 교체
-- 예약 상세 조회의 인증/존재/권한 예외를 `BusinessException`으로 교체
-- 예약 슬롯 조회/생성/수정/비활성화 예외를 `BusinessException`으로 교체
-- 예약 취소 정책 예외를 `BusinessException`으로 교체
+- 예약 생성/조회/취소/예약 슬롯 관리 예외를 `BusinessException`으로 교체
+- 방문 체크인과 현장 접수 정책 예외를 `BusinessException`으로 교체
+- 대기 상태 전이와 대기표 정책 예외를 `BusinessException`으로 교체
+- 오피스 업무 유형, 직원, 창구 기준정보 예외를 `BusinessException`으로 교체
+- 대시보드 인증/권한/요청 검증 예외를 `BusinessException`으로 교체
+- 로그인, 토큰 재발급, 로그아웃, 소셜 회원가입 검증 예외를 `BusinessException`으로 교체
+- 예약, 방문, 대기, 대시보드, 소셜 로그인 관련 `ErrorCode` 보강
+- `GlobalExceptionHandler`의 `IllegalArgumentException` handler는 레거시 fallback으로 유지
 
 ## 검증
 
-- [x] 예약 도메인 `IllegalArgumentException` 잔여 사용처 없음 확인
+- [x] 보건소 도메인 `IllegalArgumentException` throw 잔여 사용처 없음 확인
 - [x] `mvn.cmd -q -DskipTests compile`
 - [x] `mvn.cmd -q test-compile`
 - [x] `git diff --check`
@@ -73,14 +76,22 @@ Content-Type: application/json
 }
 ```
 
+## 추가 테스트 체크리스트
+
+- [ ] 방문 중복 체크인 시 `VISIT_ALREADY_CHECKED_IN` 응답 확인
+- [ ] 대기표 잘못된 상태 전이 시 `QUEUE_INVALID_STATUS` 응답 확인
+- [ ] 업무 유형 중복 생성 시 `SERVICE_TYPE_DUPLICATED` 응답 확인
+- [ ] 관리자 아닌 사용자의 대시보드 조회 시 `DASHBOARD_FORBIDDEN` 응답 확인
+- [ ] 소셜 회원가입 완료 토큰 오류 시 `SOCIAL_SIGNUP_TOKEN_INVALID` 응답 확인
+
 ## 미검증 사유
 
 - 서버 기동, Docker 실행, Swagger 런타임 호출은 프로젝트 운영 기준상 사용자가 직접 확인합니다.
 
 ## 후속 작업
 
-- Visit/Queue/Office 도메인의 `BusinessException(ErrorCode.X)` 점진 교체
-- 예약 정책 오류 Bad case 자동화 테스트 추가
+- 예약/방문/대기/권한 정책 Bad case 자동화 테스트 추가
+- `GlobalExceptionHandler`의 `IllegalArgumentException` fallback 제거 가능 시점 재검토
 ```
 
 ## Merge 후 브랜치 정리 기준
@@ -95,15 +106,14 @@ Content-Type: application/json
 제목:
 
 ```text
-refactor: 예약 도메인 예외 코드를 명시화
+docs: 보건소 도메인 예외 전환 기록 정리
 ```
 
 본문:
 
 ```text
-- 예약 서비스와 정책의 IllegalArgumentException을 BusinessException으로 교체
-- RESERVATION_FORBIDDEN, RESERVATION_SLOT_DUPLICATED 오류 코드 추가
-- 예약 슬롯과 예약 취소 오류 응답 코드를 명시화
-- 보류 목록과 전체 체크리스트에 예약 예외 전환 결과 반영
+- BusinessException 점진 교체 범위를 브랜치 구현 기록에 반영
+- Reservation, Visit, Queue, Office, Dashboard, Auth, Social 예외 전환 결과 정리
+- Swagger 대표 오류 응답과 추가 테스트 체크리스트 보강
+- 전체 체크리스트와 보류 목록의 DC-006 상태 갱신
 ```
-
