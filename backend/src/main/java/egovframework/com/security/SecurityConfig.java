@@ -160,7 +160,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/reservations").hasAnyRole("CITIZEN", "GUARDIAN", "STAFF", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/reservations/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/reservations/*").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/*").hasAnyRole("CITIZEN", "GUARDIAN", "ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/reservations/*").hasAnyRole("CITIZEN", "GUARDIAN", "STAFF", "ADMIN")
                         .requestMatchers("/api/reservation-slots/**").authenticated()
                         .requestMatchers("/api/members/me").authenticated()
                         .requestMatchers("/api/auth/logout").authenticated()

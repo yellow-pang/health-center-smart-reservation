@@ -80,7 +80,7 @@ public class ReservationController {
 	@DeleteMapping("/{reservationId}")
 	@Operation(
 		summary = "예약 취소",
-		description = "예약자 본인 또는 같은 보건소 관리자가 방문 1시간 전까지 예약을 취소한다.",
+		description = "예약자 본인 또는 같은 보건소 직원/관리자가 방문 1시간 전까지 예약을 취소한다.",
 		security = {@SecurityRequirement(name = "Authorization")}
 	)
 	public ResponseEntity<ApiResponse<Void>> cancelReservation(
