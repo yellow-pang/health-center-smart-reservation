@@ -62,6 +62,20 @@
 - `WebMvcConfig`의 HTML escaping converter는 API 응답 보안 설정이므로 유지했다.
 - eGovFrame 공통 패키지 전체를 지우지 않고, 현재 보건소 MVP 인증 흐름과 충돌하는 `LoginVO` 인증 보조 묶음만 제거했다.
 
+## 5.1 포트폴리오 관점의 매핑
+
+이번 정리는 단순 삭제가 아니라 eGovFrame 템플릿의 샘플 인증을 보건소 도메인 인증으로 치환한 작업이다.
+
+| 제거한 요소 | 현재 대체 구현 | 의미 |
+|---|---|---|
+| `LoginVO` | `MemberPrincipal` | 보건소 회원, 권한, 보건소 식별자 중심 principal로 전환 |
+| `EgovJwtTokenUtil` | `HealthcenterJwtTokenProvider` | 보건소 Auth/Member claim 기반 JWT 발급/검증으로 전환 |
+| `EgovUserDetailsHelper` | `AuthenticatedPrincipal.require(authentication)` | 보건소 API에서 필요한 principal 추출 방식으로 단순화 |
+| `CustomAuthenticationPrincipalResolver` | Controller의 `Authentication` 주입과 `MemberPrincipal` 추출 | 레거시 `@AuthenticationPrincipal LoginVO` 의존 제거 |
+| `AuthenticInterceptor` | `SecurityConfig`의 URL/role 기반 접근 규칙 | REST API에 맞는 Spring Security 권한 규칙으로 전환 |
+
+포트폴리오 설명은 `docs/12_portfolio/01_포트폴리오_구현_스토리라인.md`의 `eGovFrame 템플릿 전환 스토리` 섹션을 기준으로 한다.
+
 ## 6. 검증 체크리스트
 
 - [x] `rg`로 `EgovJwtTokenUtil`, `LoginVO`, `EgovUserDetailsHelper`, `AuthenticInterceptor`, `CustomAuthenticationPrincipalResolver` 코드 참조 제거 확인
