@@ -26,6 +26,8 @@ public enum ErrorCode {
 	RESERVATION_CANCEL_TIME_EXPIRED(HttpStatus.CONFLICT, "RESERVATION_CANCEL_TIME_EXPIRED", "예약 취소 가능 시간이 지났습니다."),
 	RESERVATION_CANCEL_INVALID_STATUS(HttpStatus.CONFLICT, "RESERVATION_CANCEL_INVALID_STATUS", "현재 상태에서는 예약을 취소할 수 없습니다."),
 	RESERVATION_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "RESERVATION_INVALID_REQUEST", "예약 요청 값이 올바르지 않습니다."),
+	RESERVATION_FORBIDDEN(HttpStatus.FORBIDDEN, "RESERVATION_FORBIDDEN", "예약을 처리할 권한이 없습니다."),
+	RESERVATION_SLOT_DUPLICATED(HttpStatus.CONFLICT, "RESERVATION_SLOT_DUPLICATED", "이미 등록된 예약 슬롯입니다."),
 	RESERVATION_SLOT_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "RESERVATION_SLOT_INVALID_REQUEST", "예약 슬롯 요청 값이 올바르지 않습니다."),
 	VISIT_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "VISIT_INVALID_REQUEST", "방문 요청 값이 올바르지 않습니다."),
 	ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "ALREADY_CHECKED_IN", "이미 체크인했거나 체크인할 수 없는 예약입니다."),
@@ -64,6 +66,9 @@ public enum ErrorCode {
 	public static ErrorCode fromMessage(String message) {
 		if (contains(message, "로그인이 필요")) {
 			return AUTH_REQUIRED;
+		}
+		if (contains(message, "예약") && contains(message, "권한")) {
+			return RESERVATION_FORBIDDEN;
 		}
 		if (contains(message, "권한")) {
 			return FORBIDDEN;
@@ -106,6 +111,9 @@ public enum ErrorCode {
 		}
 		if (contains(message, "예약 슬롯을 찾을 수 없습니다")) {
 			return RESERVATION_SLOT_NOT_FOUND;
+		}
+		if (contains(message, "이미 등록된 예약 슬롯")) {
+			return RESERVATION_SLOT_DUPLICATED;
 		}
 		if (contains(message, "마감")) {
 			return RESERVATION_SLOT_FULL;

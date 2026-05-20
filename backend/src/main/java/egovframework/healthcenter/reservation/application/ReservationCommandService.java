@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.exception.BusinessException;
+import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.common.logging.AuditLogSupport;
 import egovframework.healthcenter.member.domain.MemberRole;
 import egovframework.healthcenter.member.security.MemberPrincipal;
@@ -52,14 +54,14 @@ public class ReservationCommandService {
 
 		int increased = reservationSlotMapper.increaseReservedCountIfAvailable(request.reservationSlotId());
 		if (increased == 0) {
-			throw new IllegalArgumentException("선택한 시간대의 예약이 마감되었습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_FULL);
 		}
 
 		String reservationNo = generateReservationNo(slot);
 		try {
 			reservationMapper.insertReservation(reservationNo, slot.getHealthCenterId(), principal.memberId(), request);
 		} catch (DuplicateKeyException e) {
-			throw new IllegalArgumentException("동일 시간대에 이미 예약이 존재합니다.", e);
+			throw new BusinessException(ErrorCode.RESERVATION_DUPLICATED, ErrorCode.RESERVATION_DUPLICATED.message(), e);
 		}
 
 		ReservationVO reservation = reservationMapper.selectReservationByNo(reservationNo);
@@ -81,7 +83,7 @@ public class ReservationCommandService {
 	public void cancelReservation(MemberPrincipal principal, Long reservationId) {
 		validatePrincipal(principal);
 		if (reservationId == null || reservationId < 1) {
-			throw new IllegalArgumentException("예약 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_INVALID_REQUEST);
 		}
 
 		ReservationVO reservation = reservationMapper.selectReservationById(reservationId);
@@ -89,11 +91,11 @@ public class ReservationCommandService {
 
 		int canceled = reservationMapper.cancelReservation(reservationId);
 		if (canceled == 0) {
-			throw new IllegalArgumentException("현재 상태에서는 예약을 취소할 수 없습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_CANCEL_INVALID_STATUS);
 		}
 		int decreased = reservationSlotMapper.decreaseReservedCount(reservation.getReservationSlotId());
 		if (decreased == 0) {
-			throw new IllegalArgumentException("예약 슬롯 예약 수를 복구할 수 없습니다.");
+			throw new BusinessException(ErrorCode.CONFLICT, "예약 슬롯 예약 수를 복구할 수 없습니다.");
 		}
 		log.info(
 			"event=reservation.canceled traceId={} memberId={} role={} healthCenterId={} reservationId={} reservationSlotId={} previousStatus={} status=CANCELED",
@@ -109,46 +111,46 @@ public class ReservationCommandService {
 
 	private void validatePrincipal(MemberPrincipal principal) {
 		if (principal == null || principal.memberId() == null) {
-			throw new IllegalArgumentException("로그인이 필요합니다.");
+			throw new BusinessException(ErrorCode.AUTH_REQUIRED);
 		}
 	}
 
 	private void validateRequest(ReservationCreateRequest request) {
 		if (request == null || request.serviceTypeId() == null || request.serviceTypeId() < 1) {
-			throw new IllegalArgumentException("업무 유형 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST);
 		}
 		if (request.reservationSlotId() == null || request.reservationSlotId() < 1) {
-			throw new IllegalArgumentException("예약 슬롯 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST);
 		}
 		if (isBlank(request.visitorName()) || isBlank(request.visitorPhone())) {
-			throw new IllegalArgumentException("방문자 이름과 연락처를 입력하세요.");
+			throw new BusinessException(ErrorCode.RESERVATION_INVALID_REQUEST, "방문자 이름과 연락처를 입력하세요.");
 		}
 	}
 
 	private void validateReservableSlot(MemberPrincipal principal, ReservationSlotVO slot, ReservationCreateRequest request) {
 		if (slot == null || !slot.isActive()) {
-			throw new IllegalArgumentException("예약 슬롯을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_NOT_FOUND);
 		}
 		if (hasStaffOrAdminRole(principal)
 				&& (principal.healthCenterId() == null || !principal.healthCenterId().equals(slot.getHealthCenterId()))) {
-			throw new IllegalArgumentException("해당 보건소 예약 슬롯으로 예약할 권한이 없습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_FORBIDDEN);
 		}
 		if (!request.serviceTypeId().equals(slot.getServiceTypeId())) {
-			throw new IllegalArgumentException("업무 유형과 예약 슬롯이 일치하지 않습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "업무 유형과 예약 슬롯이 일치하지 않습니다.");
 		}
 		LocalDate today = LocalDate.now();
 		if (slot.getDate().isBefore(today) || slot.getDate().isAfter(today.plusDays(14))) {
-			throw new IllegalArgumentException("예약 가능 날짜는 오늘부터 14일 이내입니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 가능 날짜는 오늘부터 14일 이내입니다.");
 		}
 		if (slot.getReservedCount() >= slot.getCapacity()) {
-			throw new IllegalArgumentException("선택한 시간대의 예약이 마감되었습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_FULL);
 		}
 	}
 
 	private void validateDuplicatedReservation(Long memberId, Long reservationSlotId) {
 		int count = reservationMapper.countActiveReservationByMemberAndSlot(memberId, reservationSlotId);
 		if (count > 0) {
-			throw new IllegalArgumentException("동일 시간대에 이미 예약이 존재합니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_DUPLICATED);
 		}
 	}
 

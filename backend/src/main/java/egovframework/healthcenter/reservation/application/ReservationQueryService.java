@@ -5,6 +5,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.exception.BusinessException;
+import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.member.domain.MemberRole;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.reservation.dto.ReservationResponse;
@@ -33,12 +35,12 @@ public class ReservationQueryService {
 	public ReservationResponse findReservationDetail(MemberPrincipal principal, Long reservationId) {
 		validatePrincipal(principal);
 		if (reservationId == null || reservationId < 1) {
-			throw new IllegalArgumentException("예약 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_INVALID_REQUEST);
 		}
 
 		ReservationVO reservation = reservationMapper.selectReservationById(reservationId);
 		if (reservation == null) {
-			throw new IllegalArgumentException("예약 정보를 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_NOT_FOUND);
 		}
 		validateReadable(principal, reservation);
 		return ReservationResponse.from(reservation);
@@ -46,7 +48,7 @@ public class ReservationQueryService {
 
 	private void validatePrincipal(MemberPrincipal principal) {
 		if (principal == null || principal.memberId() == null) {
-			throw new IllegalArgumentException("로그인이 필요합니다.");
+			throw new BusinessException(ErrorCode.AUTH_REQUIRED);
 		}
 	}
 
@@ -58,7 +60,7 @@ public class ReservationQueryService {
 				&& principal.healthCenterId().equals(reservation.getHealthCenterId())) {
 			return;
 		}
-		throw new IllegalArgumentException("예약 조회 권한이 없습니다.");
+		throw new BusinessException(ErrorCode.RESERVATION_FORBIDDEN);
 	}
 
 	private boolean isStaffOrAdmin(MemberPrincipal principal) {
