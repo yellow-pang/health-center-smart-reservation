@@ -5,6 +5,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.exception.BusinessException;
+import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.common.logging.AuditLogSupport;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.office.mapper.OfficeMapper;
@@ -58,7 +60,7 @@ public class VisitCommandService {
 
 		int updated = reservationMapper.markCheckedIn(reservation.getId());
 		if (updated == 0) {
-			throw new IllegalArgumentException("이미 체크인했거나 체크인할 수 없는 예약입니다.");
+			throw new BusinessException(ErrorCode.VISIT_ALREADY_CHECKED_IN);
 		}
 		Long visitId = visitMapper.insertReservedVisit(reservation, principal.memberId());
 		QueueTicketVO ticket = queueTicketMapper.issueWaitingTicket(
@@ -131,25 +133,25 @@ public class VisitCommandService {
 
 	private void validatePrincipal(MemberPrincipal principal) {
 		if (principal == null || principal.memberId() == null) {
-			throw new IllegalArgumentException("로그인이 필요합니다.");
+			throw new BusinessException(ErrorCode.AUTH_REQUIRED);
 		}
 	}
 
 	private void validateRequest(VisitCheckInRequest request) {
 		if (request == null || request.reservationNo() == null || request.reservationNo().isBlank()) {
-			throw new IllegalArgumentException("예약번호를 입력하세요.");
+			throw new BusinessException(ErrorCode.VISIT_INVALID_REQUEST, "예약번호를 입력하세요.");
 		}
 	}
 
 	private void validateWalkInRequest(VisitWalkInRequest request) {
 		if (request == null || request.serviceTypeId() == null) {
-			throw new IllegalArgumentException("업무 유형을 선택하세요.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST, "업무 유형을 선택하세요.");
 		}
 		if (request.visitorName() == null || request.visitorName().isBlank()) {
-			throw new IllegalArgumentException("방문자 이름을 입력하세요.");
+			throw new BusinessException(ErrorCode.VISIT_INVALID_REQUEST, "방문자 이름을 입력하세요.");
 		}
 		if (request.visitorPhone() == null || request.visitorPhone().isBlank()) {
-			throw new IllegalArgumentException("방문자 전화번호를 입력하세요.");
+			throw new BusinessException(ErrorCode.VISIT_INVALID_REQUEST, "방문자 전화번호를 입력하세요.");
 		}
 	}
 }

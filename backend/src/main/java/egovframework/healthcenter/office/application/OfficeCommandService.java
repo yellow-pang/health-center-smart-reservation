@@ -9,6 +9,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.exception.BusinessException;
+import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.office.dto.ServiceTypeCreateRequest;
 import egovframework.healthcenter.office.dto.ServiceTypeResponse;
 import egovframework.healthcenter.office.dto.ServiceTypeUpdateRequest;
@@ -40,7 +42,7 @@ public class OfficeCommandService {
 		try {
 			officeMapper.insertServiceType(DEFAULT_HEALTH_CENTER_ID, request);
 		} catch (DuplicateKeyException e) {
-			throw new IllegalArgumentException("이미 등록된 업무 코드입니다.", e);
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_DUPLICATED, ErrorCode.SERVICE_TYPE_DUPLICATED.message(), e);
 		}
 
 		ServiceTypeVO serviceType = officeMapper.selectServiceTypeById(selectCreatedServiceTypeId(request.code()));
@@ -54,7 +56,7 @@ public class OfficeCommandService {
 
 		int updated = officeMapper.updateServiceType(serviceTypeId, request);
 		if (updated == 0) {
-			throw new IllegalArgumentException("업무 유형을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_NOT_FOUND);
 		}
 
 		return ServiceTypeResponse.from(officeMapper.selectServiceTypeById(serviceTypeId));
@@ -66,7 +68,7 @@ public class OfficeCommandService {
 
 		int updated = officeMapper.deactivateServiceType(serviceTypeId);
 		if (updated == 0) {
-			throw new IllegalArgumentException("업무 유형을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_NOT_FOUND);
 		}
 
 		return ServiceTypeResponse.from(officeMapper.selectServiceTypeById(serviceTypeId));
@@ -78,7 +80,7 @@ public class OfficeCommandService {
 
 		int updated = officeMapper.activateServiceType(serviceTypeId);
 		if (updated == 0) {
-			throw new IllegalArgumentException("업무 유형을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_NOT_FOUND);
 		}
 
 		return ServiceTypeResponse.from(officeMapper.selectServiceTypeById(serviceTypeId));
@@ -94,7 +96,7 @@ public class OfficeCommandService {
 				request
 			);
 		} catch (DuplicateKeyException e) {
-			throw new IllegalArgumentException("이미 등록된 직원 이메일입니다.", e);
+			throw new BusinessException(ErrorCode.STAFF_DUPLICATED, ErrorCode.STAFF_DUPLICATED.message(), e);
 		}
 
 		StaffVO staff = officeMapper.selectStaffByEmail(request.email());
@@ -108,7 +110,7 @@ public class OfficeCommandService {
 
 		int updated = officeMapper.updateStaff(staffId, request);
 		if (updated == 0) {
-			throw new IllegalArgumentException("직원을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.STAFF_NOT_FOUND);
 		}
 
 		return StaffResponse.from(findStaff(staffId));
@@ -120,7 +122,7 @@ public class OfficeCommandService {
 
 		int updated = officeMapper.deactivateStaff(staffId);
 		if (updated == 0) {
-			throw new IllegalArgumentException("직원을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.STAFF_NOT_FOUND);
 		}
 
 		return StaffResponse.from(findStaff(staffId));
@@ -133,7 +135,7 @@ public class OfficeCommandService {
 		try {
 			officeMapper.insertServiceWindow(DEFAULT_HEALTH_CENTER_ID, request);
 		} catch (DuplicateKeyException e) {
-			throw new IllegalArgumentException("이미 등록된 창구 번호입니다.", e);
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_DUPLICATED, ErrorCode.SERVICE_WINDOW_DUPLICATED.message(), e);
 		}
 
 		Long serviceWindowId = officeMapper.selectServiceWindowIdByNumber(
@@ -152,10 +154,10 @@ public class OfficeCommandService {
 		try {
 			int updated = officeMapper.updateServiceWindow(serviceWindowId, request);
 			if (updated == 0) {
-				throw new IllegalArgumentException("창구를 찾을 수 없습니다.");
+				throw new BusinessException(ErrorCode.SERVICE_WINDOW_NOT_FOUND);
 			}
 		} catch (DuplicateKeyException e) {
-			throw new IllegalArgumentException("이미 등록된 창구 번호입니다.", e);
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_DUPLICATED, ErrorCode.SERVICE_WINDOW_DUPLICATED.message(), e);
 		}
 
 		replaceServiceWindowMappings(serviceWindowId, request.serviceTypeIds());
@@ -168,7 +170,7 @@ public class OfficeCommandService {
 
 		int updated = officeMapper.deactivateServiceWindow(serviceWindowId);
 		if (updated == 0) {
-			throw new IllegalArgumentException("창구를 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_NOT_FOUND);
 		}
 
 		return findServiceWindow(serviceWindowId);
@@ -185,89 +187,89 @@ public class OfficeCommandService {
 
 	private void validateCreateRequest(ServiceTypeCreateRequest request) {
 		if (request == null || isBlank(request.code()) || isBlank(request.name())) {
-			throw new IllegalArgumentException("업무 코드와 업무명을 입력하세요.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST, "업무 코드와 업무명을 입력하세요.");
 		}
 		validateDefaultCapacity(request.defaultCapacity());
 	}
 
 	private void validateUpdateRequest(ServiceTypeUpdateRequest request) {
 		if (request == null || isBlank(request.name())) {
-			throw new IllegalArgumentException("업무명을 입력하세요.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST, "업무명을 입력하세요.");
 		}
 		if (request.active() == null) {
-			throw new IllegalArgumentException("사용 여부를 입력하세요.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST, "사용 여부를 입력하세요.");
 		}
 		validateDefaultCapacity(request.defaultCapacity());
 	}
 
 	private void validateDefaultCapacity(Integer defaultCapacity) {
 		if (defaultCapacity == null || defaultCapacity < 1) {
-			throw new IllegalArgumentException("기본 예약 가능 인원은 1명 이상이어야 합니다.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST, "기본 예약 가능 인원은 1명 이상이어야 합니다.");
 		}
 	}
 
 	private void validateServiceTypeId(Long serviceTypeId) {
 		if (serviceTypeId == null || serviceTypeId < 1) {
-			throw new IllegalArgumentException("업무 유형 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST, "업무 유형 ID가 올바르지 않습니다.");
 		}
 	}
 
 	private void validateCreateStaffRequest(StaffCreateRequest request) {
 		if (request == null || isBlank(request.email()) || isBlank(request.password()) || isBlank(request.name())) {
-			throw new IllegalArgumentException("이메일, 비밀번호, 이름을 입력하세요.");
+			throw new BusinessException(ErrorCode.STAFF_INVALID_REQUEST, "이메일, 비밀번호, 이름을 입력하세요.");
 		}
 		if (isBlank(request.phone())) {
-			throw new IllegalArgumentException("전화번호를 입력하세요.");
+			throw new BusinessException(ErrorCode.STAFF_INVALID_REQUEST, "전화번호를 입력하세요.");
 		}
 	}
 
 	private void validateUpdateStaffRequest(StaffUpdateRequest request) {
 		if (request == null || isBlank(request.name())) {
-			throw new IllegalArgumentException("이름을 입력하세요.");
+			throw new BusinessException(ErrorCode.STAFF_INVALID_REQUEST, "이름을 입력하세요.");
 		}
 		if (isBlank(request.phone())) {
-			throw new IllegalArgumentException("전화번호를 입력하세요.");
+			throw new BusinessException(ErrorCode.STAFF_INVALID_REQUEST, "전화번호를 입력하세요.");
 		}
 		if (request.active() == null) {
-			throw new IllegalArgumentException("사용 여부를 입력하세요.");
+			throw new BusinessException(ErrorCode.STAFF_INVALID_REQUEST, "사용 여부를 입력하세요.");
 		}
 	}
 
 	private void validateStaffId(Long staffId) {
 		if (staffId == null || staffId < 1) {
-			throw new IllegalArgumentException("직원 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.STAFF_INVALID_REQUEST, "직원 ID가 올바르지 않습니다.");
 		}
 	}
 
 	private StaffVO findStaff(Long staffId) {
 		StaffVO staff = officeMapper.selectStaffById(staffId);
 		if (staff == null) {
-			throw new IllegalArgumentException("직원을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.STAFF_NOT_FOUND);
 		}
 		return staff;
 	}
 
 	private void validateServiceWindowRequest(ServiceWindowUpsertRequest request) {
 		if (request == null || request.windowNumber() == null || request.windowNumber() < 1) {
-			throw new IllegalArgumentException("창구 번호가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_INVALID_REQUEST, "창구 번호가 올바르지 않습니다.");
 		}
 		if (isBlank(request.name())) {
-			throw new IllegalArgumentException("창구명을 입력하세요.");
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_INVALID_REQUEST, "창구명을 입력하세요.");
 		}
 		if (isBlank(request.status())) {
-			throw new IllegalArgumentException("창구 상태를 입력하세요.");
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_INVALID_REQUEST, "창구 상태를 입력하세요.");
 		}
 		if (request.active() == null) {
-			throw new IllegalArgumentException("사용 여부를 입력하세요.");
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_INVALID_REQUEST, "사용 여부를 입력하세요.");
 		}
 		if (request.serviceTypeIds() == null || request.serviceTypeIds().isEmpty()) {
-			throw new IllegalArgumentException("담당 업무를 하나 이상 선택하세요.");
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_INVALID_REQUEST, "담당 업무를 하나 이상 선택하세요.");
 		}
 	}
 
 	private void validateServiceWindowId(Long serviceWindowId) {
 		if (serviceWindowId == null || serviceWindowId < 1) {
-			throw new IllegalArgumentException("창구 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_INVALID_REQUEST, "창구 ID가 올바르지 않습니다.");
 		}
 	}
 
@@ -277,7 +279,7 @@ public class OfficeCommandService {
 		}
 		StaffVO staff = findStaff(staffId);
 		if (!staff.isActive()) {
-			throw new IllegalArgumentException("비활성 직원은 창구 담당자로 배정할 수 없습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_WINDOW_INVALID_REQUEST, "비활성 직원은 창구 담당자로 배정할 수 없습니다.");
 		}
 	}
 
@@ -285,7 +287,7 @@ public class OfficeCommandService {
 		officeMapper.deactivateServiceWindowServiceTypes(serviceWindowId);
 		for (Long serviceTypeId : serviceTypeIds) {
 			if (serviceTypeId == null || serviceTypeId < 1) {
-				throw new IllegalArgumentException("담당 업무 유형 ID가 올바르지 않습니다.");
+				throw new BusinessException(ErrorCode.SERVICE_WINDOW_INVALID_REQUEST, "담당 업무 유형 ID가 올바르지 않습니다.");
 			}
 			officeMapper.upsertServiceWindowServiceType(serviceWindowId, serviceTypeId);
 		}
@@ -304,7 +306,7 @@ public class OfficeCommandService {
 			.stream()
 			.findFirst()
 			.map(ServiceWindowBuilder::build)
-			.orElseThrow(() -> new IllegalArgumentException("창구를 찾을 수 없습니다."));
+			.orElseThrow(() -> new BusinessException(ErrorCode.SERVICE_WINDOW_NOT_FOUND));
 	}
 
 	private static class ServiceWindowBuilder {

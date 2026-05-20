@@ -4,6 +4,8 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.exception.BusinessException;
+import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.reservation.dto.ReservationSlotCreateRequest;
 import egovframework.healthcenter.reservation.dto.ReservationSlotResponse;
 import egovframework.healthcenter.reservation.dto.ReservationSlotUpdateRequest;
@@ -27,7 +29,7 @@ public class ReservationSlotCommandService {
 		try {
 			reservationSlotMapper.insertSlot(DEFAULT_HEALTH_CENTER_ID, request);
 		} catch (DuplicateKeyException e) {
-			throw new IllegalArgumentException("이미 등록된 예약 슬롯입니다.", e);
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_DUPLICATED, ErrorCode.RESERVATION_SLOT_DUPLICATED.message(), e);
 		}
 
 		ReservationSlotVO createdSlot = reservationSlotMapper.selectActiveSlots(request.serviceTypeId(), request.date())
@@ -46,10 +48,10 @@ public class ReservationSlotCommandService {
 		try {
 			int updated = reservationSlotMapper.updateSlot(slotId, request);
 			if (updated == 0) {
-				throw new IllegalArgumentException("예약 슬롯을 찾을 수 없거나 정원이 현재 예약 수보다 작습니다.");
+				throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 슬롯을 찾을 수 없거나 정원이 현재 예약 수보다 작습니다.");
 			}
 		} catch (DuplicateKeyException e) {
-			throw new IllegalArgumentException("이미 등록된 예약 슬롯 시간입니다.", e);
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_DUPLICATED, "이미 등록된 예약 슬롯 시간입니다.", e);
 		}
 
 		return ReservationSlotResponse.from(findSlot(slotId));
@@ -61,7 +63,7 @@ public class ReservationSlotCommandService {
 
 		int updated = reservationSlotMapper.deactivateSlot(slotId);
 		if (updated == 0) {
-			throw new IllegalArgumentException("예약 슬롯을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_NOT_FOUND);
 		}
 
 		return ReservationSlotResponse.from(findSlot(slotId));
@@ -69,53 +71,53 @@ public class ReservationSlotCommandService {
 
 	private void validateCreateRequest(ReservationSlotCreateRequest request) {
 		if (request == null || request.serviceTypeId() == null || request.serviceTypeId() < 1) {
-			throw new IllegalArgumentException("업무 유형 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST);
 		}
 		if (request.date() == null) {
-			throw new IllegalArgumentException("예약 날짜를 입력하세요.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 날짜를 입력하세요.");
 		}
 		if (request.startTime() == null || request.endTime() == null) {
-			throw new IllegalArgumentException("예약 시작 시간과 종료 시간을 입력하세요.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 시작 시간과 종료 시간을 입력하세요.");
 		}
 		if (!request.endTime().isAfter(request.startTime())) {
-			throw new IllegalArgumentException("예약 종료 시간은 시작 시간보다 늦어야 합니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 종료 시간은 시작 시간보다 늦어야 합니다.");
 		}
 		if (request.capacity() == null || request.capacity() < 1) {
-			throw new IllegalArgumentException("예약 가능 인원은 1명 이상이어야 합니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 가능 인원은 1명 이상이어야 합니다.");
 		}
 	}
 
 	private void validateUpdateRequest(ReservationSlotUpdateRequest request) {
 		if (request == null || request.serviceTypeId() == null || request.serviceTypeId() < 1) {
-			throw new IllegalArgumentException("업무 유형 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.SERVICE_TYPE_INVALID_REQUEST);
 		}
 		if (request.date() == null) {
-			throw new IllegalArgumentException("예약 날짜를 입력하세요.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 날짜를 입력하세요.");
 		}
 		if (request.startTime() == null || request.endTime() == null) {
-			throw new IllegalArgumentException("예약 시작 시간과 종료 시간을 입력하세요.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 시작 시간과 종료 시간을 입력하세요.");
 		}
 		if (!request.endTime().isAfter(request.startTime())) {
-			throw new IllegalArgumentException("예약 종료 시간은 시작 시간보다 늦어야 합니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 종료 시간은 시작 시간보다 늦어야 합니다.");
 		}
 		if (request.capacity() == null || request.capacity() < 1) {
-			throw new IllegalArgumentException("예약 가능 인원은 1명 이상이어야 합니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "예약 가능 인원은 1명 이상이어야 합니다.");
 		}
 		if (request.active() == null) {
-			throw new IllegalArgumentException("사용 여부를 입력하세요.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST, "사용 여부를 입력하세요.");
 		}
 	}
 
 	private void validateSlotId(Long slotId) {
 		if (slotId == null || slotId < 1) {
-			throw new IllegalArgumentException("예약 슬롯 ID가 올바르지 않습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_INVALID_REQUEST);
 		}
 	}
 
 	private ReservationSlotVO findSlot(Long slotId) {
 		ReservationSlotVO slot = reservationSlotMapper.selectSlotById(slotId);
 		if (slot == null) {
-			throw new IllegalArgumentException("예약 슬롯을 찾을 수 없습니다.");
+			throw new BusinessException(ErrorCode.RESERVATION_SLOT_NOT_FOUND);
 		}
 		return slot;
 	}

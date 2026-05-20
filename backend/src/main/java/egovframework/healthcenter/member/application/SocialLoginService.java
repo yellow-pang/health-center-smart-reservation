@@ -22,6 +22,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import egovframework.healthcenter.common.exception.BusinessException;
+import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.member.dto.LoginResponse;
 import egovframework.healthcenter.member.dto.SocialSignupRequest;
 import egovframework.healthcenter.member.mapper.MemberMapper;
@@ -125,10 +127,10 @@ public class SocialLoginService {
 	@Transactional
 	public LoginResponse completeSignup(SocialSignupRequest request) {
 		if (request == null || request.completionToken() == null || request.completionToken().isBlank()) {
-			throw new IllegalArgumentException("소셜 회원가입 완료 토큰이 없습니다.");
+			throw new BusinessException(ErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID, "소셜 회원가입 완료 토큰이 없습니다.");
 		}
 		if (request.email() == null || request.email().isBlank()) {
-			throw new IllegalArgumentException("이메일을 입력해 주세요.");
+			throw new BusinessException(ErrorCode.SOCIAL_EMAIL_REQUIRED);
 		}
 
 		PendingSocialProfile profile = parseCompletionToken(request.completionToken());
@@ -140,7 +142,10 @@ public class SocialLoginService {
 
 		String email = request.email().trim();
 		if (memberMapper.selectActiveMemberByEmail(email) != null) {
-			throw new IllegalArgumentException("이미 가입된 이메일입니다. 이메일 로그인 후 계정 연결 기능을 이용해 주세요.");
+			throw new BusinessException(
+				ErrorCode.SOCIAL_EMAIL_DUPLICATED,
+				"이미 가입된 이메일입니다. 이메일 로그인 후 계정 연결 기능을 이용해 주세요."
+			);
 		}
 
 		String name = stringValue(request.name()).isBlank()
@@ -328,17 +333,17 @@ public class SocialLoginService {
 				.getPayload();
 
 			if (!COMPLETION_TOKEN_TYPE.equals(stringValue(claims.get("type")))) {
-				throw new IllegalArgumentException("소셜 회원가입 완료 토큰이 올바르지 않습니다.");
+				throw new BusinessException(ErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID);
 			}
 
 			String provider = stringValue(claims.get("provider"));
 			String providerUserId = stringValue(claims.get("providerUserId"));
 			if (provider.isBlank() || providerUserId.isBlank()) {
-				throw new IllegalArgumentException("소셜 회원가입 완료 토큰 정보가 부족합니다.");
+				throw new BusinessException(ErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID, "소셜 회원가입 완료 토큰 정보가 부족합니다.");
 			}
 			return new PendingSocialProfile(provider, providerUserId, stringValue(claims.get("name")));
-		} catch (JwtException | IllegalArgumentException e) {
-			throw new IllegalArgumentException("소셜 회원가입 완료 토큰을 확인할 수 없습니다.");
+		} catch (JwtException | BusinessException e) {
+			throw new BusinessException(ErrorCode.SOCIAL_SIGNUP_TOKEN_INVALID, "소셜 회원가입 완료 토큰을 확인할 수 없습니다.", e);
 		}
 	}
 
@@ -425,7 +430,7 @@ public class SocialLoginService {
 					return provider;
 				}
 			}
-			throw new IllegalArgumentException("지원하지 않는 소셜 로그인 제공자입니다.");
+			throw new BusinessException(ErrorCode.SOCIAL_PROVIDER_UNSUPPORTED);
 		}
 	}
 }
