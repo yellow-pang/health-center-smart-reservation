@@ -39,6 +39,11 @@ public enum ErrorCode {
 	QUEUE_INVALID_STATUS(HttpStatus.CONFLICT, "QUEUE_INVALID_STATUS", "현재 대기 상태에서는 요청을 처리할 수 없습니다."),
 	QUEUE_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "QUEUE_INVALID_REQUEST", "대기열 요청 값이 올바르지 않습니다."),
 	DASHBOARD_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "DASHBOARD_INVALID_REQUEST", "대시보드 요청 값이 올바르지 않습니다."),
+	DASHBOARD_FORBIDDEN(HttpStatus.FORBIDDEN, "DASHBOARD_FORBIDDEN", "대시보드 조회 권한이 없습니다."),
+	SOCIAL_SIGNUP_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "SOCIAL_SIGNUP_TOKEN_INVALID", "소셜 회원가입 완료 토큰이 올바르지 않습니다."),
+	SOCIAL_EMAIL_REQUIRED(HttpStatus.BAD_REQUEST, "SOCIAL_EMAIL_REQUIRED", "이메일을 입력해 주세요."),
+	SOCIAL_EMAIL_DUPLICATED(HttpStatus.CONFLICT, "SOCIAL_EMAIL_DUPLICATED", "이미 가입된 이메일입니다."),
+	SOCIAL_PROVIDER_UNSUPPORTED(HttpStatus.BAD_REQUEST, "SOCIAL_PROVIDER_UNSUPPORTED", "지원하지 않는 소셜 로그인 제공자입니다."),
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_SERVER_ERROR", "서버 오류가 발생했습니다.");
 
 	private final HttpStatus status;
@@ -79,6 +84,9 @@ public enum ErrorCode {
 		}
 		if ((contains(message, "대기표") || contains(message, "대기열")) && contains(message, "권한")) {
 			return QUEUE_FORBIDDEN;
+		}
+		if (contains(message, "대시보드") && contains(message, "권한")) {
+			return DASHBOARD_FORBIDDEN;
 		}
 		if (contains(message, "권한")) {
 			return FORBIDDEN;
@@ -163,6 +171,18 @@ public enum ErrorCode {
 		}
 		if (contains(message, "대시보드") || contains(message, "보건소 ID")) {
 			return DASHBOARD_INVALID_REQUEST;
+		}
+		if (contains(message, "소셜 회원가입 완료 토큰")) {
+			return SOCIAL_SIGNUP_TOKEN_INVALID;
+		}
+		if (contains(message, "이메일을 입력")) {
+			return SOCIAL_EMAIL_REQUIRED;
+		}
+		if (contains(message, "이미 가입된 이메일")) {
+			return SOCIAL_EMAIL_DUPLICATED;
+		}
+		if (contains(message, "지원하지 않는 소셜 로그인 제공자")) {
+			return SOCIAL_PROVIDER_UNSUPPORTED;
 		}
 		if (contains(message, "찾을 수 없습니다")) {
 			return RESOURCE_NOT_FOUND;

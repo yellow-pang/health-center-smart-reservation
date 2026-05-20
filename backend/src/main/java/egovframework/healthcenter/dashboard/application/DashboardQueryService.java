@@ -6,6 +6,8 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import egovframework.healthcenter.common.exception.BusinessException;
+import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.dashboard.dto.CongestionResponse;
 import egovframework.healthcenter.dashboard.dto.DashboardSummaryResponse;
 import egovframework.healthcenter.dashboard.dto.HourlyVisitResponse;
@@ -74,7 +76,7 @@ public class DashboardQueryService {
 	@Transactional(readOnly = true)
 	public List<CongestionResponse> findCurrentCongestion(Long healthCenterId) {
 		if (healthCenterId == null) {
-			throw new IllegalArgumentException("보건소 ID를 입력하세요.");
+			throw new BusinessException(ErrorCode.DASHBOARD_INVALID_REQUEST, "보건소 ID를 입력하세요.");
 		}
 		return dashboardMapper.selectCurrentCongestion(healthCenterId)
 			.stream()
@@ -109,13 +111,13 @@ public class DashboardQueryService {
 
 	private void validateAdmin(MemberPrincipal principal) {
 		if (principal == null || principal.memberId() == null) {
-			throw new IllegalArgumentException("로그인이 필요합니다.");
+			throw new BusinessException(ErrorCode.AUTH_REQUIRED);
 		}
 		if (principal.healthCenterId() == null) {
-			throw new IllegalArgumentException("대시보드를 조회할 보건소 정보가 없습니다.");
+			throw new BusinessException(ErrorCode.DASHBOARD_INVALID_REQUEST, "대시보드를 조회할 보건소 정보가 없습니다.");
 		}
 		if (principal.role() != MemberRole.ADMIN) {
-			throw new IllegalArgumentException("대시보드 조회 권한이 없습니다.");
+			throw new BusinessException(ErrorCode.DASHBOARD_FORBIDDEN);
 		}
 	}
 
