@@ -29,7 +29,10 @@ public enum ErrorCode {
 	RESERVATION_FORBIDDEN(HttpStatus.FORBIDDEN, "RESERVATION_FORBIDDEN", "예약을 처리할 권한이 없습니다."),
 	RESERVATION_SLOT_DUPLICATED(HttpStatus.CONFLICT, "RESERVATION_SLOT_DUPLICATED", "이미 등록된 예약 슬롯입니다."),
 	RESERVATION_SLOT_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "RESERVATION_SLOT_INVALID_REQUEST", "예약 슬롯 요청 값이 올바르지 않습니다."),
+	VISIT_NOT_FOUND(HttpStatus.NOT_FOUND, "VISIT_NOT_FOUND", "방문 정보를 찾을 수 없습니다."),
+	VISIT_FORBIDDEN(HttpStatus.FORBIDDEN, "VISIT_FORBIDDEN", "방문을 처리할 권한이 없습니다."),
 	VISIT_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "VISIT_INVALID_REQUEST", "방문 요청 값이 올바르지 않습니다."),
+	VISIT_ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "VISIT_ALREADY_CHECKED_IN", "이미 체크인했거나 체크인할 수 없는 예약입니다."),
 	ALREADY_CHECKED_IN(HttpStatus.CONFLICT, "ALREADY_CHECKED_IN", "이미 체크인했거나 체크인할 수 없는 예약입니다."),
 	QUEUE_TICKET_NOT_FOUND(HttpStatus.NOT_FOUND, "QUEUE_TICKET_NOT_FOUND", "대기표 정보를 찾을 수 없습니다."),
 	QUEUE_INVALID_STATUS(HttpStatus.CONFLICT, "QUEUE_INVALID_STATUS", "현재 대기 상태에서는 요청을 처리할 수 없습니다."),
@@ -69,6 +72,9 @@ public enum ErrorCode {
 		}
 		if (contains(message, "예약") && contains(message, "권한")) {
 			return RESERVATION_FORBIDDEN;
+		}
+		if ((contains(message, "방문") || contains(message, "체크인") || contains(message, "현장 접수")) && contains(message, "권한")) {
+			return VISIT_FORBIDDEN;
 		}
 		if (contains(message, "권한")) {
 			return FORBIDDEN;
@@ -133,8 +139,14 @@ public enum ErrorCode {
 		if (contains(message, "예약")) {
 			return RESERVATION_INVALID_REQUEST;
 		}
-		if (contains(message, "체크인")) {
-			return ALREADY_CHECKED_IN;
+		if (contains(message, "이미 체크인")) {
+			return VISIT_ALREADY_CHECKED_IN;
+		}
+		if (contains(message, "방문 정보를 찾을 수 없습니다")) {
+			return VISIT_NOT_FOUND;
+		}
+		if (contains(message, "방문") || contains(message, "체크인") || contains(message, "현장 접수")) {
+			return VISIT_INVALID_REQUEST;
 		}
 		if (contains(message, "대기표 정보를 찾을 수 없습니다") || contains(message, "대기표를 처리할")) {
 			return QUEUE_TICKET_NOT_FOUND;
