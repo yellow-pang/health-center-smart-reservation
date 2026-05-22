@@ -1,0 +1,24 @@
+{
+  "name": "보건소 스마트 예약 시스템",
+  "short_name": "보건소 예약",
+  "description": "가까운 보건소 예약을 미리 잡고 대기 없이 방문하세요",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d9488",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/health_reservation_icon_128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/보건소예약앱아이콘2.png",
+      "sizes": "1080x1080",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

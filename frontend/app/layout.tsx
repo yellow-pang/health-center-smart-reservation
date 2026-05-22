@@ -9,25 +9,20 @@ const _geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' });
 const _geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
   title: '보건소 스마트 예약 시스템',
-  description: '보건소 예약, 대기, 혼잡도 분석을 위한 통합 시스템',
-  generator: 'v0.app',
+  description: '가까운 보건소 예약을 미리 잡고 대기 없이 방문하세요',
+  manifest: '/manifest.json',
   icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
+    icon: '/health_reservation_icon_128.png',
+    apple: '/보건소예약앱아이콘2.png',
+  },
+  openGraph: {
+    title: '보건소 스마트 예약 시스템',
+    description: '가까운 보건소 예약을 미리 잡고 대기 없이 방문하세요',
+    images: [{ url: '/보건소예약앱아이콘2.png', width: 1080, height: 1080 }],
+    locale: 'ko_KR',
+    type: 'website',
   },
 };
 
