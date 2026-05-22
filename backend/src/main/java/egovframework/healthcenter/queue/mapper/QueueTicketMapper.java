@@ -1,5 +1,6 @@
 package egovframework.healthcenter.queue.mapper;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,5 +81,33 @@ public class QueueTicketMapper extends EgovAbstractMapper {
 
 	public int markReservationCanceled(Long queueTicketId) {
 		return update("QueueTicketMapper.markReservationCanceled", queueTicketId);
+	}
+
+	public int countPendingTicketsForClose(Long healthCenterId, LocalDate targetDate) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("healthCenterId", healthCenterId);
+		params.put("targetDate", targetDate);
+		return selectOne("QueueTicketMapper.countPendingTicketsForClose", params);
+	}
+
+	public int markPendingVisitsNoShow(Long healthCenterId, LocalDate targetDate) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("healthCenterId", healthCenterId);
+		params.put("targetDate", targetDate);
+		return update("QueueTicketMapper.markPendingVisitsNoShow", params);
+	}
+
+	public int markPendingReservationsNoShow(Long healthCenterId, LocalDate targetDate) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("healthCenterId", healthCenterId);
+		params.put("targetDate", targetDate);
+		return update("QueueTicketMapper.markPendingReservationsNoShow", params);
+	}
+
+	public int markPendingTicketsNoShow(Long healthCenterId, LocalDate targetDate) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("healthCenterId", healthCenterId);
+		params.put("targetDate", targetDate);
+		return update("QueueTicketMapper.markPendingTicketsNoShow", params);
 	}
 }

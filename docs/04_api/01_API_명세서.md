@@ -863,6 +863,35 @@ Response:
 - 성공 시 대기표 상태는 `COMPLETED`가 되고 Visit 상태도 `COMPLETED`가 된다.
 - 예약 기반 방문이면 예약 상태도 `COMPLETED`로 변경된다.
 
+#### 4.9.8 미처리 대기표 마감
+
+`POST /api/queues/admin/close-pending?date=2026-05-22`
+
+권한:
+
+- 같은 보건소 소속 `ADMIN`
+
+정책:
+
+- `date`를 생략하면 오늘 날짜 기준으로 처리한다.
+- 해당 날짜에 발급된 `WAITING`, `CALLED`, `HOLD`, `IN_PROGRESS` 대기표를 `NO_SHOW`로 일괄 처리한다.
+- 연결된 Visit 상태도 `NO_SHOW`로 변경한다.
+- 예약 기반 방문이면 `CHECKED_IN` 상태 예약도 `NO_SHOW`로 변경한다.
+- 이미 종료된 `COMPLETED`, `NO_SHOW`, `CANCELED` 대기표는 변경하지 않는다.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "date": "2026-05-22",
+    "closedCount": 3
+  },
+  "error": null
+}
+```
+
 상태 오류 Response:
 
 ```json

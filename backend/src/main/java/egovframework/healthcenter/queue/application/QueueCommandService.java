@@ -1,14 +1,18 @@
 package egovframework.healthcenter.queue.application;
 
-import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import egovframework.healthcenter.common.exception.BusinessException;
 import egovframework.healthcenter.common.exception.ErrorCode;
 import egovframework.healthcenter.common.logging.AuditLogSupport;
+import egovframework.healthcenter.member.domain.MemberRole;
 import egovframework.healthcenter.member.security.MemberPrincipal;
+import egovframework.healthcenter.queue.dto.ClosePendingQueueTicketsResponse;
 import egovframework.healthcenter.queue.dto.QueueTicketResponse;
 import egovframework.healthcenter.queue.mapper.QueueTicketMapper;
 import egovframework.healthcenter.queue.mapper.QueueTicketVO;
@@ -106,6 +110,28 @@ public class QueueCommandService {
 		return response;
 	}
 
+	@Transactional
+	public ClosePendingQueueTicketsResponse closePendingTickets(MemberPrincipal principal, LocalDate date) {
+		validateAdmin(principal);
+		LocalDate targetDate = date == null ? LocalDate.now() : date;
+		int pendingCount = queueTicketMapper.countPendingTicketsForClose(principal.healthCenterId(), targetDate);
+		if (pendingCount > 0) {
+			queueTicketMapper.markPendingVisitsNoShow(principal.healthCenterId(), targetDate);
+			queueTicketMapper.markPendingReservationsNoShow(principal.healthCenterId(), targetDate);
+			queueTicketMapper.markPendingTicketsNoShow(principal.healthCenterId(), targetDate);
+		}
+		log.info(
+			"event=queue.pending_closed traceId={} memberId={} role={} healthCenterId={} targetDate={} closedCount={}",
+			AuditLogSupport.traceId(),
+			AuditLogSupport.memberId(principal),
+			AuditLogSupport.role(principal),
+			AuditLogSupport.healthCenterId(principal),
+			targetDate,
+			pendingCount
+		);
+		return new ClosePendingQueueTicketsResponse(targetDate, pendingCount);
+	}
+
 	private QueueTicketVO loadTicket(MemberPrincipal principal, Long queueTicketId) {
 		queueTicketPolicy.validateStaff(principal);
 		if (queueTicketId == null) {
@@ -114,6 +140,18 @@ public class QueueCommandService {
 		QueueTicketVO ticket = queueTicketMapper.selectQueueTicketById(queueTicketId);
 		queueTicketPolicy.validateAccess(principal, ticket);
 		return ticket;
+	}
+
+	private void validateAdmin(MemberPrincipal principal) {
+		if (principal == null || principal.memberId() == null) {
+			throw new BusinessException(ErrorCode.AUTH_REQUIRED);
+		}
+		if (principal.healthCenterId() == null) {
+			throw new BusinessException(ErrorCode.QUEUE_INVALID_REQUEST, "대기열을 마감할 보건소 정보가 없습니다.");
+		}
+		if (principal.role() != MemberRole.ADMIN) {
+			throw new BusinessException(ErrorCode.QUEUE_FORBIDDEN, "대기열 마감은 관리자만 처리할 수 있습니다.");
+		}
 	}
 
 	private void logTransition(MemberPrincipal principal, String event, QueueTicketVO before, QueueTicketResponse after) {
