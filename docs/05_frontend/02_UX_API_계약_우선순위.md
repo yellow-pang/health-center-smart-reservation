@@ -50,7 +50,7 @@
 | 3 | 예약 신청 | `POST /api/reservations` | 사용자 핵심 기능 |
 | 4 | 내 예약 조회/취소 | `GET /api/reservations/me`, `DELETE /api/reservations/{id}` | 예약 후 관리 |
 | 5 | 로그인 | `POST /api/auth/login` | 권한별 화면 진입 |
-| 6 | 직원 체크인 | `POST /api/visits/check-in` | 현장 운영 시작 |
+| 6 | 직원 예약 검색/체크인 | `GET /api/reservations/staff/search`, `POST /api/visits/check-in` | 현장 운영 시작 |
 | 7 | 현장 접수 | `POST /api/visits/walk-in` | 예약 없는 방문자 처리 |
 | 8 | 대기열 관리 | `GET /api/queues`, queue command APIs | 직원 업무 효율 핵심 |
 | 9 | 관리자 대시보드 | dashboard APIs | 포트폴리오 시각화 핵심 |
@@ -126,8 +126,21 @@ UX 고도화:
 API:
 
 ```text
+GET /api/reservations/staff/search?date=2026-05-22&keyword=홍길동&status=RESERVED
 POST /api/visits/check-in
 ```
+
+검색 응답에 필요한 필드:
+
+| 필드 | 용도 |
+|---|---|
+| `reservationId` | 검색 결과 key |
+| `reservationNo` | 체크인 요청 값 |
+| `visitorName` | 예약자 확인 |
+| `visitorPhone` | 동명이인 구분 |
+| `serviceTypeName` | 업무 구분 |
+| `date`, `startTime` | 예약 시간 확인 |
+| `status` | 접수 가능 여부 |
 
 요청:
 
@@ -150,6 +163,9 @@ POST /api/visits/check-in
 
 UX 고도화:
 
+- 직원은 예약번호를 몰라도 이름, 전화번호, 예약번호 일부로 접수 대상을 찾을 수 있다.
+- 검색 결과에서 이름, 마스킹 전화번호, 업무, 예약 시간을 확인한 뒤 바로 접수한다.
+- 예약번호 직접 입력은 예외 상황을 위해 보조 경로로 유지한다.
 - 체크인 성공 시 대기번호를 크게 표시한다.
 - 이미 체크인된 예약은 명확한 오류 메시지를 보여준다.
 - 예약 시간 10분 초과 여부를 직원에게 안내한다.

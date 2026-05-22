@@ -70,6 +70,7 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | GET | /api/reservation-slots | 예약 가능 시간 조회 | 로그인 사용자 |
 | POST | /api/reservations | 예약 신청 | CITIZEN, GUARDIAN, STAFF, ADMIN |
 | GET | /api/reservations/me | 내 예약 조회 | 로그인 사용자 |
+| GET | /api/reservations/staff/search | 직원용 예약 검색 | STAFF, ADMIN |
 | GET | /api/reservations/{id} | 예약 상세 조회 | 예약자, STAFF, ADMIN |
 | DELETE | /api/reservations/{id} | 예약 취소 | 예약자, ADMIN |
 | POST | /api/visits/check-in | 예약자 체크인 | STAFF, ADMIN |
@@ -579,7 +580,47 @@ Response:
 }
 ```
 
-### 4.6.3 예약 취소
+### 4.6.3 직원용 예약 검색
+
+`GET /api/reservations/staff/search?date=2026-05-22&keyword=홍길동&status=RESERVED`
+
+권한:
+
+- 같은 보건소 소속 `STAFF`, `ADMIN`
+
+정책:
+
+- 예약번호, 방문자 이름, 전화번호 일부로 검색할 수 있다.
+- `date`를 보내면 해당 예약일만 조회한다.
+- `status` 기본값은 `RESERVED`이다.
+- 검색 결과는 최대 20건까지 예약일/시간 오름차순으로 조회한다.
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "reservationId": 100,
+      "reservationNo": "RSV-SWAGGER-CHECKIN-001",
+      "serviceTypeId": 1,
+      "serviceTypeName": "예방접종",
+      "reservationSlotId": 10,
+      "date": "2026-05-22",
+      "startTime": "09:00",
+      "endTime": "09:30",
+      "visitorName": "홍길동",
+      "visitorPhone": "010-1234-5678",
+      "status": "RESERVED",
+      "reservedAt": "2026-05-21T10:00:00"
+    }
+  ],
+  "error": null
+}
+```
+
+### 4.6.4 예약 취소
 
 `DELETE /api/reservations/{id}`
 

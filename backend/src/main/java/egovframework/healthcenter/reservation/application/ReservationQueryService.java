@@ -1,5 +1,6 @@
 package egovframework.healthcenter.reservation.application;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -46,6 +47,30 @@ public class ReservationQueryService {
 		return ReservationResponse.from(reservation);
 	}
 
+	@Transactional(readOnly = true)
+	public List<ReservationResponse> searchReservationsForStaff(
+			MemberPrincipal principal,
+			String keyword,
+			LocalDate date,
+			String status) {
+		validatePrincipal(principal);
+		validateStaffSearchable(principal);
+		if (principal.healthCenterId() == null) {
+			throw new BusinessException(ErrorCode.RESERVATION_INVALID_REQUEST, "보건소 ID가 필요합니다.");
+		}
+
+		String normalizedKeyword = normalizeKeyword(keyword);
+		String normalizedStatus = normalizeStatus(status);
+		return reservationMapper.searchReservationsForStaff(
+				principal.healthCenterId(),
+				normalizedKeyword,
+				date,
+				normalizedStatus)
+			.stream()
+			.map(ReservationResponse::from)
+			.toList();
+	}
+
 	private void validatePrincipal(MemberPrincipal principal) {
 		if (principal == null || principal.memberId() == null) {
 			throw new BusinessException(ErrorCode.AUTH_REQUIRED);
@@ -65,5 +90,25 @@ public class ReservationQueryService {
 
 	private boolean isStaffOrAdmin(MemberPrincipal principal) {
 		return principal.role() == MemberRole.STAFF || principal.role() == MemberRole.ADMIN;
+	}
+
+	private void validateStaffSearchable(MemberPrincipal principal) {
+		if (!isStaffOrAdmin(principal)) {
+			throw new BusinessException(ErrorCode.RESERVATION_FORBIDDEN);
+		}
+	}
+
+	private String normalizeKeyword(String keyword) {
+		if (keyword == null || keyword.isBlank()) {
+			return null;
+		}
+		return keyword.trim();
+	}
+
+	private String normalizeStatus(String status) {
+		if (status == null || status.isBlank()) {
+			return "RESERVED";
+		}
+		return status.trim().toUpperCase();
 	}
 }
