@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, CheckCircle2, Loader2, AlertCircle, RotateCcw, UserCheck } from 'lucide-react';
+import { Search, CheckCircle2, Loader2, AlertCircle, RotateCcw, UserCheck, ScanLine } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { PageHeader } from '@/src/components/common/page-header';
+import { ReservationCheckInCode } from '@/src/components/common/reservation-checkin-code';
 import { checkInByReservationNumber, searchReservationsForCheckIn } from '@/src/lib/staff-api';
 import { getServiceTypeName } from '@/src/lib/mock-data';
 import type { QueueEntry, Reservation } from '@/src/lib/mock-data';
@@ -105,7 +106,7 @@ export default function CheckInPage() {
         <CardHeader>
           <CardTitle className="text-lg">예약자 검색</CardTitle>
           <CardDescription>
-            이름, 전화번호, 예약번호 일부로 오늘 예약자를 찾습니다
+            이름, 전화번호, 예약번호 일부로 오늘 예약자를 찾거나 스캐너 입력을 받습니다
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -196,6 +197,13 @@ export default function CheckInPage() {
                             접수
                           </Button>
                         </div>
+                        <ReservationCheckInCode
+                          reservationNo={reservation.reservationNo}
+                          title="예약자 제시 코드"
+                          description="시민 화면의 QR/바코드와 같은 예약번호입니다."
+                          compact
+                          className="mt-3"
+                        />
                       </div>
                     ))
                   )}
@@ -214,7 +222,7 @@ export default function CheckInPage() {
                   <Label htmlFor="reservationNumber">예약번호 직접 입력</Label>
                   <Input
                     id="reservationNumber"
-                    placeholder="RSV-SWAGGER-CHECKIN-001"
+                    placeholder="QR/바코드 스캔 또는 RSV-SWAGGER-CHECKIN-001"
                     value={reservationNumber}
                     onChange={(e) => setReservationNumber(e.target.value.toUpperCase())}
                     disabled={state === 'loading'}
@@ -277,10 +285,18 @@ export default function CheckInPage() {
 
       <Card className="mt-4">
         <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">테스트 예약번호:</span>{' '}
-            RSV-SWAGGER-CHECKIN-001
-          </p>
+          <div className="flex gap-3 text-sm text-muted-foreground">
+            <ScanLine className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+            <div className="space-y-1">
+              <p>
+                QR/바코드 스캐너는 예약번호 입력칸에 커서를 둔 뒤 사용합니다.
+              </p>
+              <p>
+                <span className="font-medium text-foreground">테스트 예약번호:</span>{' '}
+                RSV-SWAGGER-CHECKIN-001
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

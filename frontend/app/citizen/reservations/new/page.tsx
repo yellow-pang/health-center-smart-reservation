@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Calendar } from '@/components/ui/calendar';
 import { PageHeader } from '@/src/components/common/page-header';
 import { LoadingState } from '@/src/components/common/loading-state';
+import { ReservationCheckInCode } from '@/src/components/common/reservation-checkin-code';
 import { cn } from '@/lib/utils';
 import { 
   getServiceTypes, 
@@ -348,6 +349,13 @@ export default function NewReservationPage() {
                   <span>{completedReservation.startTime}</span>
                 </p>
               </div>
+
+              <ReservationCheckInCode
+                reservationNo={completedReservation.reservationNo}
+                title="방문 당일 체크인 코드"
+                description="직원 체크인 창구에서 QR 또는 바코드를 보여주세요."
+                className="mb-6 text-left"
+              />
 
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => router.push('/citizen/reservations')}>

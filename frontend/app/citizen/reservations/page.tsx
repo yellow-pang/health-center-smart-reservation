@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarPlus, Calendar, X } from 'lucide-react';
+import { CalendarPlus, Calendar, QrCode, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -21,6 +21,7 @@ import { StatusBadge } from '@/src/components/common/status-badge';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { EmptyState } from '@/src/components/common/empty-state';
 import { ErrorState } from '@/src/components/common/error-state';
+import { ReservationCheckInCode } from '@/src/components/common/reservation-checkin-code';
 import { getUserReservations, cancelReservation } from '@/src/lib/reservation-api';
 import { getServiceTypeName } from '@/src/lib/mock-data';
 import type { Reservation } from '@/src/lib/mock-data';
@@ -35,6 +36,7 @@ export default function MyReservationsPage() {
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loadState, setLoadState] = useState<LoadState>('loading');
   const [cancelingId, setCancelingId] = useState<number | null>(null);
+  const [openCodeReservationId, setOpenCodeReservationId] = useState<number | null>(null);
 
   const loadReservations = async () => {
     setLoadState('loading');
@@ -150,41 +152,61 @@ export default function MyReservationsPage() {
                               예약번호: <span className="font-mono">{reservation.reservationNo}</span>
                             </p>
                           </div>
-                          {canCancel(reservation.status) && (
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="text-destructive hover:text-destructive shrink-0"
-                                  disabled={cancelingId === reservation.reservationId}
-                                >
-                                  <X className="h-4 w-4 mr-1" />
-                                  취소
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>예약을 취소하시겠습니까?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    {getReservationServiceName(reservation)} - {format(parseISO(reservation.date), 'yyyy년 M월 d일', { locale: ko })} {reservation.startTime}
-                                    <br />
-                                    취소 후에는 되돌릴 수 없습니다.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>아니요</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => handleCancel(reservation.reservationId)}
-                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setOpenCodeReservationId((currentId) => (
+                                currentId === reservation.reservationId ? null : reservation.reservationId
+                              ))}
+                            >
+                              <QrCode className="h-4 w-4 mr-1" />
+                              체크인 코드
+                            </Button>
+                            {canCancel(reservation.status) && (
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="text-destructive hover:text-destructive"
+                                    disabled={cancelingId === reservation.reservationId}
                                   >
-                                    예약 취소
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          )}
+                                    <X className="h-4 w-4 mr-1" />
+                                    취소
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>예약을 취소하시겠습니까?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      {getReservationServiceName(reservation)} - {format(parseISO(reservation.date), 'yyyy년 M월 d일', { locale: ko })} {reservation.startTime}
+                                      <br />
+                                      취소 후에는 되돌릴 수 없습니다.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>아니요</AlertDialogCancel>
+                                    <AlertDialogAction
+                                      onClick={() => handleCancel(reservation.reservationId)}
+                                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                      예약 취소
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            )}
+                          </div>
                         </div>
+                        {openCodeReservationId === reservation.reservationId && (
+                          <ReservationCheckInCode
+                            reservationNo={reservation.reservationNo}
+                            title="방문 당일 체크인 코드"
+                            description="직원 체크인 창구에서 QR 또는 바코드를 보여주세요."
+                            className="mt-4"
+                          />
+                        )}
                       </CardContent>
                     </Card>
                   ))}
