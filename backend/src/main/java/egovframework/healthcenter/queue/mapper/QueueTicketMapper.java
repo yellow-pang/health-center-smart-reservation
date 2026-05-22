@@ -19,11 +19,16 @@ public class QueueTicketMapper extends EgovAbstractMapper {
 		return selectOne("QueueTicketMapper.issueWaitingTicket", params);
 	}
 
-	public List<QueueTicketVO> selectQueueTickets(Long healthCenterId, Long serviceTypeId, String status) {
+	public List<QueueTicketVO> selectQueueTickets(
+			Long healthCenterId,
+			Long serviceTypeId,
+			String status,
+			LocalDate targetDate) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("healthCenterId", healthCenterId);
 		params.put("serviceTypeId", serviceTypeId);
 		params.put("status", status);
+		params.put("targetDate", targetDate);
 		return selectList("QueueTicketMapper.selectQueueTickets", params);
 	}
 

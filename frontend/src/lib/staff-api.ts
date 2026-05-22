@@ -26,6 +26,11 @@ interface QueueTicketApiResponse {
   holdAt: string | null;
 }
 
+interface ClosePendingQueueTicketsApiResponse {
+  date: string;
+  closedCount: number;
+}
+
 export interface CheckInResponse {
   success: boolean;
   queueEntry?: QueueEntry;
@@ -122,15 +127,26 @@ export async function registerWalkIn(input: WalkInInput): Promise<CheckInRespons
 export async function getQueueEntries(filters?: {
   serviceTypeId?: number;
   status?: QueueStatus;
+  date?: string;
 }): Promise<QueueEntry[]> {
   const entries = await apiRequest<QueueTicketApiResponse[]>('/api/queues', {
     query: {
       serviceTypeId: filters?.serviceTypeId,
       status: filters?.status,
+      date: filters?.date,
     },
   });
 
   return entries.map(toQueueEntry);
+}
+
+export async function closePendingQueueTickets(
+  date: string,
+): Promise<ClosePendingQueueTicketsApiResponse> {
+  return apiRequest<ClosePendingQueueTicketsApiResponse>('/api/queues/admin/close-pending', {
+    method: 'POST',
+    query: { date },
+  });
 }
 
 export async function updateQueueStatus(

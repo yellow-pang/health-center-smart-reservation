@@ -762,7 +762,7 @@ Response:
 
 #### 4.9.1 대기열 조회
 
-`GET /api/queues?serviceTypeId=1&status=WAITING`
+`GET /api/queues?serviceTypeId=1&status=WAITING&date=2026-05-22`
 
 권한:
 
@@ -770,7 +770,7 @@ Response:
 
 정책:
 
-- 오늘 발급된 대기표를 조회한다.
+- `date`를 생략하면 오늘 발급된 대기표를 조회한다.
 - `serviceTypeId`를 생략하면 전체 업무 유형을 조회한다.
 - `status`를 생략하면 `WAITING`, `CALLED`, `IN_PROGRESS`, `HOLD` 상태를 조회한다.
 - 대기번호는 같은 보건소, 같은 업무 유형, 같은 발급일 기준으로 중복되지 않도록 DB 채번 테이블과 유니크 인덱스로 보호한다.
