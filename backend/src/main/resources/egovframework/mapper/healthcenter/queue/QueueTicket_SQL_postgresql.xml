@@ -96,7 +96,7 @@
 		INNER JOIN visits v ON v.id = q.visit_id
 		INNER JOIN service_types st ON st.id = q.service_type_id
 		WHERE q.health_center_id = #{healthCenterId}
-		  AND q.issued_at::date = CURRENT_DATE
+		  AND q.issued_at::date = #{targetDate}
 		<if test="serviceTypeId != null">
 		  AND q.service_type_id = #{serviceTypeId}
 		</if>
@@ -248,6 +248,47 @@
 		WHERE v.reservation_id = r.id
 		  AND q.id = #{queueTicketId}
 		  AND r.status = 'CHECKED_IN'
+	</update>
+
+	<select id="countPendingTicketsForClose" parameterType="map" resultType="int">
+		SELECT COUNT(1)::integer
+		FROM queue_tickets q
+		WHERE q.health_center_id = #{healthCenterId}
+		  AND q.issued_at::date = #{targetDate}
+		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
+	</select>
+
+	<update id="markPendingVisitsNoShow" parameterType="map">
+		UPDATE visits v
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		FROM queue_tickets q
+		WHERE q.visit_id = v.id
+		  AND q.health_center_id = #{healthCenterId}
+		  AND q.issued_at::date = #{targetDate}
+		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
+	</update>
+
+	<update id="markPendingReservationsNoShow" parameterType="map">
+		UPDATE reservations r
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		FROM visits v
+		INNER JOIN queue_tickets q ON q.visit_id = v.id
+		WHERE v.reservation_id = r.id
+		  AND q.health_center_id = #{healthCenterId}
+		  AND q.issued_at::date = #{targetDate}
+		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
+		  AND r.status = 'CHECKED_IN'
+	</update>
+
+	<update id="markPendingTicketsNoShow" parameterType="map">
+		UPDATE queue_tickets q
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		WHERE q.health_center_id = #{healthCenterId}
+		  AND q.issued_at::date = #{targetDate}
+		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
 	</update>
 
 </mapper>

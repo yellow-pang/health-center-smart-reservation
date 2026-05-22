@@ -1,5 +1,6 @@
 package egovframework.healthcenter.queue.application;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -22,9 +23,18 @@ public class QueueQueryService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<QueueTicketResponse> findQueueTickets(MemberPrincipal principal, Long serviceTypeId, String status) {
+	public List<QueueTicketResponse> findQueueTickets(
+			MemberPrincipal principal,
+			Long serviceTypeId,
+			String status,
+			LocalDate date) {
 		queueTicketPolicy.validateStaff(principal);
-		return queueTicketMapper.selectQueueTickets(principal.healthCenterId(), serviceTypeId, normalizeStatus(status))
+		LocalDate targetDate = date == null ? LocalDate.now() : date;
+		return queueTicketMapper.selectQueueTickets(
+				principal.healthCenterId(),
+				serviceTypeId,
+				normalizeStatus(status),
+				targetDate)
 			.stream()
 			.map(QueueTicketResponse::from)
 			.toList();

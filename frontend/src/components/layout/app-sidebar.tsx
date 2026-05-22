@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   Home,
+  ClipboardCheck,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -46,6 +47,7 @@ const navItems: Record<UserRole, NavItem[]> = {
     { href: '/admin/dashboard', label: '대시보드', icon: LayoutDashboard },
     { href: '/admin/service-types', label: '업무 유형 관리', icon: FileText },
     { href: '/admin/reservation-slots', label: '예약 슬롯 관리', icon: Clock },
+    { href: '/admin/queue-closing', label: '대기 마감 관리', icon: ClipboardCheck },
     { href: '/admin/staff', label: '직원 관리', icon: Users },
     { href: '/admin/service-windows', label: '창구 관리', icon: Building2 },
   ],

@@ -1,7 +1,9 @@
 package egovframework.healthcenter.queue.api;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +18,7 @@ import egovframework.healthcenter.common.security.AuthenticatedPrincipal;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.queue.application.QueueCommandService;
 import egovframework.healthcenter.queue.application.QueueQueryService;
+import egovframework.healthcenter.queue.dto.ClosePendingQueueTicketsResponse;
 import egovframework.healthcenter.queue.dto.QueueTicketResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -43,9 +46,10 @@ public class QueueController {
 	public ApiResponse<List<QueueTicketResponse>> findQueueTickets(
 			Authentication authentication,
 			@RequestParam(required = false) Long serviceTypeId,
-			@RequestParam(required = false) String status) {
+			@RequestParam(required = false) String status,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
-		return ApiResponse.success(queueQueryService.findQueueTickets(principal, serviceTypeId, status));
+		return ApiResponse.success(queueQueryService.findQueueTickets(principal, serviceTypeId, status, date));
 	}
 
 	@PostMapping("/{queueTicketId}/call")
@@ -118,6 +122,19 @@ public class QueueController {
 			Authentication authentication,
 			@PathVariable Long queueTicketId) {
 		return handleCommand(authentication, queueTicketId, QueueAction.CANCEL);
+	}
+
+	@PostMapping("/admin/close-pending")
+	@Operation(
+		summary = "미처리 대기표 마감",
+		description = "관리자가 영업일 마감 시 WAITING, CALLED, HOLD, IN_PROGRESS 대기표를 NO_SHOW로 일괄 처리한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ResponseEntity<ApiResponse<ClosePendingQueueTicketsResponse>> closePendingTickets(
+			Authentication authentication,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ResponseEntity.ok(ApiResponse.success(queueCommandService.closePendingTickets(principal, date)));
 	}
 
 	private ResponseEntity<ApiResponse<QueueTicketResponse>> handleCommand(
