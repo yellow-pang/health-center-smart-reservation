@@ -20,6 +20,13 @@ type LoadState = 'idle' | 'loading' | 'success' | 'error';
 
 export function AdminQueueClosingAlert() {
   const [now, setNow] = useState(() => new Date());
+  const [isPageVisible, setIsPageVisible] = useState(() => {
+    if (typeof document === 'undefined') {
+      return true;
+    }
+
+    return document.visibilityState === 'visible';
+  });
   const today = useMemo(() => getTodayDate(now), [now]);
   const dismissedKey = `queue-closing-alert-dismissed:${today}`;
   const [entries, setEntries] = useState<QueueEntry[]>([]);
@@ -30,22 +37,58 @@ export function AdminQueueClosingAlert() {
       return false;
     }
 
-    return window.sessionStorage.getItem(dismissedKey) === 'true';
+    return window.localStorage.getItem(dismissedKey) === 'true';
   });
   const [hasShownToast, setHasShownToast] = useState(false);
 
   const shouldCheck = useMemo(() => isAfterClosingAlertTime(now), [now]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setNow(new Date());
-    }, 60 * 1000);
+    setIsDismissed(window.localStorage.getItem(dismissedKey) === 'true');
+  }, [dismissedKey]);
 
-    return () => window.clearInterval(timer);
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      const visible = document.visibilityState === 'visible';
+      setIsPageVisible(visible);
+
+      if (visible) {
+        setNow(new Date());
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === dismissedKey) {
+        setIsDismissed(event.newValue === 'true');
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [dismissedKey]);
+
+  useEffect(() => {
+    if (shouldCheck) {
+      return undefined;
+    }
+
+    const delayMs = Math.max(getClosingAlertTime(now).getTime() - now.getTime(), 0);
+    const timer = window.setTimeout(() => {
+      setNow(new Date());
+    }, delayMs);
+
+    return () => window.clearTimeout(timer);
+  }, [now, shouldCheck]);
+
   const loadPendingEntries = useCallback(async (showLoading = false) => {
-    if (!shouldCheck || isDismissed) {
+    if (!shouldCheck || isDismissed || !isPageVisible) {
       return;
     }
 
@@ -69,12 +112,12 @@ export function AdminQueueClosingAlert() {
     } finally {
       setIsRefreshing(false);
     }
-  }, [isDismissed, shouldCheck, today]);
+  }, [isDismissed, isPageVisible, shouldCheck, today]);
 
   useEffect(() => {
     loadPendingEntries(true);
 
-    if (!shouldCheck || isDismissed) {
+    if (!shouldCheck || isDismissed || !isPageVisible) {
       return undefined;
     }
 
@@ -83,7 +126,7 @@ export function AdminQueueClosingAlert() {
     }, REFRESH_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
-  }, [isDismissed, loadPendingEntries, shouldCheck]);
+  }, [isDismissed, isPageVisible, loadPendingEntries, shouldCheck]);
 
   useEffect(() => {
     if (hasShownToast || isDismissed || loadState !== 'success' || entries.length === 0) {
@@ -95,7 +138,7 @@ export function AdminQueueClosingAlert() {
   }, [entries.length, hasShownToast, isDismissed, loadState]);
 
   const handleDismiss = () => {
-    window.sessionStorage.setItem(dismissedKey, 'true');
+    window.localStorage.setItem(dismissedKey, 'true');
     setIsDismissed(true);
   };
 
@@ -161,9 +204,13 @@ function getTodayDate(date: Date): string {
 }
 
 function isAfterClosingAlertTime(now: Date): boolean {
+  return now >= getClosingAlertTime(now);
+}
+
+function getClosingAlertTime(now: Date): Date {
   const closingTime = new Date(now);
   closingTime.setHours(CLOSING_ALERT_HOUR, CLOSING_ALERT_MINUTE, 0, 0);
-  return now >= closingTime;
+  return closingTime;
 }
 
 function formatClosingTime(): string {
