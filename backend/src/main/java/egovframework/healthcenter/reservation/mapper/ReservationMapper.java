@@ -3,6 +3,7 @@ package egovframework.healthcenter.reservation.mapper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 import org.egovframe.rte.psl.dataaccess.EgovAbstractMapper;
 import org.springframework.stereotype.Repository;
@@ -43,6 +44,19 @@ public class ReservationMapper extends EgovAbstractMapper {
 		Map<String, Object> params = new HashMap<>();
 		params.put("memberId", memberId);
 		return selectList("ReservationMapper.selectReservationsByMemberId", params);
+	}
+
+	public List<ReservationVO> searchReservationsForStaff(
+			Long healthCenterId,
+			String keyword,
+			LocalDate date,
+			String status) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("healthCenterId", healthCenterId);
+		params.put("keyword", keyword);
+		params.put("date", date);
+		params.put("status", status);
+		return selectList("ReservationMapper.searchReservationsForStaff", params);
 	}
 
 	public ReservationVO selectReservationById(Long reservationId) {

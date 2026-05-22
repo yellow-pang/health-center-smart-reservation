@@ -99,6 +99,43 @@
 		ORDER BY rs.slot_date DESC, rs.start_time DESC, r.id DESC
 	</select>
 
+	<select id="searchReservationsForStaff" parameterType="map" resultMap="Reservation">
+		SELECT
+			r.id,
+			r.reservation_no,
+			r.health_center_id,
+			r.member_id,
+			r.service_type_id,
+			st.name AS service_type_name,
+			r.reservation_slot_id,
+			rs.slot_date,
+			rs.start_time,
+			rs.end_time,
+			r.visitor_name,
+			r.visitor_phone,
+			r.status,
+			r.reserved_at
+		FROM reservations r
+		INNER JOIN service_types st ON st.id = r.service_type_id
+		INNER JOIN reservation_slots rs ON rs.id = r.reservation_slot_id
+		WHERE r.health_center_id = #{healthCenterId}
+		<if test="date != null">
+		  AND rs.slot_date = #{date}
+		</if>
+		<if test="status != null and status != ''">
+		  AND r.status = #{status}
+		</if>
+		<if test="keyword != null and keyword != ''">
+		  AND (
+		    LOWER(r.reservation_no) LIKE CONCAT('%', LOWER(#{keyword}), '%')
+		    OR LOWER(r.visitor_name) LIKE CONCAT('%', LOWER(#{keyword}), '%')
+		    OR REPLACE(r.visitor_phone, '-', '') LIKE CONCAT('%', REPLACE(#{keyword}, '-', ''), '%')
+		  )
+		</if>
+		ORDER BY rs.slot_date ASC, rs.start_time ASC, r.id ASC
+		LIMIT 20
+	</select>
+
 	<select id="selectReservationById" parameterType="long" resultMap="Reservation">
 		SELECT
 			r.id,

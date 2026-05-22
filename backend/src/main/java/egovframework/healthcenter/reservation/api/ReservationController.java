@@ -1,5 +1,6 @@
 package egovframework.healthcenter.reservation.api;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -8,8 +9,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import egovframework.healthcenter.common.response.ApiResponse;
@@ -48,6 +51,21 @@ public class ReservationController {
 	public ApiResponse<List<ReservationResponse>> findMyReservations(Authentication authentication) {
 		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
 		return ApiResponse.success(reservationQueryService.findMyReservations(principal));
+	}
+
+	@GetMapping("/staff/search")
+	@Operation(
+		summary = "직원용 예약 검색",
+		description = "직원 또는 관리자가 예약번호, 방문자 이름, 전화번호 일부와 예약일로 접수 대상 예약을 검색한다.",
+		security = {@SecurityRequirement(name = "Authorization")}
+	)
+	public ApiResponse<List<ReservationResponse>> searchReservationsForStaff(
+			Authentication authentication,
+			@RequestParam(required = false) String keyword,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+			@RequestParam(required = false, defaultValue = "RESERVED") String status) {
+		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
+		return ApiResponse.success(reservationQueryService.searchReservationsForStaff(principal, keyword, date, status));
 	}
 
 	@GetMapping("/{reservationId}")

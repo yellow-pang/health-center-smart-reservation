@@ -1,5 +1,5 @@
 import { apiRequest } from './api-client';
-import type { QueueEntry, QueueStatus, ServiceType, VisitType } from './mock-data';
+import type { QueueEntry, QueueStatus, Reservation, ServiceType, VisitType } from './mock-data';
 import { getServiceTypes } from './reservation-api';
 
 interface VisitQueueResponse {
@@ -39,7 +39,28 @@ export interface WalkInInput {
   serviceTypeName?: string;
 }
 
-export async function checkInByReservationNumber(reservationNo: string): Promise<CheckInResponse> {
+export interface StaffReservationSearchFilters {
+  keyword?: string;
+  date?: string;
+  status?: Reservation['status'];
+}
+
+export async function searchReservationsForCheckIn(
+  filters: StaffReservationSearchFilters,
+): Promise<Reservation[]> {
+  return apiRequest<Reservation[]>('/api/reservations/staff/search', {
+    query: {
+      keyword: filters.keyword,
+      date: filters.date,
+      status: filters.status || 'RESERVED',
+    },
+  });
+}
+
+export async function checkInByReservationNumber(
+  reservationNo: string,
+  reservation?: Reservation,
+): Promise<CheckInResponse> {
   try {
     const response = await apiRequest<VisitQueueResponse>('/api/visits/check-in', {
       method: 'POST',
@@ -52,12 +73,13 @@ export async function checkInByReservationNumber(reservationNo: string): Promise
         queueTicketId: response.queueTicketId,
         visitId: response.visitId,
         ticketNumber: String(response.ticketNumber),
-        visitorNameMasked: '-',
-        visitorPhoneMasked: '-',
-        serviceTypeId: 0,
-        serviceTypeName: '예약 방문',
+        visitorNameMasked: reservation ? maskName(reservation.visitorName) : '-',
+        visitorPhoneMasked: reservation ? maskPhone(reservation.visitorPhone) : '-',
+        serviceTypeId: reservation?.serviceTypeId || 0,
+        serviceTypeName: reservation?.serviceTypeName || '예약 방문',
         visitType: 'RESERVED',
         status: response.status,
+        reservationId: reservation?.reservationId,
         createdAt: new Date().toISOString(),
       },
     };
