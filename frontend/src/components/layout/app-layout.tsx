@@ -1,6 +1,7 @@
 'use client';
 
 import { AppSidebar } from './app-sidebar';
+import { AdminQueueClosingAlert } from './admin-queue-closing-alert';
 import { useAuth } from '@/src/contexts/auth-context';
 import { canAccessRole } from '@/src/lib/route-access';
 import type { UserRole } from '@/src/lib/mock-data';
@@ -39,6 +40,7 @@ export function AppLayout({ children, allowedRoles }: AppLayoutProps) {
       <AppSidebar />
       <main className="lg:pl-64 pt-14 lg:pt-0">
         <div className="p-4 sm:p-6 lg:p-8">
+          {user.role === 'ADMIN' && <AdminQueueClosingAlert />}
           {children}
         </div>
       </main>
