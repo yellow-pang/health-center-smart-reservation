@@ -37,9 +37,6 @@ feat: 직원 예약 검색 접수 UX 개선
   - 예약자 검색 폼 추가
   - 검색 결과 카드에서 바로 접수
   - 예약번호 직접 입력은 보조 경로로 유지
-- 시민 혼잡도 화면 API 연동
-  - 고정 mock 혼잡도 제거
-  - `GET /api/congestion/current` 응답 기준으로 대기 인원/예상 대기시간 표시
 - API/UX 문서와 전체 체크리스트 갱신
 
 ## 검증
@@ -50,9 +47,7 @@ feat: 직원 예약 검색 접수 UX 개선
 - [x] `npm.cmd run build`
 - [ ] Swagger `Try it out`: `GET /api/reservations/staff/search?date=2026-05-22&keyword=RSV-SWAGGER-CHECKIN-001&status=RESERVED`
 - [ ] Swagger `Try it out`: 조회된 `reservationNo`로 `POST /api/visits/check-in`
-- [ ] Swagger `Try it out`: `GET /api/congestion/current?healthCenterId=1`
 - [ ] 브라우저 직원 체크인 화면에서 예약 검색 후 접수
-- [ ] 브라우저 시민 혼잡도 화면에서 실제 API 기준 대기 인원 확인
 
 ## 추가 테스트 체크리스트
 
@@ -63,7 +58,6 @@ feat: 직원 예약 검색 접수 UX 개선
 - [ ] Edge: 검색 결과가 없을 때 빈 상태가 표시된다.
 - [ ] Bad: 이미 체크인된 예약을 다시 접수하면 오류 메시지가 표시된다.
 - [ ] Bad: 시민 권한으로 직원 검색 API를 호출하면 403 응답이 반환된다.
-- [ ] Edge: 당일 대기표가 없으면 시민 혼잡도 화면의 대기 인원과 예상 시간이 0으로 표시된다.
 
 ## 미검증 사유
 

@@ -8,7 +8,7 @@ public record CongestionResponse(
 	Long serviceTypeId,
 	@Schema(description = "업무 유형명", example = "예방접종")
 	String serviceTypeName,
-	@Schema(description = "현재 대기 인원", example = "18")
+	@Schema(description = "현재 혼잡도 반영 인원", example = "18")
 	Integer waitingCount,
 	@Schema(description = "예상 대기시간", example = "35")
 	Integer estimatedWaitMinutes,
