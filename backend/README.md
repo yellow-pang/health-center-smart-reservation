@@ -14,6 +14,7 @@
 | Spring Boot | 3.5.6 |
 | Spring Framework | 6.2.11 |
 | API Docs | Springdoc OpenAPI / Swagger UI |
+| Observability | Spring Boot Actuator / Micrometer |
 | 기본 패키지 | `egovframework` |
 | 신규 도메인 패키지 | `egovframework.healthcenter` |
 | DB 접근 방식 | MyBatis |
@@ -88,6 +89,17 @@ Swagger UI:
 http://localhost:8080/swagger-ui/index.html
 ```
 
+Actuator:
+
+```text
+GET http://localhost:8080/actuator/health
+GET http://localhost:8080/actuator/info
+GET http://localhost:8080/actuator/metrics
+GET http://localhost:8080/actuator/prometheus
+```
+
+`/actuator/health`와 `/actuator/info`는 공개 상태 확인용입니다. `/actuator/metrics`, `/actuator/prometheus`, 기타 `/actuator/**` endpoint는 ADMIN 권한 토큰이 필요합니다.
+
 공통코드 조회 API:
 
 ```text
@@ -97,16 +109,16 @@ GET http://localhost:8080/api/common-codes?groupCodes=RESERVATION_STATUS,QUEUE_S
 
 ## Swagger 인증 확인
 
-템플릿의 JWT 로그인 예시는 다음 엔드포인트를 사용합니다.
+보건소 로그인 API는 다음 엔드포인트를 사용합니다.
 
 ```text
-POST /auth/login-jwt
+POST /api/auth/login
 ```
 
 기본 예시 계정:
 
 ```text
-admin / 1
+admin@test.com / password1234
 ```
 
 토큰을 받은 뒤 Swagger UI 상단의 `Authorize` 버튼에서 토큰을 설정하면 인증이 필요한 API를 테스트할 수 있습니다.
@@ -153,6 +165,7 @@ backend
 ## 다음 확인 사항
 
 1. Docker Desktop 실행 후 PostgreSQL 컨테이너 기동 확인
-2. 백엔드 실행 및 공통코드 조회 API 확인
-3. 기존 샘플 기능 중 제거 범위 확정
-4. 예약·대기 핵심 도메인 구현 시작
+2. 백엔드 실행 및 Swagger 대표 흐름 확인
+3. `/actuator/health` 공개 상태 확인
+4. ADMIN 토큰으로 `/actuator/metrics`, `/actuator/prometheus` 보호 endpoint 확인
+5. Prometheus/Grafana/Loki/k6 후속 운영성 고도화 범위 결정

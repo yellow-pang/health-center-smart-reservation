@@ -56,6 +56,9 @@ public class SecurityConfig {
             "/api/common-codes/**", // 보건소 공통코드 조회
             "/api/service-types", // 보건소 업무 유형 조회
             "/api/congestion/current", // 보건소 현재 혼잡도 조회
+            "/actuator/health", // 운영 health check
+            "/actuator/health/**", // liveness/readiness probe
+            "/actuator/info", // 운영 기본 정보
 
             /* 정적 리소스 */
             "/css/**",
@@ -155,6 +158,9 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN") // 관리자 페이지는 ADMIN만 접근
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
+                        .requestMatchers("/actuator/metrics/**").hasRole("ADMIN")
+                        .requestMatchers("/actuator/prometheus").hasRole("ADMIN")
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .requestMatchers("/api/visits/**").hasAnyRole("STAFF", "ADMIN")
                         .requestMatchers("/api/queues/**").hasAnyRole("STAFF", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/reservations").hasAnyRole("CITIZEN", "GUARDIAN", "STAFF", "ADMIN")
