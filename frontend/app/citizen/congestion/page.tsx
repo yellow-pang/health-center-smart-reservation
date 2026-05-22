@@ -8,7 +8,7 @@ import { PageHeader } from '@/src/components/common/page-header';
 import { StatusBadge } from '@/src/components/common/status-badge';
 import { LoadingState } from '@/src/components/common/loading-state';
 import { ErrorState } from '@/src/components/common/error-state';
-import { getCongestionInfo } from '@/src/lib/mock-services';
+import { getCurrentCongestion } from '@/src/lib/dashboard-api';
 import type { CongestionInfo } from '@/src/lib/mock-data';
 import { cn } from '@/lib/utils';
 
@@ -28,7 +28,7 @@ export default function CongestionPage() {
     }
     
     try {
-      const data = await getCongestionInfo();
+      const data = await getCurrentCongestion();
       setCongestionData(data);
       setLastUpdated(new Date());
       setLoadState('success');

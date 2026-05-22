@@ -46,6 +46,8 @@
 | `backend/src/main/resources/egovframework/mapper/healthcenter/reservation/Reservation_SQL_postgresql.xml` | 예약번호/이름/전화번호 일부 검색 SQL 추가 |
 | `frontend/src/lib/staff-api.ts` | 직원용 예약 검색 API client 추가, 선택 예약 정보로 체크인 결과 표시 보강 |
 | `frontend/app/staff/check-in/page.tsx` | 예약자 검색, 결과 카드, 선택 접수, 예약번호 직접 입력 보조 경로 추가 |
+| `frontend/src/lib/dashboard-api.ts` | 시민 혼잡도 화면에서 사용할 현재 혼잡도 API client 추가 |
+| `frontend/app/citizen/congestion/page.tsx` | 고정 mock 혼잡도 대신 `GET /api/congestion/current` 연동 |
 | `docs/04_api/01_API_명세서.md` | 직원용 예약 검색 API 문서화 |
 | `docs/05_frontend/02_UX_API_계약_우선순위.md` | 직원 예약 검색/체크인 UX 계약 보강 |
 | `docs/13_schedule/02_전체_작업_체크리스트.md` | 직원 접수 UX 개선 진행 상태 반영 |
@@ -86,6 +88,7 @@ GET /api/reservations/staff/search?date=2026-05-22&keyword=RSV-SWAGGER-CHECKIN-0
 | 접수 UX 검토 | QR/바코드 생성 및 표시 | 스캔 장비가 없어도 예약번호 직접 입력을 넘어선 UX 고려를 포트폴리오에서 보여줄 수 있음 | `docs/14_deferred_cleanup/01_보류_정리_목록.md` DC-023으로 이관 |
 | 접수 UX 검토 | 지각/조기 도착 안내 | 예약 시간과 실제 접수 시간이 다를 때 직원 판단을 줄일 수 있음 | 후속 정책 작업 |
 | 접수 UX 검토 | 검색 결과 개인정보 마스킹 정책 | 동명이인 구분과 개인정보 보호 균형이 필요함 | 화면은 전화번호 마스킹, API는 기존 예약 응답 유지 |
+| 혼잡도 확인 | 시민 혼잡도 화면이 고정 mock 데이터를 사용 | 실제 당일 접수가 없어도 mock 대기 인원이 표시될 수 있음 | 실제 `GET /api/congestion/current` API 연동으로 수정 |
 
 ## 8. 브랜치 종료 전 체크리스트
 
