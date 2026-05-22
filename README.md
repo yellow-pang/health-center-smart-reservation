@@ -79,6 +79,7 @@ docker compose --env-file .env up -d --build
 Frontend: http://localhost:3000
 Backend:  http://localhost:8080
 Swagger:  http://localhost:8080/swagger-ui/index.html
+Health:   http://localhost:8080/actuator/health
 ```
 
 Ubuntu VM이나 외부 공개 환경에서는 `.env`의 아래 값을 접속 기준 URL로 맞춥니다.
@@ -89,9 +90,13 @@ NEXT_PUBLIC_APP_URL=http://<frontend-host>:3000
 CORS_ALLOWED_ORIGINS=http://<frontend-host>:3000
 APP_TIME_ZONE=Asia/Seoul
 DB_TIME_ZONE=Asia/Seoul
+MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus
+MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=never
+MANAGEMENT_METRICS_TAGS_APPLICATION=health-center-backend
 ```
 
 `APP_TIME_ZONE`과 `DB_TIME_ZONE`은 접수/체크인 저장 시각과 대시보드 시간대별 집계 기준을 맞추기 위한 값입니다.
+Actuator는 `health`, `info`, `metrics`, `prometheus`를 기본 노출합니다. `health`와 `info`는 배포 상태 확인용으로 공개하고, `metrics`와 `prometheus`는 관리자 토큰이 필요한 보호 endpoint로 둡니다.
 
 Cloudflare Tunnel 공개 시에는 예를 들어 아래처럼 설정합니다.
 
@@ -138,6 +143,15 @@ GET /api/dashboard/summary
 GET /api/congestion/current
 ```
 
+운영 상태 확인:
+
+```text
+GET /actuator/health
+GET /actuator/info
+GET /actuator/metrics        # ADMIN token 필요
+GET /actuator/prometheus     # ADMIN token 필요
+```
+
 ## 9. 주요 문서
 
 | 문서 | 목적 |
@@ -156,6 +170,6 @@ GET /api/congestion/current
 MVP는 종료 상태로 보고, 후속 작업은 아래 순서로 진행합니다.
 
 1. 객체 단위 권한, 예외 응답, 트랜잭션 경계 재점검
-2. Actuator, Micrometer, Prometheus/Grafana, Loki, k6 같은 운영성 고도화
+2. Prometheus/Grafana, Loki, k6 같은 운영성 고도화
 3. 소셜 로그인 연결 추가
 4. 챗봇 기능 추가로 ux 향상
