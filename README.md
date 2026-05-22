@@ -85,6 +85,7 @@ Ubuntu VM이나 외부 공개 환경에서는 `.env`의 아래 값을 접속 기
 
 ```text
 NEXT_PUBLIC_API_BASE_URL=http://<backend-host>:8080
+NEXT_PUBLIC_APP_URL=http://<frontend-host>:3000
 CORS_ALLOWED_ORIGINS=http://<frontend-host>:3000
 APP_TIME_ZONE=Asia/Seoul
 DB_TIME_ZONE=Asia/Seoul
@@ -96,8 +97,11 @@ Cloudflare Tunnel 공개 시에는 예를 들어 아래처럼 설정합니다.
 
 ```text
 NEXT_PUBLIC_API_BASE_URL=https://api.<domain>
+NEXT_PUBLIC_APP_URL=https://demo.<domain>
 CORS_ALLOWED_ORIGINS=https://demo.<domain>,http://localhost:3000
 ```
+
+`NEXT_PUBLIC_APP_URL`은 카카오톡 등 외부 서비스가 Open Graph 이미지를 가져갈 때 사용하는 프론트엔드 공개 URL입니다. Docker 이미지 빌드 전에 실제 공개 도메인으로 설정해야 링크 미리보기 이미지가 `localhost`가 아닌 배포 URL로 생성됩니다.
 
 ## 7. 기본 계정
 
