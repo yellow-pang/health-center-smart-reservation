@@ -1,5 +1,7 @@
 import { apiRequest } from './api-client';
 import type {
+  CongestionInfo,
+  CongestionLevel,
   DashboardStats,
   HourlyVisitors,
   ServiceWaitTime,
@@ -37,6 +39,15 @@ interface NoShowRateApiResponse {
   targetReservationCount: number;
   noShowReservationCount: number;
   noShowRate: number;
+}
+
+interface CongestionApiResponse {
+  serviceTypeId: number;
+  serviceTypeName: string;
+  waitingCount: number;
+  estimatedWaitMinutes: number;
+  congestionLevel: string;
+  congestionLabel: string;
 }
 
 export interface DashboardDateFilter {
@@ -143,4 +154,26 @@ export async function getNoShowRate(
   return apiRequest<NoShowRateApiResponse>('/api/dashboard/no-show-rate', {
     query: { date: filter.date },
   });
+}
+
+export async function getCurrentCongestion(healthCenterId = 1): Promise<CongestionInfo[]> {
+  const congestion = await apiRequest<CongestionApiResponse[]>('/api/congestion/current', {
+    query: { healthCenterId },
+    auth: false,
+  });
+
+  return congestion.map((item) => ({
+    serviceTypeId: item.serviceTypeId,
+    serviceTypeName: item.serviceTypeName,
+    waitingCount: item.waitingCount,
+    estimatedWaitMinutes: item.estimatedWaitMinutes,
+    level: normalizeCongestionLevel(item.congestionLevel),
+  }));
+}
+
+function normalizeCongestionLevel(level: string): CongestionLevel {
+  if (level === 'NORMAL' || level === 'HIGH') {
+    return level;
+  }
+  return 'LOW';
 }

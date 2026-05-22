@@ -90,7 +90,7 @@
 		SELECT
 			st.id AS service_type_id,
 			st.name AS service_type_name,
-			COUNT(q.id) FILTER (WHERE q.status = 'WAITING')::integer AS waiting_count,
+			COUNT(q.id) FILTER (WHERE q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS'))::integer AS waiting_count,
 			COALESCE(
 				ROUND(AVG(EXTRACT(EPOCH FROM (q.completed_at - q.started_at)) / 60)
 					FILTER (WHERE q.started_at IS NOT NULL AND q.completed_at IS NOT NULL)),
