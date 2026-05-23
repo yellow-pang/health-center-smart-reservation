@@ -9,6 +9,7 @@ pipeline {
   environment {
     DEPLOY_BRANCH = 'main'
     COMPOSE_PROJECT_NAME = 'health-center'
+    COMPOSE_PROFILE_ARGS = '--profile observability'
   }
 
   stages {
@@ -84,20 +85,20 @@ pipeline {
 
     stage('Docker Compose Config') {
       steps {
-        sh 'docker compose --env-file .env config'
+        sh 'docker compose --env-file .env ${COMPOSE_PROFILE_ARGS} config'
       }
     }
 
     stage('Docker Build') {
       steps {
-        sh 'docker compose --env-file .env build'
+        sh 'docker compose --env-file .env ${COMPOSE_PROFILE_ARGS} build'
       }
     }
 
     stage('Deploy') {
       steps {
-        sh 'docker compose --env-file .env up -d --remove-orphans'
-        sh 'docker compose --env-file .env ps'
+        sh 'docker compose --env-file .env ${COMPOSE_PROFILE_ARGS} up -d --remove-orphans'
+        sh 'docker compose --env-file .env ${COMPOSE_PROFILE_ARGS} ps'
       }
     }
 
