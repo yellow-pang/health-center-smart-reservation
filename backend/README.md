@@ -100,6 +100,26 @@ GET http://localhost:8080/actuator/prometheus
 
 `/actuator/health`와 `/actuator/info`는 공개 상태 확인용입니다. `/actuator/metrics`, `/actuator/prometheus`, 기타 `/actuator/**` endpoint는 ADMIN 권한 토큰이 필요합니다.
 
+Prometheus가 주기적으로 scrape해야 하는 로컬/내부 관측성 스택에서는 아래 환경변수를 `true`로 설정하면 `/actuator/prometheus`만 토큰 없이 수집할 수 있습니다. 기본값은 `false`입니다.
+
+```text
+OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED=true
+```
+
+루트 Compose의 관측성 profile은 Prometheus, Grafana, Loki, Promtail을 함께 실행합니다.
+
+```bash
+docker compose --env-file .env --profile observability up -d --build
+```
+
+접속 URL:
+
+```text
+Prometheus: http://localhost:9090
+Grafana:    http://localhost:3001
+Loki:       http://localhost:3100
+```
+
 공통코드 조회 API:
 
 ```text

@@ -60,6 +60,7 @@ services:
       MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: ${MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS:-never}
       MANAGEMENT_METRICS_TAGS_APPLICATION: ${MANAGEMENT_METRICS_TAGS_APPLICATION:-health-center-backend}
       INFO_APP_VERSION: ${INFO_APP_VERSION:-local}
+      OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED: ${OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED:-false}
       TZ: ${APP_TIME_ZONE:-Asia/Seoul}
       JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS:--Duser.timezone=Asia/Seoul}
     ports:
@@ -95,8 +96,92 @@ services:
       - health-center-network
     restart: unless-stopped
 
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: health-center-prometheus
+    profiles:
+      - observability
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    volumes:
+      - ./infra/observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - health-center-prometheus-data:/prometheus
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    depends_on:
+      - backend
+    networks:
+      - health-center-network
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: health-center-loki
+    profiles:
+      - observability
+    command:
+      - "-config.file=/etc/loki/loki-config.yml"
+    volumes:
+      - ./infra/observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - health-center-loki-data:/loki
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    networks:
+      - health-center-network
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    container_name: health-center-promtail
+    profiles:
+      - observability
+    command:
+      - "-config.file=/etc/promtail/promtail-config.yml"
+    volumes:
+      - ./infra/observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+    networks:
+      - health-center-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: health-center-grafana
+    profiles:
+      - observability
+    env_file:
+      - .env
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://localhost:3001}
+      TZ: ${APP_TIME_ZONE:-Asia/Seoul}
+    volumes:
+      - ./infra/observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
+      - ./infra/observability/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./infra/observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - health-center-grafana-data:/var/lib/grafana
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - health-center-network
+    restart: unless-stopped
+
 volumes:
   health-center-postgres-data:
+  health-center-prometheus-data:
+  health-center-loki-data:
+  health-center-grafana-data:
 
 networks:
   health-center-network:

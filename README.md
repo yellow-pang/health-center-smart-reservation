@@ -82,6 +82,29 @@ Swagger:  http://localhost:8080/swagger-ui/index.html
 Health:   http://localhost:8080/actuator/health
 ```
 
+관측성 스택까지 함께 확인할 때는 Prometheus scrape 허용 값을 켠 뒤 `observability` profile을 사용합니다.
+
+```bash
+OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED=true docker compose --env-file .env --profile observability up -d --build
+```
+
+Windows PowerShell에서는 아래처럼 환경변수를 먼저 설정합니다.
+
+```powershell
+$env:OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED="true"
+docker compose --env-file .env --profile observability up -d --build
+```
+
+관측성 URL:
+
+```text
+Prometheus: http://localhost:9090
+Grafana:    http://localhost:3001
+Loki:       http://localhost:3100
+```
+
+Grafana 기본 계정은 `.env`의 `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD` 값을 사용합니다.
+
 Ubuntu VM이나 외부 공개 환경에서는 `.env`의 아래 값을 접속 기준 URL로 맞춥니다.
 
 ```text
@@ -93,10 +116,16 @@ DB_TIME_ZONE=Asia/Seoul
 MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE=health,info,metrics,prometheus
 MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS=never
 MANAGEMENT_METRICS_TAGS_APPLICATION=health-center-backend
+OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED=false
+PROMETHEUS_PORT=9090
+GRAFANA_PORT=3001
+GRAFANA_ADMIN_USER=admin
+GRAFANA_ADMIN_PASSWORD=change-me
+LOKI_PORT=3100
 ```
 
 `APP_TIME_ZONE`과 `DB_TIME_ZONE`은 접수/체크인 저장 시각과 대시보드 시간대별 집계 기준을 맞추기 위한 값입니다.
-Actuator는 `health`, `info`, `metrics`, `prometheus`를 기본 노출합니다. `health`와 `info`는 배포 상태 확인용으로 공개하고, `metrics`와 `prometheus`는 관리자 토큰이 필요한 보호 endpoint로 둡니다.
+Actuator는 `health`, `info`, `metrics`, `prometheus`를 기본 노출합니다. `health`와 `info`는 배포 상태 확인용으로 공개하고, `metrics`와 `prometheus`는 관리자 토큰이 필요한 보호 endpoint로 둡니다. Prometheus scrape가 필요한 로컬/내부 관측성 스택에서는 `OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED=true`로 `/actuator/prometheus`만 scrape 가능하게 열 수 있습니다.
 
 Cloudflare Tunnel 공개 시에는 예를 들어 아래처럼 설정합니다.
 
