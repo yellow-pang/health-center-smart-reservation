@@ -8,10 +8,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.web.context.NullSecurityContextRepository;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.channel.ChannelProcessingFilter;
@@ -81,6 +84,9 @@ public class SecurityConfig {
     @Value("${Globals.Allow.Origin:http://localhost:3000}")
     private String allowedOrigins;
 
+    @Value("${Observability.Prometheus.ScrapeEnabled:false}")
+    private boolean prometheusScrapeEnabled;
+
     @Bean
     public JwtAuthenticationFilter authenticationTokenFilterBean() throws Exception {
         return new JwtAuthenticationFilter();
@@ -118,6 +124,14 @@ public class SecurityConfig {
                 .map(String::trim)
                 .filter(origin -> !origin.isBlank())
                 .toList();
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication != null
+                && authentication.isAuthenticated()
+                && authentication.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .anyMatch("ROLE_ADMIN"::equals);
     }
 
     @Bean
@@ -159,7 +173,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/dashboard/**").hasRole("ADMIN")
                         .requestMatchers("/actuator/metrics/**").hasRole("ADMIN")
-                        .requestMatchers("/actuator/prometheus").hasRole("ADMIN")
+                        .requestMatchers("/actuator/prometheus").access((authentication, context) ->
+                                new AuthorizationDecision(prometheusScrapeEnabled || isAdmin(authentication.get())))
                         .requestMatchers("/actuator/**").hasRole("ADMIN")
                         .requestMatchers("/api/visits/**").hasAnyRole("STAFF", "ADMIN")
                         .requestMatchers("/api/queues/**").hasAnyRole("STAFF", "ADMIN")
