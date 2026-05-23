@@ -60,6 +60,7 @@
 | `infra/observability/grafana/dashboards/backend-overview.json` | HTTP request rate, 평균 latency, JVM heap, error log 패널 추가 |
 | `infra/observability/loki/loki-config.yml` | 단일 노드 filesystem 기반 Loki 설정 |
 | `infra/observability/promtail/promtail-config.yml` | Docker container log 수집 설정 |
+| `infra/observability/*/Dockerfile` | Jenkins Docker socket 배포에서 workspace bind mount에 의존하지 않도록 설정 파일을 이미지에 포함 |
 | `README.md`, `backend/README.md` | 관측성 profile 실행 기준과 확인 URL 추가 |
 | `docs/13_schedule/02_전체_작업_체크리스트.md` | Prometheus/Grafana/Loki Compose 스택 완료 반영 |
 | `docs/14_deferred_cleanup/01_보류_정리_목록.md` | `DC-019`, `DC-020` 정리 완료 반영 |
@@ -75,6 +76,7 @@
 | Grafana datasource | Prometheus와 Loki 자동 등록 |
 | Dashboard | backend overview 1개 기본 제공 |
 | 로그 수집 | Promtail이 Docker socket과 container log 경로를 read-only로 읽음 |
+| 설정 주입 | Prometheus/Grafana/Loki/Promtail 설정 파일은 custom image에 `COPY`하고, 런타임 bind mount는 Docker log 수집에 필요한 host 경로만 유지 |
 
 운영 공개 환경에서는 `OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED=false`를 유지한다.
 로컬 또는 내부 Docker 네트워크에서 관측성 스택을 확인할 때만 true로 연다.
