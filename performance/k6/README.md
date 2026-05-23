@@ -182,7 +182,103 @@ k6 run performance/k6/vaccination-queue-flow.js
 
 실패율이 오르거나 p95 응답 시간이 크게 튀면 더 올리지 않는다.
 
-## 확인할 지표
+## Grafana에서 결과 확인하기
+
+k6 콘솔은 "테스트 요청 자체가 성공했는지"를 보여준다. Grafana는 "테스트를 받는 서버가 그 순간 어떤 상태였는지"를 보여준다.
+
+역할은 이렇게 나뉜다.
+
+| 도구 | 보는 것 | 이번 확인에서의 의미 |
+|---|---|---|
+| k6 콘솔 | 실패율, 응답 시간, checks | 부하 테스트 요청이 성공했는지 |
+| Prometheus | backend 메트릭 수집 | API 요청량, 평균 응답 시간, JVM 메모리 |
+| Loki | backend 로그 수집 | 부하 중 에러 로그가 남았는지 |
+| Grafana | Prometheus와 Loki를 화면으로 조회 | 메트릭과 로그를 한 곳에서 확인 |
+
+Loki는 브라우저에서 직접 열 필요가 없다. Grafana가 Docker 내부 네트워크에서 `http://loki:3100`으로 대신 조회한다. 따라서 VM NAT/포트포워딩은 Grafana 접속 포트만 열려 있어도 Grafana 안에서 Loki 로그를 볼 수 있다.
+
+### 1단계: Grafana 대시보드 열기
+
+1. Grafana에 접속한다.
+2. `Dashboards` 메뉴를 연다.
+3. `Health Center Backend Overview` 대시보드를 연다.
+4. 오른쪽 위 시간 범위를 k6 실행 시간에 맞춘다.
+   - 방금 실행했다면 `Last 15 minutes`
+   - 조금 전에 실행했다면 `Last 30 minutes`
+5. 새로고침 간격은 `10s` 정도로 둔다.
+
+### 2단계: Prometheus 패널 보기
+
+`Health Center Backend Overview`에서 아래 패널을 본다.
+
+| 패널 | 무엇을 보는가 | k6 중 정상적으로 보이는 모습 |
+|---|---|---|
+| HTTP Request Rate | 초당 API 요청 수 | k6 실행 중 그래프가 올라갔다가 종료 후 내려감 |
+| Average HTTP Latency | API 평균 응답 시간 | 튀더라도 계속 상승하지 않고 안정적으로 유지 |
+| JVM Heap Memory | backend heap 메모리 | 완만히 움직이고 급격히 계속 증가하지 않음 |
+
+해석 기준:
+
+- Request Rate가 올라가면 k6 요청이 backend까지 도착한 것이다.
+- Latency가 k6 콘솔 p95보다 낮거나 다르게 보일 수 있다. Grafana 기본 패널은 평균값이고, k6는 p95를 따로 보여주기 때문이다.
+- JVM Heap이 테스트가 끝난 뒤에도 계속 올라가기만 하면 메모리 누수 후보를 의심한다. 짧은 테스트에서는 보통 완만한 변화만 확인하면 충분하다.
+
+### 3단계: Loki 로그 보기
+
+대시보드 아래의 `Backend Error Logs` 패널을 본다.
+
+현재 기본 쿼리는 아래와 같다.
+
+```logql
+{service="backend"} |= "ERROR"
+```
+
+정상적인 결과:
+
+- k6 실행 중 새로운 `ERROR` 로그가 거의 없거나 없다.
+- `walk-in`, `queue`, `auth` 관련 예외가 반복해서 쌓이지 않는다.
+
+로그가 안 보일 때 확인할 점:
+
+- 에러가 없으면 `Backend Error Logs` 패널이 비어 있는 것이 정상일 수 있다.
+- 전체 backend 로그를 보고 싶으면 Grafana `Explore`에서 datasource를 `Loki`로 고르고 아래 쿼리를 실행한다.
+
+```logql
+{service="backend"}
+```
+
+컨테이너 label이 다르게 잡힌 경우에는 더 넓게 본다.
+
+```logql
+{container=~".*backend.*"}
+```
+
+그래도 아무것도 안 나오면 Promtail이 Docker 로그를 못 읽는 상태일 수 있다. 이때는 VM에서 `health-center-promtail`, `health-center-loki`, `health-center-backend` 컨테이너가 떠 있는지 확인한다.
+
+### 4단계: k6 콘솔과 Grafana를 함께 해석하기
+
+| k6 결과 | Grafana 결과 | 판단 |
+|---|---|---|
+| 실패율 0%, p95 낮음 | Request Rate 상승, Error Logs 없음 | 가장 좋은 상태 |
+| 실패율 0%, p95 증가 | Latency도 같이 증가 | 부하는 처리하지만 느려지는 상태 |
+| 실패율 증가 | Error Logs에 예외 반복 | API 오류 원인부터 확인 |
+| k6 요청 수가 있는데 Grafana Request Rate 변화 없음 | Prometheus scrape 설정 문제 가능 | `/actuator/prometheus`와 Prometheus target 확인 |
+| Error Logs가 항상 비어 있음 | 실제 에러가 없거나 Promtail 문제 | `Explore`에서 `{service="backend"}`로 전체 로그 확인 |
+
+이번 VM VUS 5 테스트 결과는 k6 기준으로는 안정적이다.
+
+```text
+checks: 100%
+http_req_failed: 0%
+전체 p95: 244.67ms
+walk_in p95: 181.96ms
+queue_list p95: 278.78ms
+queue_action p95: 174.97ms
+```
+
+Grafana에서는 같은 시간대에 Request Rate가 올라갔다가 내려가고, Backend Error Logs에 반복 ERROR가 없는지 확인하면 된다.
+
+## k6 콘솔에서 확인할 지표
 
 k6 콘솔에서 본다.
 
@@ -197,13 +293,6 @@ Grafana에서 본다.
 - error rate
 - JVM heap
 - backend error log
-
-Loki에서 본다.
-
-- `traceId`
-- `errorCode`
-- `/api/visits/walk-in`
-- `/api/queues`
 
 ## 데이터 주의
 

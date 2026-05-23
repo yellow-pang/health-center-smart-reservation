@@ -156,11 +156,124 @@ Jenkins 배포 `.env`와 k6 `.env`는 역할이 다르다.
 - [x] 스크립트 정적 확인
 - [x] `git diff --check`
 - [ ] 로컬 Docker Compose backend 실행
-- [ ] Docker k6로 로컬 backend 대상 실행
+- [x] Docker k6로 로컬 backend 대상 실행
 - [ ] 로컬 설치 k6로 로컬 backend 대상 실행
-- [ ] VM/배포 서버 대상 실행
+- [x] VM/배포 서버 대상 실행
 - [ ] Grafana request rate/latency/error rate 확인
 - [ ] Loki error log 확인
+
+2026-05-23 로컬 Docker k6 실행 결과:
+
+| 지표 | 결과 | 판단 |
+|---|---:|---|
+| checks | 100.00% (532/532) | 통과 |
+| http_req_failed | 0.00% (0/266) | 통과 |
+| 전체 http_req_duration p95 | 70.93ms | 기준 1초/1.5초 대비 매우 양호 |
+| auth_login p95 | 58.55ms | 양호 |
+| service_types p95 | 65.79ms | 양호 |
+| walk_in p95 | 73.97ms | 양호 |
+| queue_list p95 | 59.63ms | 양호 |
+| queue_action p95 | 75.96ms | 양호 |
+| http_reqs | 266 requests, 5.23/s | 로컬 기본 부하 확인 |
+| iterations | 114 iterations, 2.24/s | 로컬 기본 부하 확인 |
+
+결론: 로컬 기본 부하 기준에서는 예방접종 현장 접수, 대기열 조회, 일부 대기 상태 변경 흐름이 실패 없이 안정적으로 통과했다. 다음 확인은 VM 대상 짧은 smoke 실행 또는 로컬 강도 상향 테스트다.
+
+2026-05-23 로컬 Docker k6 추가 실행 결과:
+
+| 지표 | 결과 | 판단 |
+|---|---:|---|
+| checks | 100.00% (550/550) | 통과 |
+| http_req_failed | 0.00% (0/275) | 통과 |
+| 전체 http_req_duration p95 | 65.36ms | 기준 1초/1.5초 대비 매우 양호 |
+| auth_login p95 | 45.25ms | 양호 |
+| service_types p95 | 39.80ms | 양호 |
+| walk_in p95 | 66.10ms | 양호 |
+| queue_list p95 | 61.76ms | 양호 |
+| queue_action p95 | 66.16ms | 양호 |
+| http_reqs | 275 requests, 5.40/s | 로컬 기본 부하 확인 |
+| iterations | 114 iterations, 2.24/s | 로컬 기본 부하 확인 |
+| vus_max | 3 | 강도 상향 시도 시 `k6.local.env` 적용값 재확인 필요 |
+
+결론: 두 번째 로컬 실행도 실패 없이 통과했고, p95 응답 시간은 첫 실행보다 소폭 더 낮았다. 다만 출력상 `vus_max=3`으로 표시되어, `VUS=5` 강도 상향 테스트를 의도했다면 `performance/k6/k6.local.env`의 `VUS` 값 저장 여부와 `--env-file performance/k6/k6.local.env` 적용 여부를 다시 확인해야 한다.
+
+2026-05-23 로컬 Docker k6 강도 상향 실행 결과:
+
+| 지표 | 결과 | 판단 |
+|---|---:|---|
+| checks | 100.00% (1818/1818) | 통과 |
+| http_req_failed | 0.00% (0/909) | 통과 |
+| 전체 http_req_duration p95 | 79.98ms | 기준 1초/1.5초 대비 매우 양호 |
+| auth_login p95 | 39.58ms | 양호 |
+| service_types p95 | 28.41ms | 양호 |
+| walk_in p95 | 69.16ms | 양호 |
+| queue_list p95 | 83.36ms | 양호 |
+| queue_action p95 | 82.02ms | 양호 |
+| http_reqs | 909 requests, 11.24/s | 로컬 VUS 5 부하 확인 |
+| iterations | 311 iterations, 3.85/s | 로컬 VUS 5 부하 확인 |
+| vus_max | 5 | 강도 상향 적용 확인 |
+
+결론: `VUS=5`, 약 1분 20초 실행에서도 예방접종 현장 접수, 대기열 조회, 일부 대기 상태 변경 흐름이 실패 없이 통과했다. `queue_list`와 `queue_action` p95가 80ms 초반으로 늘었지만 기준값보다 충분히 낮다.
+
+2026-05-23 VM 도메인 대상 Docker k6 강도 상향 실행 결과:
+
+| 지표 | 결과 | 판단 |
+|---|---:|---|
+| checks | 100.00% (1400/1400) | 통과 |
+| http_req_failed | 0.00% (0/700) | 통과 |
+| 전체 http_req_duration p95 | 244.67ms | 기준 1초/1.5초 대비 양호 |
+| auth_login p95 | 368.71ms | 양호 |
+| service_types p95 | 175.93ms | 양호 |
+| walk_in p95 | 181.96ms | 양호 |
+| queue_list p95 | 278.78ms | VM 도메인 경유 기준 양호 |
+| queue_action p95 | 174.97ms | 양호 |
+| http_reqs | 700 requests, 8.64/s | VM VUS 5 부하 확인 |
+| iterations | 247 iterations, 3.05/s | VM VUS 5 부하 확인 |
+| vus_max | 5 | 강도 상향 적용 확인 |
+
+결론: VM 도메인 대상 `VUS=5`, 약 1분 20초 실행에서도 실패 없이 통과했다. 로컬 테스트보다 p95 응답 시간은 증가했지만, 도메인/TLS/네트워크 경유가 포함된 결과이며 문서 기준인 조회 1초와 쓰기 1.5초보다 충분히 낮다. 가장 느린 구간은 `queue_list` p95 278.78ms이고, 전체 p95도 244.67ms로 포트폴리오 시연용 기준에서는 안정적이다.
+
+2026-05-23 VM 도메인 대상 Docker k6 3단계 실행 결과:
+
+| 지표 | 결과 | 판단 |
+|---|---:|---|
+| checks | 100.00% (6900/6900) | 통과 |
+| http_req_failed | 0.00% (0/3450) | 통과 |
+| 전체 http_req_duration p95 | 380.60ms | 기준 1초/1.5초 대비 양호 |
+| auth_login p95 | 312.10ms | 양호 |
+| service_types p95 | 131.84ms | 양호 |
+| walk_in p95 | 247.18ms | 양호 |
+| queue_list p95 | 473.06ms | 기준 내 통과, 병목 후보 |
+| queue_action p95 | 271.45ms | 양호 |
+| http_reqs | 3450 requests, 17.11/s | VM VUS 10 부하 확인 |
+| iterations | 1169 iterations, 5.80/s | VM VUS 10 부하 확인 |
+| vus_max | 10 | 3단계 강도 적용 확인 |
+
+결론: VM 도메인 대상 `VUS=10`, 약 3분 20초 실행에서도 checks 100%, 실패율 0%로 통과했다. 전체 p95는 380.60ms로 기준값보다 충분히 낮다. 다만 `queue_list` p95가 473.06ms로 가장 높아, 이후 데이터를 더 늘리거나 VUS를 더 올릴 경우 대기열 조회 SQL과 응답 payload가 1차 병목 후보가 될 수 있다.
+
+2026-05-23 VM 도메인 대상 Docker k6 4단계 실행 결과:
+
+| 지표 | 결과 | 판단 |
+|---|---:|---|
+| checks | 100.00% (14122/14122) | 기능 흐름 통과 |
+| http_req_failed | 0.00% (0/7061) | HTTP 실패 없음 |
+| 전체 http_req_duration p95 | 1.90s | 기준 초과 |
+| auth_login p95 | 346.64ms | 양호 |
+| service_types p95 | 132.26ms | 양호 |
+| walk_in p95 | 499.48ms | 기준 내 통과 |
+| queue_list p95 | 2.31s | threshold 초과, 병목 확인 |
+| queue_action p95 | 501.05ms | 기준 내 통과 |
+| http_reqs | 7061 requests, 21.97/s | VM VUS 20 부하 확인 |
+| iterations | 2043 iterations, 6.36/s | VM VUS 20 부하 확인 |
+| vus_max | 20 | 4단계 강도 적용 확인 |
+
+k6 threshold 결과:
+
+```text
+thresholds on metrics 'http_req_duration{api:queue_list}' have been crossed
+```
+
+결론: VM 도메인 대상 `VUS=20`, 약 5분 20초 실행에서 기능 흐름은 모두 성공했고 HTTP 실패도 없었다. 하지만 `queue_list` p95가 2.31초로 조회 기준 1초를 초과했다. 이 결과는 장애라기보다 대기열 조회 API가 높은 부하에서 가장 먼저 느려지는 병목 후보임을 확인한 것이다. 다음 성능 개선 후보는 `GET /api/queues`의 조회 범위, 인덱스, 정렬, 응답 payload, 페이지네이션이다.
 
 ## 8. 사용자 확인 방법
 
@@ -269,6 +382,58 @@ VM 대상으로 실행하면 VM DB에 테스트 방문자가 생성된다. 그�
 - `QUEUE_ACTION_RATE`를 높이면 상태 변경 API 부하가 커지고 미처리 대기표 수는 줄어든다.
 - 예약 생성 동시성 테스트는 슬롯 정원과 seed 충돌 관리가 필요하므로 이번 브랜치에서 제외했다.
 - Docker/k6 실행은 로컬 Docker 상태, 네트워크, VM 상태가 필요하므로 사용자가 직접 확인한다.
+
+## 9.1 Grafana/Prometheus/Loki 확인 방법
+
+k6 콘솔은 요청 성공 여부를 보여주고, Grafana는 backend가 그 부하를 받는 동안 어떤 상태였는지 보여준다.
+
+| 도구 | 역할 | 확인할 것 |
+|---|---|---|
+| k6 | 부하 생성과 요청 결과 출력 | checks, 실패율, p95 응답 시간 |
+| Prometheus | backend 메트릭 수집 | 요청량, 평균 응답 시간, JVM heap |
+| Loki | backend 로그 수집 | ERROR 로그, 예외 반복 여부 |
+| Grafana | Prometheus와 Loki 화면 조회 | 대시보드와 Explore |
+
+Grafana에서 확인하는 순서:
+
+1. `Health Center Backend Overview` 대시보드를 연다.
+2. 시간 범위를 k6 실행 시간에 맞춘다. 예: `Last 15 minutes`
+3. `HTTP Request Rate`가 k6 실행 중 올라갔다가 내려가는지 본다.
+4. `Average HTTP Latency`가 계속 상승하지 않고 안정적인지 본다.
+5. `JVM Heap Memory`가 급격히 계속 증가하지 않는지 본다.
+6. `Backend Error Logs`에 반복 ERROR가 없는지 본다.
+
+현재 dashboard의 Loki 기본 쿼리:
+
+```logql
+{service="backend"} |= "ERROR"
+```
+
+에러가 없으면 패널이 비어 있을 수 있다. 전체 backend 로그를 보고 싶으면 Grafana `Explore`에서 datasource를 `Loki`로 선택하고 아래 쿼리를 실행한다.
+
+```logql
+{service="backend"}
+```
+
+컨테이너 label이 다르게 보이면 아래처럼 넓게 조회한다.
+
+```logql
+{container=~".*backend.*"}
+```
+
+Loki 포트를 VM NAT로 따로 열 필요는 없다. Grafana datasource가 `access: proxy`, `url: http://loki:3100`으로 설정되어 있어 Grafana 컨테이너가 Docker 내부 네트워크에서 Loki를 조회한다.
+
+결과 해석:
+
+| k6 결과 | Grafana 결과 | 판단 |
+|---|---|---|
+| 실패율 0%, p95 낮음 | Request Rate 상승, Error Logs 없음 | 안정적 |
+| 실패율 0%, p95 증가 | Latency도 증가 | 처리 가능하지만 느려지는 상태 |
+| 실패율 증가 | Error Logs에 예외 반복 | API 오류 원인 확인 필요 |
+| k6 요청이 있는데 Request Rate 변화 없음 | Prometheus target 또는 scrape 설정 확인 필요 |
+| Error Logs가 항상 비어 있음 | 에러가 없거나 Promtail 수집 문제. Explore에서 전체 로그 확인 |
+
+이번 VM VUS 5 결과는 k6 기준으로 안정적이다. Grafana에서는 같은 시간대의 Request Rate 상승과 Error Logs 반복 여부만 확인하면 된다.
 
 ## 10. 후속 작업
 
