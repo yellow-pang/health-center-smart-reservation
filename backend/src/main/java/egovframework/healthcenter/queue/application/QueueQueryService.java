@@ -14,6 +14,9 @@ import egovframework.healthcenter.queue.policy.QueueTicketPolicy;
 @Service
 public class QueueQueryService {
 
+	private static final int DEFAULT_LIMIT = 200;
+	private static final int MAX_LIMIT = 500;
+
 	private final QueueTicketMapper queueTicketMapper;
 	private final QueueTicketPolicy queueTicketPolicy;
 
@@ -27,14 +30,17 @@ public class QueueQueryService {
 			MemberPrincipal principal,
 			Long serviceTypeId,
 			String status,
-			LocalDate date) {
+			LocalDate date,
+			Integer limit) {
 		queueTicketPolicy.validateStaff(principal);
 		LocalDate targetDate = date == null ? LocalDate.now() : date;
 		return queueTicketMapper.selectQueueTickets(
 				principal.healthCenterId(),
 				serviceTypeId,
 				normalizeStatus(status),
-				targetDate)
+				targetDate.atStartOfDay(),
+				targetDate.plusDays(1).atStartOfDay(),
+				normalizeLimit(limit))
 			.stream()
 			.map(QueueTicketResponse::from)
 			.toList();
@@ -45,5 +51,15 @@ public class QueueQueryService {
 			return null;
 		}
 		return status.trim().toUpperCase();
+	}
+
+	private int normalizeLimit(Integer limit) {
+		if (limit == null) {
+			return DEFAULT_LIMIT;
+		}
+		if (limit < 1) {
+			return DEFAULT_LIMIT;
+		}
+		return Math.min(limit, MAX_LIMIT);
 	}
 }

@@ -1,6 +1,7 @@
 package egovframework.healthcenter.queue.mapper;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,12 +24,16 @@ public class QueueTicketMapper extends EgovAbstractMapper {
 			Long healthCenterId,
 			Long serviceTypeId,
 			String status,
-			LocalDate targetDate) {
+			LocalDateTime fromIssuedAt,
+			LocalDateTime toIssuedAt,
+			Integer limit) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("healthCenterId", healthCenterId);
 		params.put("serviceTypeId", serviceTypeId);
 		params.put("status", status);
-		params.put("targetDate", targetDate);
+		params.put("fromIssuedAt", fromIssuedAt);
+		params.put("toIssuedAt", toIssuedAt);
+		params.put("limit", limit);
 		return selectList("QueueTicketMapper.selectQueueTickets", params);
 	}
 

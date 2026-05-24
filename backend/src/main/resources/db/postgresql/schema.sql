@@ -190,6 +190,9 @@ CREATE INDEX IF NOT EXISTS idx_queue_tickets_health_center_service_status
 CREATE INDEX IF NOT EXISTS idx_queue_tickets_issued_at
     ON queue_tickets (issued_at);
 
+CREATE INDEX IF NOT EXISTS idx_queue_tickets_list_lookup
+    ON queue_tickets (health_center_id, service_type_id, status, issued_at, ticket_number);
+
 CREATE UNIQUE INDEX IF NOT EXISTS uk_queue_tickets_daily_ticket_number
     ON queue_tickets (health_center_id, service_type_id, (issued_at::date), ticket_number);
 

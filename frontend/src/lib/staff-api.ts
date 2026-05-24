@@ -128,12 +128,14 @@ export async function getQueueEntries(filters?: {
   serviceTypeId?: number;
   status?: QueueStatus;
   date?: string;
+  limit?: number;
 }): Promise<QueueEntry[]> {
   const entries = await apiRequest<QueueTicketApiResponse[]>('/api/queues', {
     query: {
       serviceTypeId: filters?.serviceTypeId,
       status: filters?.status,
       date: filters?.date,
+      limit: filters?.limit,
     },
   });
 

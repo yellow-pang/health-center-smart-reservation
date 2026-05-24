@@ -96,7 +96,8 @@
 		INNER JOIN visits v ON v.id = q.visit_id
 		INNER JOIN service_types st ON st.id = q.service_type_id
 		WHERE q.health_center_id = #{healthCenterId}
-		  AND q.issued_at::date = #{targetDate}
+		  AND q.issued_at &gt;= #{fromIssuedAt}
+		  AND q.issued_at &lt; #{toIssuedAt}
 		<if test="serviceTypeId != null">
 		  AND q.service_type_id = #{serviceTypeId}
 		</if>
@@ -117,6 +118,7 @@
 				ELSE 5
 			END,
 			q.ticket_number
+		LIMIT #{limit}
 	</select>
 
 	<select id="selectQueueTicketById" parameterType="long" resultMap="QueueTicket">
