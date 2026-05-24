@@ -48,6 +48,12 @@ GitNexus 상태:
 - `npx gitnexus impact -r health-center-smart-reservation selectQueueTickets`
 - 위 impact/context 명령은 빈 출력과 exit code 1로 종료되어 신뢰 가능한 그래프 결과를 얻지 못했다.
 
+후속 문서 정리:
+
+- 이 프로젝트의 `.git`은 repository 루트(`C:\Dev\health-center-smart-reservation`)에만 있고 `backend`, `frontend` 하위 폴더에는 없다.
+- GitNexus CLI는 하위 폴더가 아니라 루트에서 실행해야 한다.
+- 관련 기준은 `START_HERE.md`, `README.md`, `AGENTS.md`, `CLAUDE.md`, `docs/09_agent/01_코드_에이전트_작업_가이드.md`, `docs/09_agent/03_Codex_GitNexus_UTF8_작업_주의사항.md`, `docs/13_schedule/02_전체_작업_체크리스트.md`에 반영했다.
+
 `rg` 기준 직접 확인한 blast radius:
 
 | 대상 | 직접 영향 |

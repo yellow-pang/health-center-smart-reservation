@@ -44,9 +44,13 @@ rg --files docs
 
 코드 구조 탐색, 영향도 분석, 대규모 샘플 코드 정리 전에는 GitNexus 상태를 확인한다.
 
+이 프로젝트의 Git repository는 루트 폴더(`health-center-smart-reservation`)에만 있다.
+`backend`, `frontend`, `performance/k6` 같은 하위 폴더에는 `.git`이 없으므로 GitNexus 명령은 반드시 repository 루트에서 실행한다.
+
 권장 명령:
 
 ```powershell
+cd C:\Dev\health-center-smart-reservation
 gitnexus status
 ```
 
@@ -64,8 +68,10 @@ gitnexus list
 
 주의:
 
-- 이 프로젝트는 로컬에 설치된 GitNexus CLI를 직접 사용하므로 `npm.cmd exec -- gitnexus ...` 또는 `npx gitnexus ...`를 기본 명령으로 쓰지 않는다.
-- 현재 설치된 GitNexus CLI 버전에는 `detect-change`, `detect-changes`, `detect_changes` 명령이 없으므로 변경 범위 확인은 `git status`, `git diff --stat`, `git diff --check`, `rg`, Maven/Next build로 보완한다.
+- `gitnexus analyze`, `gitnexus impact`, `gitnexus detect-changes`는 `backend`나 `frontend`에서 실행하면 git repository를 찾지 못할 수 있다.
+- GitNexus MCP 도구가 노출되어 있으면 MCP 도구를 우선 사용하고, CLI를 쓸 때는 루트에서 `gitnexus ...` 또는 `npx gitnexus ...`를 실행한다.
+- 여러 저장소가 인덱싱되어 repo 지정이 필요하다는 오류가 나오면 `-r health-center-smart-reservation`을 붙인다.
+- `detect-changes`가 현재 CLI에서 가능하면 루트에서 `gitnexus detect-changes -r health-center-smart-reservation --scope all`을 시도한다. 실패하면 변경 범위 확인은 `git status`, `git diff --stat`, `git diff --check`, `rg`, Maven/Next build로 보완한다.
 - GitNexus가 stale 상태이거나 실패하면 작업을 중단하지 말고 실패 이유를 기록한다.
 - GitNexus 결과만 믿지 않고 `rg`, 파일 직접 확인, 테스트를 함께 사용한다.
 - 문서만 수정하는 작업에서는 GitNexus가 필수는 아니다.

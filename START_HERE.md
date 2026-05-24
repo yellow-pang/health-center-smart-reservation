@@ -134,6 +134,7 @@ docs/11_implementation_log/00_브랜치_작업_기록_가이드.md 기준으로
 - Maven 유지
 - MyBatis 기준 유지
 - 신규 백엔드 도메인은 egovframework.healthcenter 하위에 작성
+- GitNexus 명령은 `.git`이 있는 repository 루트에서만 실행하고, `backend`/`frontend` 하위 폴더에서는 실행하지 말 것
 - 에이전트는 일반 명령, 정적 확인, Maven 빌드/테스트 컴파일까지만 직접 실행
 - 서버 기동, Docker 실행, API 런타임 호출, Swagger/브라우저 확인, 포트 점유 프로세스 종료는 사용자가 직접 수행
 - API 런타임 검증 안내는 Swagger `Try it out`을 우선하고, 요청 예시는 대표 예시 1개만 작성

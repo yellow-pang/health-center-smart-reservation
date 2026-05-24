@@ -64,6 +64,20 @@ health-center-smart-reservation
  └─ README.md
 ```
 
+Git repository는 이 루트 폴더에만 있습니다. `backend`와 `frontend`는 하위 프로젝트 폴더이며 별도 `.git`을 갖지 않습니다.
+
+GitNexus를 사용할 때는 반드시 루트에서 실행합니다.
+
+```powershell
+cd C:\Dev\health-center-smart-reservation
+gitnexus status
+gitnexus analyze
+gitnexus impact -r health-center-smart-reservation <symbolName>
+gitnexus detect-changes -r health-center-smart-reservation --scope all
+```
+
+하위 폴더에서 GitNexus를 실행하면 repository를 찾지 못하거나 stale/impact 확인이 실패할 수 있습니다. GitNexus가 실패하면 실패 이유를 기록하고 `rg`, `git diff`, Maven/Next build로 영향 범위를 보완합니다.
+
 ## 6. 실행 방법
 
 `.env.example`을 복사해 `.env`를 만든 뒤 환경에 맞게 값을 수정합니다.
