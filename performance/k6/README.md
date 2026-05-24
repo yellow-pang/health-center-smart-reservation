@@ -23,7 +23,7 @@
 1. `POST /api/auth/login`
 2. `GET /api/service-types`에서 `VACCINATION` 업무 유형 ID 확인
 3. `POST /api/visits/walk-in`으로 예방접종 현장 접수
-4. `GET /api/queues?serviceTypeId={id}&status=WAITING`으로 대기열 조회
+4. `GET /api/queues?serviceTypeId={id}&status=WAITING&limit=100`으로 대기열 조회
 5. 일부 요청은 `call -> start -> complete` 상태 변경까지 진행
 
 기본값은 작게 잡았다.

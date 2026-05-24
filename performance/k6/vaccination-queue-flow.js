@@ -116,7 +116,7 @@ export default function (context) {
   const queueTicketId = walkInResponse.json('data.queueTicketId');
 
   const queueListResponse = http.get(
-    `${BASE_URL}/api/queues?serviceTypeId=${context.serviceTypeId}&status=WAITING`,
+    `${BASE_URL}/api/queues?serviceTypeId=${context.serviceTypeId}&status=WAITING&limit=100`,
     authParams(context.accessToken, { api: 'queue_list' }),
   );
 

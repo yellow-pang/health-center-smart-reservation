@@ -47,9 +47,10 @@ public class QueueController {
 			Authentication authentication,
 			@RequestParam(required = false) Long serviceTypeId,
 			@RequestParam(required = false) String status,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+			@RequestParam(required = false) Integer limit) {
 		MemberPrincipal principal = AuthenticatedPrincipal.require(authentication);
-		return ApiResponse.success(queueQueryService.findQueueTickets(principal, serviceTypeId, status, date));
+		return ApiResponse.success(queueQueryService.findQueueTickets(principal, serviceTypeId, status, date, limit));
 	}
 
 	@PostMapping("/{queueTicketId}/call")
