@@ -894,6 +894,26 @@ Response:
 }
 ```
 
+#### 4.9.9 미처리 대기표 자동 NO_SHOW 배치
+
+Spring Scheduler가 매일 설정된 시간에 과거 미처리 대기표를 자동 마감한다.
+
+기본 설정:
+
+- 활성 여부: `QUEUE_AUTO_CLOSE_ENABLED=true`
+- 실행 시각: `QUEUE_AUTO_CLOSE_CRON=0 10 18 * * *`
+- 기준 시간대: `Globals.TimeZone`, 기본 `Asia/Seoul`
+- 보관 일수: `QUEUE_AUTO_CLOSE_RETENTION_DAYS=2`
+
+정책:
+
+- 기본 정책은 실행일 기준 2일 전까지 발급된 미처리 대기표를 대상으로 한다.
+- 예: 2026-05-26 실행 시 `issued_at < 2026-05-25 00:00:00`, 즉 2026-05-24까지 발급된 `WAITING`, `CALLED`, `HOLD`, `IN_PROGRESS` 대기표를 `NO_SHOW` 처리한다.
+- 연결된 Visit 상태도 `NO_SHOW`로 변경한다.
+- 예약 기반 방문이면 `CHECKED_IN` 상태 예약도 `NO_SHOW`로 변경한다.
+- 이미 종료된 `COMPLETED`, `NO_SHOW`, `CANCELED` 대기표는 변경하지 않아 재실행해도 같은 대상을 중복 처리하지 않는다.
+- 자동 배치는 별도 API를 노출하지 않으며, 실행 결과는 `event=queue.pending_auto_closed` 로그로 확인한다.
+
 상태 오류 Response:
 
 ```json

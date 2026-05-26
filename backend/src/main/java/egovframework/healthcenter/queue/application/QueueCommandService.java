@@ -1,6 +1,7 @@
 package egovframework.healthcenter.queue.application;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import egovframework.healthcenter.common.logging.AuditLogSupport;
 import egovframework.healthcenter.member.domain.MemberRole;
 import egovframework.healthcenter.member.security.MemberPrincipal;
 import egovframework.healthcenter.queue.dto.ClosePendingQueueTicketsResponse;
+import egovframework.healthcenter.queue.dto.QueueAutoCloseResult;
 import egovframework.healthcenter.queue.dto.QueueTicketResponse;
 import egovframework.healthcenter.queue.mapper.QueueTicketMapper;
 import egovframework.healthcenter.queue.mapper.QueueTicketVO;
@@ -130,6 +132,29 @@ public class QueueCommandService {
 			pendingCount
 		);
 		return new ClosePendingQueueTicketsResponse(targetDate, pendingCount);
+	}
+
+	@Transactional
+	public QueueAutoCloseResult autoCloseOverduePendingTickets(LocalDate baseDate, int retentionDays) {
+		LocalDate runDate = baseDate == null ? LocalDate.now() : baseDate;
+		int safeRetentionDays = Math.max(retentionDays, 1);
+		LocalDate cutoffDate = runDate.minusDays(safeRetentionDays);
+		LocalDateTime cutoffExclusive = cutoffDate.plusDays(1).atStartOfDay();
+		int pendingCount = queueTicketMapper.countOverduePendingTicketsForAutoClose(cutoffExclusive);
+		if (pendingCount > 0) {
+			queueTicketMapper.markOverduePendingVisitsNoShow(cutoffExclusive);
+			queueTicketMapper.markOverduePendingReservationsNoShow(cutoffExclusive);
+			queueTicketMapper.markOverduePendingTicketsNoShow(cutoffExclusive);
+		}
+		log.info(
+			"event=queue.pending_auto_closed traceId={} runDate={} cutoffDate={} retentionDays={} closedCount={}",
+			AuditLogSupport.traceId(),
+			runDate,
+			cutoffDate,
+			safeRetentionDays,
+			pendingCount
+		);
+		return new QueueAutoCloseResult(runDate, cutoffDate, pendingCount);
 	}
 
 	private QueueTicketVO loadTicket(MemberPrincipal principal, Long queueTicketId) {
