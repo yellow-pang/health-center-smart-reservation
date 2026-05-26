@@ -120,4 +120,26 @@ public class QueueTicketMapper extends EgovAbstractMapper {
 		params.put("targetDate", targetDate);
 		return update("QueueTicketMapper.markPendingTicketsNoShow", params);
 	}
+
+	public int countOverduePendingTicketsForAutoClose(LocalDateTime cutoffExclusive) {
+		return selectOne("QueueTicketMapper.countOverduePendingTicketsForAutoClose", cutoffParams(cutoffExclusive));
+	}
+
+	public int markOverduePendingVisitsNoShow(LocalDateTime cutoffExclusive) {
+		return update("QueueTicketMapper.markOverduePendingVisitsNoShow", cutoffParams(cutoffExclusive));
+	}
+
+	public int markOverduePendingReservationsNoShow(LocalDateTime cutoffExclusive) {
+		return update("QueueTicketMapper.markOverduePendingReservationsNoShow", cutoffParams(cutoffExclusive));
+	}
+
+	public int markOverduePendingTicketsNoShow(LocalDateTime cutoffExclusive) {
+		return update("QueueTicketMapper.markOverduePendingTicketsNoShow", cutoffParams(cutoffExclusive));
+	}
+
+	private Map<String, Object> cutoffParams(LocalDateTime cutoffExclusive) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("cutoffExclusive", cutoffExclusive);
+		return params;
+	}
 }

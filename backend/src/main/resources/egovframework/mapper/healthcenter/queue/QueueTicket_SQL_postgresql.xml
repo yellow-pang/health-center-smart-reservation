@@ -293,4 +293,41 @@
 		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
 	</update>
 
+	<select id="countOverduePendingTicketsForAutoClose" parameterType="map" resultType="int">
+		SELECT COUNT(1)::integer
+		FROM queue_tickets q
+		WHERE q.issued_at &lt; #{cutoffExclusive}
+		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
+	</select>
+
+	<update id="markOverduePendingVisitsNoShow" parameterType="map">
+		UPDATE visits v
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		FROM queue_tickets q
+		WHERE q.visit_id = v.id
+		  AND q.issued_at &lt; #{cutoffExclusive}
+		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
+	</update>
+
+	<update id="markOverduePendingReservationsNoShow" parameterType="map">
+		UPDATE reservations r
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		FROM visits v
+		INNER JOIN queue_tickets q ON q.visit_id = v.id
+		WHERE v.reservation_id = r.id
+		  AND q.issued_at &lt; #{cutoffExclusive}
+		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
+		  AND r.status = 'CHECKED_IN'
+	</update>
+
+	<update id="markOverduePendingTicketsNoShow" parameterType="map">
+		UPDATE queue_tickets q
+		SET status = 'NO_SHOW',
+			updated_at = CURRENT_TIMESTAMP
+		WHERE q.issued_at &lt; #{cutoffExclusive}
+		  AND q.status IN ('WAITING', 'CALLED', 'HOLD', 'IN_PROGRESS')
+	</update>
+
 </mapper>
