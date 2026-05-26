@@ -88,6 +88,8 @@ GitNexus 상태:
 | `backend/src/main/java/egovframework/healthcenter/queue/mapper/QueueTicketMapper.java` | 자동 마감 count/update mapper 메서드 추가 |
 | `backend/src/main/resources/egovframework/mapper/healthcenter/queue/QueueTicket_SQL_postgresql.xml` | 자동 마감 대상 count, Visit/Reservation/QueueTicket update SQL 추가 |
 | `backend/src/main/resources/application.properties` | 배치 설정 기본값 추가 |
+| `.env.example` | 배포/로컬 예시 환경변수에 자동 마감 배치 설정 추가 |
+| `docker-compose.yml` | backend 컨테이너에 `QUEUE_AUTO_CLOSE_*` 환경변수 전달 |
 | `backend/src/test/java/egovframework/healthcenter/queue/application/QueueCommandServiceTest.java` | 자동 마감 대상 있음/없음 단위 테스트 추가 |
 | `docs/04_api/01_API_명세서.md` | 자동 배치 정책과 설정 문서화 |
 

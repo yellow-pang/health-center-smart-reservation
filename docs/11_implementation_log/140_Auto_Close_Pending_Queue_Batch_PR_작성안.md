@@ -41,6 +41,7 @@ feat: 미처리 대기표 자동 노쇼 배치 추가
 - 자동 마감 결과 로그 추가
   - `event=queue.pending_auto_closed`
   - `event=queue.pending_auto_close_scheduler_completed`
+- `.env.example`과 `docker-compose.yml`에 `QUEUE_AUTO_CLOSE_*` 설정 반영
 - 자동 마감 서비스 단위 테스트 추가
 - API 명세, 보류 목록, 전체 체크리스트, 구현 기록 갱신
 
