@@ -232,9 +232,6 @@ export default function LoginPage() {
           </Card>
         )}
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          테스트 계정 비밀번호는 password1234입니다.
-        </p>
       </div>
     </div>
   );
