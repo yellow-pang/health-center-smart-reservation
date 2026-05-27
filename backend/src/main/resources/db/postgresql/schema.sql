@@ -52,6 +52,19 @@ CREATE TABLE IF NOT EXISTS members (
 CREATE INDEX IF NOT EXISTS idx_members_role_active
     ON members (role, active);
 
+CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id BIGSERIAL PRIMARY KEY,
+    member_id BIGINT NOT NULL REFERENCES members(id),
+    token_hash VARCHAR(128) NOT NULL UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    used_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_member_active
+    ON password_reset_tokens (member_id, used_at, expires_at);
+
 CREATE TABLE IF NOT EXISTS social_accounts (
     id BIGSERIAL PRIMARY KEY,
     member_id BIGINT NOT NULL REFERENCES members(id),

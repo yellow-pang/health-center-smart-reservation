@@ -64,6 +64,7 @@ erDiagram
 | dashboard_hourly_stats | 시간대별 통계 집계 | 2차 |
 | notifications | 알림 이력 | 2차 |
 | refresh_tokens | Refresh Token 저장 | 포함 |
+| password_reset_tokens | 비밀번호 재설정 토큰 저장 | 고도화 포함 |
 
 ## 4. 주요 테이블 상세
 
@@ -240,6 +241,24 @@ UNIQUE (service_type_id, slot_date, start_time, end_time)
 | memo | TEXT | NULL | 내부 메모 |
 | created_at | TIMESTAMP | NOT NULL | 생성일 |
 | updated_at | TIMESTAMP | NULL | 수정일 |
+
+### 4.9 password_reset_tokens
+
+| 컬럼 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| id | BIGSERIAL | PK | 비밀번호 재설정 토큰 ID |
+| member_id | BIGINT | FK, NOT NULL | 회원 ID |
+| token_hash | VARCHAR(128) | UNIQUE, NOT NULL | 재설정 토큰 SHA-256 해시 |
+| expires_at | TIMESTAMP | NOT NULL | 만료 시각 |
+| used_at | TIMESTAMP | NULL | 사용 시각 |
+| created_at | TIMESTAMP | NOT NULL | 생성일 |
+| updated_at | TIMESTAMP | NULL | 수정일 |
+
+정책:
+
+- 토큰 원문은 DB에 저장하지 않는다.
+- 새 토큰 발급 시 같은 회원의 기존 미사용 토큰은 사용 처리한다.
+- 비밀번호 재설정 성공 시 해당 회원의 Refresh Token을 모두 폐기한다.
 
 ## 5. 인덱스 후보
 

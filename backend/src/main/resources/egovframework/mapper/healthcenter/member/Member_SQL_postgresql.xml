@@ -63,6 +63,59 @@
 		  AND m.active = true
 	</select>
 
+	<select id="selectActiveMemberByNameAndPhone" parameterType="map" resultMap="Member">
+		SELECT
+			id,
+			health_center_id,
+			email,
+			password,
+			name,
+			phone,
+			role,
+			active
+		FROM members
+		WHERE name = #{name}
+		  AND regexp_replace(phone, '[^0-9]', '', 'g') = regexp_replace(#{phone}, '[^0-9]', '', 'g')
+		  AND active = true
+		ORDER BY id
+		LIMIT 1
+	</select>
+
+	<select id="selectActiveMemberByEmailAndPhone" parameterType="map" resultMap="Member">
+		SELECT
+			id,
+			health_center_id,
+			email,
+			password,
+			name,
+			phone,
+			role,
+			active
+		FROM members
+		WHERE email = #{email}
+		  AND regexp_replace(phone, '[^0-9]', '', 'g') = regexp_replace(#{phone}, '[^0-9]', '', 'g')
+		  AND active = true
+	</select>
+
+	<select id="selectActiveMemberByPasswordResetToken" parameterType="string" resultMap="Member">
+		SELECT
+			m.id,
+			m.health_center_id,
+			m.email,
+			m.password,
+			m.name,
+			m.phone,
+			m.role,
+			m.active
+		FROM password_reset_tokens prt
+		INNER JOIN members m
+			ON m.id = prt.member_id
+		WHERE prt.token_hash = #{tokenHash}
+		  AND prt.used_at IS NULL
+		  AND prt.expires_at > CURRENT_TIMESTAMP
+		  AND m.active = true
+	</select>
+
 	<select id="selectActiveMemberBySocialAccount" parameterType="map" resultMap="Member">
 		SELECT
 			m.id,
@@ -139,6 +192,45 @@
 		)
 	</insert>
 
+	<insert id="insertPasswordResetToken" parameterType="map">
+		INSERT INTO password_reset_tokens (
+			member_id,
+			token_hash,
+			expires_at,
+			created_at
+		) VALUES (
+			#{memberId},
+			#{tokenHash},
+			#{expiresAt},
+			CURRENT_TIMESTAMP
+		)
+	</insert>
+
+	<update id="markMemberPasswordResetTokensUsed" parameterType="long">
+		UPDATE password_reset_tokens
+		SET used_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE member_id = #{memberId}
+		  AND used_at IS NULL
+	</update>
+
+	<update id="markPasswordResetTokenUsed" parameterType="string">
+		UPDATE password_reset_tokens
+		SET used_at = CURRENT_TIMESTAMP,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE token_hash = #{tokenHash}
+		  AND used_at IS NULL
+		  AND expires_at > CURRENT_TIMESTAMP
+	</update>
+
+	<update id="updateMemberPassword" parameterType="map">
+		UPDATE members
+		SET password = #{password},
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = #{memberId}
+		  AND active = true
+	</update>
+
 	<update id="revokeRefreshTokenByToken" parameterType="string">
 		UPDATE refresh_tokens
 		SET revoked = true,
@@ -153,6 +245,14 @@
 			updated_at = CURRENT_TIMESTAMP
 		WHERE member_id = #{memberId}
 		  AND refresh_token = #{refreshToken}
+		  AND revoked = false
+	</update>
+
+	<update id="revokeMemberRefreshTokens" parameterType="long">
+		UPDATE refresh_tokens
+		SET revoked = true,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE member_id = #{memberId}
 		  AND revoked = false
 	</update>
 

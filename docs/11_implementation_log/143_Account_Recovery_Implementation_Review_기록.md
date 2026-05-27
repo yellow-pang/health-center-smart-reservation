@@ -87,16 +87,54 @@
 - 단점: 외부 서비스, 비용, 운영 설정, rate limit, 발송 실패 대응이 필요하다.
 - 판단: 운영 고도화 후보로 두고, 먼저 후보 B 구조를 만든 뒤 발송 채널을 교체하는 편이 좋다.
 
-## 6. 이번 작업에서 변경하지 않은 것
+## 6. 구현 진행 결과
 
-- API 구현
-- DB 스키마 변경
+2026-05-27 `feat/account-recovery-api` 브랜치에서 후보 B의 1차 백엔드 구현을 진행했다.
+
+변경 파일:
+
+- `backend/src/main/java/egovframework/healthcenter/member/api/AccountRecoveryController.java`
+- `backend/src/main/java/egovframework/healthcenter/member/application/AccountRecoveryService.java`
+- `backend/src/main/java/egovframework/healthcenter/member/dto/*`
+- `backend/src/main/java/egovframework/healthcenter/member/mapper/MemberMapper.java`
+- `backend/src/main/resources/egovframework/mapper/healthcenter/member/Member_SQL_postgresql.xml`
+- `backend/src/main/resources/db/postgresql/schema.sql`
+- `backend/src/main/resources/application.properties`
+- `backend/src/main/java/egovframework/com/security/SecurityConfig.java`
+- `backend/src/main/java/egovframework/healthcenter/common/exception/ErrorCode.java`
+- `.env.example`
+- `docs/04_api/01_API_명세서.md`
+
+구현 내용:
+
+- `POST /api/auth/find-id` 추가
+- `POST /api/auth/password-reset/request` 추가
+- `POST /api/auth/password-reset/confirm` 추가
+- `password_reset_tokens` 테이블 추가
+- 재설정 토큰은 원문 저장 없이 SHA-256 해시로 저장
+- 비밀번호 변경 성공 시 해당 회원의 refresh token 전체 폐기
+- 휴대폰 번호는 하이픈 유무와 관계없이 숫자 기준으로 비교
+- 개발/포트폴리오 확인용 `developmentResetToken` 응답은 `ACCOUNT_RECOVERY_EXPOSE_DEVELOPMENT_TOKEN`으로 제어
+
+## 7. 이번 작업에서 변경하지 않은 것
+
 - 프론트 mock 화면의 실제 API 연동
 - SMS/Email 발송 연동
 - 서버 기동, Swagger, 브라우저 확인
 
-## 7. 다음 작업 후보
+## 8. 검증 결과
 
-1. `feat/account-recovery-api`: 서버 저장 토큰 기반 아이디 찾기/비밀번호 재설정 API 구현
-2. `feat/account-recovery-frontend`: `/find-id`, `/reset-password` 실제 API 연동
-3. `feat/account-recovery-verification`: SMS/Email 인증번호 또는 발송 채널 연동 검토
+- 수행: `git diff --check` 통과. CRLF 변환 경고만 표시
+- 미수행: 사용자 요청에 따라 이 학습 PC에서는 Maven 빌드와 테스트를 실행하지 않았다.
+- 미수행: 서버 기동, Swagger, 브라우저 확인
+
+## 9. 다음 작업 후보
+
+1. `feat/account-recovery-frontend`: `/find-id`, `/reset-password` 실제 API 연동
+2. `feat/account-recovery-verification`: SMS/Email 인증번호 또는 발송 채널 연동 검토
+3. `test/account-recovery-policy`: 계정 찾기와 재설정 토큰 정책 단위 테스트 추가
+
+## 10. 관련 구현/PR 문서
+
+- `docs/11_implementation_log/144_Account_Recovery_API_구현_기록.md`
+- `docs/11_implementation_log/145_Account_Recovery_API_PR_작성안.md`

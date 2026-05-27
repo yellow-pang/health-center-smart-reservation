@@ -62,6 +62,9 @@ Swagger Authorize 창은 HTTP bearer 스키마를 사용하므로 `Bearer `를 �
 | POST | /api/auth/login | 로그인 | PUBLIC |
 | POST | /api/auth/reissue | 토큰 재발급 | PUBLIC |
 | POST | /api/auth/logout | 로그아웃 | 로그인 사용자 |
+| POST | /api/auth/find-id | 아이디 찾기 | PUBLIC |
+| POST | /api/auth/password-reset/request | 비밀번호 재설정 요청 | PUBLIC |
+| POST | /api/auth/password-reset/confirm | 비밀번호 재설정 완료 | PUBLIC |
 | GET | /api/auth/social/{provider}/authorize | 소셜 로그인 시작 | PUBLIC |
 | GET | /api/auth/social/{provider}/callback | 소셜 로그인 콜백 | PUBLIC |
 | POST | /api/auth/social/signup | 소셜 로그인 추가 정보 입력 완료 | PUBLIC |
@@ -253,6 +256,104 @@ Response:
   "error": null
 }
 ```
+
+### 4.4.1 아이디 찾기
+
+`POST /api/auth/find-id`
+
+Request:
+
+```json
+{
+  "name": "홍길동",
+  "phone": "010-0000-0001"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "found": true,
+    "maskedEmail": "ci***@example.com"
+  },
+  "error": null
+}
+```
+
+정책:
+
+- 이름과 휴대폰 번호가 일치하는 활성 회원의 로그인 이메일을 마스킹해 반환한다.
+- 휴대폰 번호는 하이픈 유무와 관계없이 숫자 기준으로 비교한다.
+- 일치하는 회원이 없으면 `found=false`, `maskedEmail=null`을 반환한다.
+
+### 4.4.2 비밀번호 재설정 요청
+
+`POST /api/auth/password-reset/request`
+
+Request:
+
+```json
+{
+  "email": "citizen@example.com",
+  "phone": "010-0000-0001"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "accepted": true,
+    "developmentResetToken": "dev-visible-reset-token"
+  },
+  "error": null
+}
+```
+
+정책:
+
+- 이메일과 휴대폰 번호가 일치하는 활성 회원이면 비밀번호 재설정 토큰을 발급한다.
+- 토큰 원문은 저장하지 않고 SHA-256 해시만 `password_reset_tokens`에 저장한다.
+- 기본 만료 시간은 `ACCOUNT_RECOVERY_RESET_TOKEN_EXPIRE=1800`초이다.
+- 개발/포트폴리오 환경 확인을 위해 `ACCOUNT_RECOVERY_EXPOSE_DEVELOPMENT_TOKEN=true`이면 응답에 `developmentResetToken`을 포함한다. 운영 환경에서는 `false`로 둔다.
+- 일치하는 회원이 없어도 계정 존재 여부 노출을 줄이기 위해 `accepted=true`, `developmentResetToken=null`을 반환한다.
+
+### 4.4.3 비밀번호 재설정 완료
+
+`POST /api/auth/password-reset/confirm`
+
+Request:
+
+```json
+{
+  "resetToken": "dev-visible-reset-token",
+  "newPassword": "newPassword1234",
+  "newPasswordConfirm": "newPassword1234"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "completed": true
+  },
+  "error": null
+}
+```
+
+정책:
+
+- 유효하고 아직 사용하지 않은 재설정 토큰만 사용할 수 있다.
+- 새 비밀번호는 8자 이상이며 확인값과 일치해야 한다.
+- 성공 시 기존 eGovFrame 암호화 방식으로 비밀번호를 저장하고, 해당 회원의 Refresh Token을 모두 폐기한다.
 
 ### 4.5 예약 가능 시간 조회
 
@@ -1104,6 +1205,8 @@ Response:
 | AUTH_INVALID_CREDENTIALS | 이메일 또는 비밀번호가 올바르지 않음 |
 | AUTH_TOKEN_EXPIRED | Access Token 만료 |
 | AUTH_REFRESH_TOKEN_INVALID | Refresh Token이 유효하지 않음 |
+| AUTH_PASSWORD_RESET_TOKEN_INVALID | 비밀번호 재설정 토큰이 유효하지 않음 |
+| AUTH_PASSWORD_RESET_INVALID_REQUEST | 비밀번호 재설정 요청 값이 올바르지 않음 |
 | FORBIDDEN | 접근 권한 없음 |
 | SERVICE_TYPE_NOT_FOUND | 업무 유형 없음 |
 | RESERVATION_SLOT_NOT_FOUND | 예약 슬롯 없음 |
