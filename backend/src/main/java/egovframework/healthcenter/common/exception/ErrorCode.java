@@ -7,6 +7,8 @@ public enum ErrorCode {
 	AUTH_REQUIRED(HttpStatus.UNAUTHORIZED, "AUTH_REQUIRED", "로그인이 필요합니다."),
 	AUTH_INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUTH_INVALID_CREDENTIALS", "이메일 또는 비밀번호가 올바르지 않습니다."),
 	AUTH_REFRESH_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "AUTH_REFRESH_TOKEN_INVALID", "Refresh Token이 유효하지 않습니다."),
+	AUTH_PASSWORD_RESET_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "AUTH_PASSWORD_RESET_TOKEN_INVALID", "비밀번호 재설정 토큰이 올바르지 않습니다."),
+	AUTH_PASSWORD_RESET_INVALID_REQUEST(HttpStatus.BAD_REQUEST, "AUTH_PASSWORD_RESET_INVALID_REQUEST", "비밀번호 재설정 요청 값이 올바르지 않습니다."),
 	FORBIDDEN(HttpStatus.FORBIDDEN, "FORBIDDEN", "요청을 처리할 권한이 없습니다."),
 	RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "RESOURCE_NOT_FOUND", "요청한 정보를 찾을 수 없습니다."),
 	CONFLICT(HttpStatus.CONFLICT, "CONFLICT", "현재 상태에서는 요청을 처리할 수 없습니다."),
@@ -96,6 +98,12 @@ public enum ErrorCode {
 		}
 		if (contains(message, "Refresh Token")) {
 			return AUTH_REFRESH_TOKEN_INVALID;
+		}
+		if (contains(message, "비밀번호 재설정 토큰")) {
+			return AUTH_PASSWORD_RESET_TOKEN_INVALID;
+		}
+		if (contains(message, "비밀번호 재설정") || contains(message, "새 비밀번호")) {
+			return AUTH_PASSWORD_RESET_INVALID_REQUEST;
 		}
 		if (contains(message, "이미 등록된 업무 코드")) {
 			return SERVICE_TYPE_DUPLICATED;

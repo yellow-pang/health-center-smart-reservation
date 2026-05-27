@@ -54,6 +54,8 @@ public class SecurityConfig {
             "/error", // 에러 페이지
             "/api/auth/login", // 보건소 로그인
             "/api/auth/reissue", // 보건소 토큰 재발급
+            "/api/auth/find-id", // 보건소 아이디 찾기
+            "/api/auth/password-reset/**", // 보건소 비밀번호 재설정
             "/api/auth/social/**", // 보건소 소셜 로그인
             "/api/common-codes", // 보건소 공통코드 일괄 조회
             "/api/common-codes/**", // 보건소 공통코드 조회

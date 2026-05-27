@@ -22,6 +22,24 @@ public class MemberMapper extends EgovAbstractMapper {
 		return selectOne("MemberMapper.selectActiveMemberByRefreshToken", refreshToken);
 	}
 
+	public MemberVO selectActiveMemberByNameAndPhone(String name, String phone) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("name", name);
+		params.put("phone", phone);
+		return selectOne("MemberMapper.selectActiveMemberByNameAndPhone", params);
+	}
+
+	public MemberVO selectActiveMemberByEmailAndPhone(String email, String phone) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("email", email);
+		params.put("phone", phone);
+		return selectOne("MemberMapper.selectActiveMemberByEmailAndPhone", params);
+	}
+
+	public MemberVO selectActiveMemberByPasswordResetToken(String tokenHash) {
+		return selectOne("MemberMapper.selectActiveMemberByPasswordResetToken", tokenHash);
+	}
+
 	public MemberVO selectActiveMemberBySocialAccount(String provider, String providerUserId) {
 		Map<String, Object> params = new HashMap<>();
 		params.put("provider", provider);
@@ -61,6 +79,29 @@ public class MemberMapper extends EgovAbstractMapper {
 		insert("MemberMapper.insertRefreshToken", params);
 	}
 
+	public void insertPasswordResetToken(Long memberId, String tokenHash, LocalDateTime expiresAt) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("memberId", memberId);
+		params.put("tokenHash", tokenHash);
+		params.put("expiresAt", expiresAt);
+		insert("MemberMapper.insertPasswordResetToken", params);
+	}
+
+	public int markMemberPasswordResetTokensUsed(Long memberId) {
+		return update("MemberMapper.markMemberPasswordResetTokensUsed", memberId);
+	}
+
+	public int markPasswordResetTokenUsed(String tokenHash) {
+		return update("MemberMapper.markPasswordResetTokenUsed", tokenHash);
+	}
+
+	public int updateMemberPassword(Long memberId, String password) {
+		Map<String, Object> params = new HashMap<>();
+		params.put("memberId", memberId);
+		params.put("password", password);
+		return update("MemberMapper.updateMemberPassword", params);
+	}
+
 	public int revokeRefreshTokenByToken(String refreshToken) {
 		return update("MemberMapper.revokeRefreshTokenByToken", refreshToken);
 	}
@@ -70,5 +111,9 @@ public class MemberMapper extends EgovAbstractMapper {
 		params.put("memberId", memberId);
 		params.put("refreshToken", refreshToken);
 		return update("MemberMapper.revokeMemberRefreshToken", params);
+	}
+
+	public int revokeMemberRefreshTokens(Long memberId) {
+		return update("MemberMapper.revokeMemberRefreshTokens", memberId);
 	}
 }
