@@ -14,7 +14,6 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
             - jenkins-maven-cache:/root/.m2
             - jenkins-npm-cache:/root/.npm
-            - /apps/smart-drain:/deploy/smart-drain
         restart: unless-stopped
 
 volumes:
