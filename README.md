@@ -205,6 +205,7 @@ GET /actuator/prometheus     # ADMIN token 필요
 | `docs/08_deploy/03_dev_to_main_배포전_확인_체크리스트.md` | dev to main 배포 전 점검 |
 | `docs/08_deploy/04_Jenkins_VM_배포_운영_가이드.md` | Jenkins VM 운영 |
 | `docs/08_deploy/06_가비아_도메인_Cloudflare_Tunnel_외부공개_가이드.md` | 외부 공개 절차 |
+| [Mac mini 다중 프로젝트 공통 운영 기준](docs/08_deploy/11_Mac_mini_다중_프로젝트_공통_운영_기준.md) | 서버 전체 이전 설계, 운영·백업·복구 및 결제 중단 규칙 |
 | `docs/12_portfolio/01_포트폴리오_구현_스토리라인.md` | 포트폴리오 설명 흐름 |
 | `docs/14_deferred_cleanup/01_보류_정리_목록.md` | MVP 이후 고도화 후보 |
 

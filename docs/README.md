@@ -42,11 +42,15 @@
 34. `11_implementation_log/00_브랜치_작업_기록_가이드.md`
 35. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
 
-## Mac mini + OrbStack 이전 분석
+## Mac mini + OrbStack 이전 및 공통 운영
 
 - [Mac mini + OrbStack 이전 사전 분석](08_deploy/08_Mac_mini_OrbStack_이전_사전_분석.md)
 - 현재 Compose/Jenkins 배포 흐름, 새 DB 초기화, 모니터링·네트워크, arm64 확인 결과를 정리한다.
 - 기존 구조로 재현 가능한 부분과 조건부 환경 설정 조정, 후속 운영 개선을 구분한다. 실제 build/up과 외부 설정 변경은 수행하지 않은 사전 분석이다.
+- [09 이전 실행 Plan](08_deploy/09_Mac_mini_OrbStack_이전_실행_Plan.md): Health Center의 단계별 이전·검증 절차.
+- [10 이전 진행 기록](08_deploy/10_Mac_mini_OrbStack_이전_진행기록.md): 실제 실행 결과와 다음 세션 재개 위치.
+- [11 다중 프로젝트 공통 운영 기준](08_deploy/11_Mac_mini_다중_프로젝트_공통_운영_기준.md): Health Center/RWR/SmartDrain 공통 운영 설계, Tunnel·포트·Secret·관측성·자동 복구·백업·결제 중단 규칙.
+- 다음 세션은 08 → 09 → 10 → 11 순서로 읽는다. 11은 사용자 확정 방향과 미적용 설계 제안을 구분한 기록이며, 기존 Plan의 CI/관측성 변경을 자동 승인하지 않는다.
 
 ## 코드 작성 전 반드시 확인할 문서
 
