@@ -6,12 +6,12 @@
 |---|---|
 | 기준 Analysis | `08_Mac_mini_OrbStack_이전_사전_분석.md` |
 | 기준 Plan | `09_Mac_mini_OrbStack_이전_실행_Plan.md` |
-| branch | `docs/mac-orbstack-deployment-analysis` |
+| 현재 branch / HEAD | `dev` / `ae10814` |
 | 실행 시작 HEAD | `fed9104f754b02b1d993cef2175c0779b97585e0` |
-| 현재 Phase / Step | Phase 2-S, S-3 Mac reboot 승인 Gate |
+| 현재 Phase / Step | Phase 2-S, S-4 24시간 운영 관찰 진행 중 |
 | 완료된 Stop Point | Stop Point 0, Stop Point 0-B, Stop Point 1, Stop Point 2-A, Stop Point 2-B |
-| 상태 | 세 프로젝트 운영 전환 PASS. S-1 실무 필수 설정과 S-2 컨테이너·DB·cloudflared 재시작 PASS. 로그인 전 OrbStack 복구와 S-3 reboot는 미검증 |
-| 다음 시작 Step | 사용자 별도 승인 후 S-3 정상 reboot와 로그인 전/후 외부 복구 판정 |
+| 상태 | S-3 엄격한 무인 복구 기준은 FAIL, 사용자 로그인 후 별도 조작 없는 자동 복구는 PASS. 이 운영 조건의 허용 여부는 별도 판단으로 남기고 S-4 관찰을 시작함 |
+| 다음 시작 Step | `2026-09-21 18:18 KST` 이후 S-4 종료 측정·외부 접근·display sleep 유지 여부 검증 |
 
 ## 최신 방향 — 2026-09-20
 
@@ -174,6 +174,41 @@
 - 사용자가 로컬 Terminal에서 관리자 암호를 직접 입력해 cloudflared LaunchDaemon을 재시작했다. 재시작 횟수가 2로 증가하고 `running` 상태였으며 Health Frontend/Backend, RWR, SmartDrain 운영 URL이 모두 HTTP 200으로 자동 회복했다.
 - 사용자가 AC 전원의 system sleep을 `1`에서 `0`으로 변경했다. display sleep은 `10`으로 유지해 화면은 꺼질 수 있지만 시스템 idle sleep은 방지한다. 복원값은 AC system sleep `1`이다.
 - 관리자 작업 후 Health production metrics는 계속 HTTP 302, 내부 Prometheus Backend target은 `UP`, OrbStack은 `Running`이고 `app.start_at_login=true`였다. 세 프로젝트의 15개 컨테이너가 모두 실행 상태였다.
+
+## S-3 Mac 재부팅 검증 — 2026-09-20
+
+### 사용자 외부 관찰
+
+- Mac mini를 정상 재부팅한 뒤 로그인하지 않은 상태로 약 10분간 Health Center Frontend/Backend, RWR, SmartDrain 운영 URL을 확인했으나 모두 HTTP 502가 지속됐다.
+- 로그인 전에도 system LaunchDaemon인 cloudflared는 시작됐지만 OrbStack/Docker Engine과 origin 컨테이너는 시작되지 않아 요청을 전달할 수 없었다.
+- 사용자는 암호를 입력해 로그인만 수행했고 `orb start`, `docker compose up`, 컨테이너·OrbStack·cloudflared 수동 시작/재시작은 수행하지 않았다.
+- 로그인 후 OrbStack과 Docker Engine이 시작되고 세 프로젝트 운영 URL이 모두 자동 복구됐다.
+
+### 로그인 후 상태 증거
+
+- host boot 시각은 `2026-09-20 18:03 KST`, 15개 컨테이너의 시작 시각은 모두 약 `18:11 KST`였다. 모든 컨테이너가 `running`, 설정은 `unless-stopped`, restart count는 0이었다.
+- Health Center PostgreSQL은 기존 named volume `health-center_health-center-postgres-data`를 다시 연결했고 `refresh_tokens=5`, `service_types=4`, `reservation_slots=630`으로 재부팅 전 검증 데이터가 유지됐다.
+- Health Center Backend health, RWR UI/API, SmartDrain UI/API는 HTTP 200이었다. Health Frontend root의 localhost 307은 로그인 화면 redirect 계약이며 공개 URL은 redirect 후 HTTP 200이었다.
+- cloudflared LaunchDaemon은 부팅 직후 DNS resolver 준비 전 1회 종료했지만 `KeepAlive`로 6초 뒤 자동 재시작했다. 이후 QUIC 연결 4개와 connectivity pre-check PASS가 기록됐고 수동 조작 없이 운영 URL이 복구됐다.
+- Prometheus의 `health-center-backend`와 자기 target은 모두 `UP`이었다. 외부 `api.healthq.store/actuator/prometheus`는 HTTP 302로 Cloudflare Access 로그인 경로로 전환돼 차단 정책이 유지됐다.
+- Loki는 재부팅 시 정상 종료 후 WAL 복구를 완료했고 `/ready` HTTP 200, Promtail 로그 수신/flush가 재개됐다. 기동 직후의 일시적 readiness 관찰에는 수정하지 않았다.
+
+### S-3 판정
+
+- Plan의 엄격한 성공 조건인 **로그인 전 10분 이내 무인 복구는 FAIL**이다.
+- 현재 지원되는 실제 운영 계약인 **사용자 로그인 후 수동 명령 없는 자동 복구는 PASS**다.
+- 자동 로그인, FileVault 변경, root wrapper, custom LaunchDaemon/boot script는 추가하지 않았다.
+- 이 조건을 개인 포트폴리오 서버 기준으로 수용할지는 S-4 종료 후 별도 사용자 판단으로 남긴다. S-4 진행은 이 제한을 해소하거나 S-3를 완전 PASS로 바꾸지 않는다.
+
+## S-4 24시간 운영 관찰 시작 — 2026-09-20 18:18 KST
+
+- 종료 측정 가능 시각: `2026-09-21 18:18 KST` 이후. 그 전에는 S-4 완료로 표시하지 않는다.
+- 시작 시점 15개 컨테이너 메모리 합계는 약 1.1 GiB이며 모두 실행 중이다. macOS swap in/out은 0이었다.
+- Docker 기준값은 image 27.96 GB, container writable layer 8.004 MB, local volume 287.7 MB, build cache 18.73 GB다. macOS Data volume은 228 GiB 중 68 GiB 사용, 139 GiB 여유다.
+- Health Center 주요 volume 기준값은 PostgreSQL 67.39 MB, Prometheus 9.391 MB, Grafana 14.6 MB, Loki 2.149 MB다.
+- Health Center 7개 컨테이너의 Docker log driver는 `json-file`, `max-size=20m`, `max-file=5`로 확인됐다.
+- 시작 시 공개 Health Center Frontend/Backend, RWR, SmartDrain은 redirect 포함 최종 HTTP 200이었다. 외부 metrics는 redirect를 따라가지 않은 상태에서 HTTP 302였고 내부 Prometheus target은 `UP`이었다.
+- 종료 시 같은 상태·자원·disk 지표를 재측정하고 display sleep 중 외부 접근 유지, container restart/OOM, volume 증가량을 비교한다. 자동 cleanup이나 retention 변경은 이번 관찰 중 선제 적용하지 않는다.
 
 ## Rollback 상태
 
