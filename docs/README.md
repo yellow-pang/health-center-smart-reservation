@@ -51,6 +51,8 @@
 - [10 이전 진행 기록](08_deploy/10_Mac_mini_OrbStack_이전_진행기록.md): 실제 실행 결과와 다음 세션 재개 위치.
 - [11 다중 프로젝트 공통 운영 기준](08_deploy/11_Mac_mini_다중_프로젝트_공통_운영_기준.md): Health Center/RWR/SmartDrain 공통 운영 설계, Tunnel·포트·Secret·관측성·자동 복구·백업·결제 중단 규칙.
 - 다음 세션은 08 → 09 → 10 → 11 순서로 읽는다. 11은 사용자 확정 방향과 미적용 설계 제안을 구분한 기록이며, 기존 Plan의 CI/관측성 변경을 자동 승인하지 않는다.
+- [12 공통 운영 전환 1차 실행 Plan](08_deploy/12_공통_운영_전환_1차_실행_Plan.md): 실제 세 프로젝트 현황을 반영한 작업 인계·호스트 복구·단일 Tunnel 전환 Gate. 공통 관측성/CI 구현은 별도 후속 단위다.
+- [13 Cloudflare Mac Tunnel 설정 기록](08_deploy/13_Cloudflare_Mac_Tunnel_설정_기록.md): Mac 전용 Tunnel·임시 route·metrics 경로 보호의 실행 순서, 비용/Secret 경계와 검증 결과.
 
 ## 코드 작성 전 반드시 확인할 문서
 
