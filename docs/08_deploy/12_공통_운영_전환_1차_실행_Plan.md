@@ -10,24 +10,25 @@
 
 **기준:** [11 공통 운영 기준](11_Mac_mini_다중_프로젝트_공통_운영_기준.md), [09 Health Center Plan](09_Mac_mini_OrbStack_이전_실행_Plan.md), [10 진행 기록](10_Mac_mini_OrbStack_이전_진행기록.md). 작성일 2026-09-20, 시작 HEAD `f0d2748`.
 
-## 1. 이번 조사 결과
+## 1. 최신 인계 결과
 
 | 대상 | 이번 직접 확인 또는 출처 | 판정 |
 |---|---|---|
-| Health Center | Docker에서 7개 container 실행, HTTP publish는 127.0.0.1 | 이전 API PASS 증거 유지. 이번에는 API 재시험 안 함 |
-| RWR | `rwr-phase0` 8090, `rwr-phase1` 8091; 모두 IPv4/IPv6 전체 interface publish | 검증용 두 스택 중 운영 대상 선정과 localhost 제한 필요 |
-| SmartDrain | 실제 Compose에 migrate/seed/AI 모델 mount 있음. 진행 기록은 Gate A BLOCKED | Health Center SQL init 절차를 그대로 적용하면 안 됨 |
+| Health Center | HEAD `5c3ea17`; 7개 container, 기본 기능·관측성·새 DB 검증 PASS | 임시 route 생성 완료. 공개 URL/CORS와 브라우저 기능 검증 필요 |
+| RWR | HEAD `4d77fc4`; main 자동 배포와 production localhost 검증 PASS | `rwr-production`, nginx loopback 8090을 임시 route 대상으로 확정 |
+| SmartDrain | `dev` HEAD `dc1c060`; 이관 PR 병합, ARM inference와 전체 Compose/새 DB/localhost E2E PASS | nginx loopback 8099를 임시 route 대상으로 확정 |
 | FileVault | 호스트 권한으로 `fdesetup status`: Off | 디스크 암호화 해제 작업 불필요. 자동 로그인/무인 복구 성공을 의미하지 않음 |
 | 전원 | `pmset -g custom`: AC sleep=1, displaysleep=10, autorestart=0 | 서버 sleep/정전 복구 설정 검토 필요; assertion에 의한 실제 sleep 억제 여부는 미확인 |
-| cloudflared | 실행 파일 version 2026.9.1 | 이번에는 서비스 등록/연결 상태 재검증 안 함 |
+| cloudflared | version 2026.9.1, system LaunchDaemon running, `mac-mini-prod` connector Healthy | 공통 connector 준비 완료. 중복 Tunnel/service 생성 금지 |
 | OrbStack | CLI version 2.2.3 | 로그인 전 Engine 복구는 미검증 |
 
 샌드박스 내 `fdesetup status`는 volume 오류를 냈으나 호스트 권한 재조회는 정상 응답했다. 이 오류를 macOS 장애로 판단하지 않는다.
 
-다른 프로젝트 근거(읽기 전용 확인, 실시간 진행 중이므로 재개 때 재확인):
+다른 프로젝트 근거(읽기 전용 확인, 외부 설정 쓰기 전 Git/localhost 상태 재확인):
 
-- RWR: `/Users/tro/dev/RWR-mini-project/docker-compose.yml`, `docs/34-mac-mini-deployment-analysis/steps/step-34-phase-2-ci-ghcr.md`. 기록상 CI/GHCR 준비 및 PR 검증은 진행됐으나 main image publish는 남아 있다. 원격 상태를 이 세션에서 재검증한 것은 아니다.
-- SmartDrain: `/Users/tro/dev/smartdrain-agent-upgrade/docker-compose.yml`, `docs/steps/step-03-mac-mini-orbstack-migration.md`. 기록상 동일 운영 `best.pt` 부재로 YOLO 검증이 막혀 있다. 모델 파일이나 실제 env 값은 이번에 열지 않았다.
+- RWR: `/Users/tro/dev/RWR-mini-project`, 최신 HEAD `4d77fc4`. GHCR arm64 image를 사용하는 main 자동 배포와 `127.0.0.1:8090`의 UI/API health가 검증됐다. Cloudflare 작업은 본 세션으로 인계됐다.
+- SmartDrain: `/Users/tro/dev/smartdrain-agent-upgrade`, `dev` 최신 HEAD `dc1c060`. 실제 모델 기반 ARM 추론과 `127.0.0.1:8099`의 REST/WebSocket/callback/UI Gate가 검증됐고 이관 PR이 병합됐다. Cloudflare 작업은 본 세션으로 인계됐다.
+- 각 프로젝트 문서에 남은 이전 상태의 HEAD, RWR 검증 스택, SmartDrain 모델 차단 표기는 시점 기록으로 보존하되 현재 실행 판단에는 위 최신 인계를 사용한다.
 
 ## 2. 공통 제약과 검수 포인트
 
@@ -65,7 +66,9 @@
 
 - [x] 실제 세 저장소의 Compose와 진행 기록 위치를 확인한다.
 - [x] Docker container 이름과 publish, FileVault/전원 설정을 읽기 확인한다.
-- [ ] 다른 세션의 Cloudflare 변경 여부와 완료 시점을 인계받고 Dashboard에서 실제 Tunnel/route/DNS/Access 상태를 재확인한다.
+- [x] RWR·SmartDrain 세션에서 Cloudflare 작업을 본 Health Center 세션으로 인계받았다.
+- [x] `mac-mini-prod` Tunnel, Health Center 임시 route 2개, metrics Access application의 실제 생성 상태를 확인했다.
+- [ ] RWR·SmartDrain route를 쓰기 직전에 Dashboard의 Tunnel/route/DNS/Access 상태를 다시 확인한다.
 - [ ] 기존 route 복원본이 비공개로 확보됐는지 확인한다. 목록 조회만으로 rollback 준비 완료라고 표시하지 않는다.
 
 **성공:** 공통 설정의 동시 수정이 배제되고 최신 origin/route와 복원 대상이 특정됨. **실패:** 해당 공통 설정 쓰기 중단. **Rollback:** 읽기 전용이므로 없음.
@@ -74,11 +77,11 @@
 
 **입력:** 담당 프로젝트 최신 실행 기록. **산출:** 각 프로젝트의 단일 운영 대상과 임시 hostname 연결 가능 여부.
 
-- [ ] Health Center는 09 Stop Point 0/0-B 증거를 재사용한다. image/config가 바뀐 부분만 재검증하고 명령별 override를 운영 `.env`에 정착시키는 시점을 Task 4와 맞춘다.
-- [ ] RWR는 두 검증 스택 중 어느 DB/버전을 운영으로 사용할지 해당 세션 기록을 확인한다. 현재 8090을 최종 대상이라고 단정하지 않는다.
-- [ ] RWR 담당 세션에서 `NGINX_PORT=127.0.0.1:<선정한 포트>` 적용 후 바인딩과 주요 API를 확인한다. 이 표기는 선택 규칙이며 미선정 상태로 실행할 명령이 아니다.
-- [ ] SmartDrain은 동일 운영 모델을 비공개 전달하고 크기/SHA256 일치, ARM64 inference, migration, seed, REST/WebSocket/callback E2E Gate를 해당 Plan에서 순서대로 통과시킨다.
+- [x] Health Center는 09 Stop Point 0/0-B 증거를 재사용한다. image/config가 바뀐 부분만 재검증하고 공개 URL/CORS 반영은 Task 4에서 수행한다.
+- [x] RWR 운영 대상은 `rwr-production`, nginx `127.0.0.1:8090`, health `/api/health`로 확정됐다. server/DB는 host에 publish하지 않는다.
+- [x] SmartDrain은 실제 모델 기반 ARM64 inference, migration, 새 DB, REST/WebSocket/callback/UI localhost Gate를 통과했다. nginx `127.0.0.1:8099`만 공개한다.
 - [ ] 프로젝트별 DB volume과 이름을 기록한다. 새 이름을 쓰면 새 volume이 생길 수 있으므로 임의 project rename을 금지한다.
+- [ ] route 생성 직전에 세 origin과 대표 health/API를 재확인한다. 기존 검증과 동일한 image/config이면 전체 build/test는 반복하지 않는다.
 
 **성공:** 해당 프로젝트가 localhost에서 실제 외부 계약을 통과함. 한 프로젝트 실패가 이미 검증된 다른 프로젝트의 임시 route 준비를 막지는 않는다. **실패:** 해당 프로젝트 route 추가 보류. **Rollback:** 기존 검증 stack/volume 보존; 삭제 정리 없음.
 
@@ -105,16 +108,31 @@ docker --context orbstack ps --format '{{.Names}}|{{.Status}}|{{.Ports}}'
 
 ## 7. Task 4 — 단일 Mac Tunnel 임시 공개와 프로젝트별 전환
 
-**입력:** Task 1 인계·복원 준비, 대상 프로젝트 Task 2 PASS, 호스트 Task 3 지원 확인. **산출:** Mac 임시 HTTPS 경로와 검증된 production 전환.
+**입력:** Task 1 인계·복원 준비, 대상 프로젝트 Task 2 PASS. Task 3의 최종 reboot 조건은 임시 공개를 막지 않지만 production 전환 완료 판정 전에 반드시 해결한다. **산출:** Mac 임시 HTTPS 경로와 검증된 production 전환.
 
-- [ ] 기존 Mac Tunnel이 다른 세션에서 생성됐는지 먼저 확인하고 중복 생성하지 않는다. 없다면 서버 단위 이름 `mac-mini-prod`로 단일 remotely-managed Tunnel 생성 절차를 진행한다.
-- [ ] 11 결제 규칙과 UI 권한 확인 규칙을 적용한다. 기존 Tunnel token은 재사용/회전하지 않는다.
-- [ ] Mac host connector를 지원되는 서비스 방식으로 연결한다. token을 채팅·문서·shell history에 남기지 않는다.
-- [ ] 대상 프로젝트의 `mac-*` hostname 충돌 여부를 확인하고 11의 localhost 매핑을 등록한다. 내부 DB/관측성 route는 만들지 않는다.
-- [ ] Backend 관리 경로 차단을 공개와 함께 준비한다. 외부 `/actuator/prometheus`는 거부되며 내부 target은 UP인지 확인한다. 유료 기능이 필수인 것으로 나타나면 중단하고 무료 대안을 설명한다.
-- [ ] Health Center URL/CORS 및 Frontend build는 09 Step 2-2를 사용한다. 다른 프로젝트는 각 Plan의 domain/WebSocket/외부 API 허용 origin 조건을 확인한다.
-- [ ] 외부 네트워크에서 로그인/조회·브라우저 API target과 Mac 로그를 대조한다. 임시 URL 확인을 production 성공으로 간주하지 않는다.
-- [ ] 생산 hostname 전환은 09 Step 2-3의 쓰기 통제·rollback 기준을 프로젝트별 적용한다. Health Center 두 hostname은 함께 검증한다.
+- [x] 서버 단위 remotely-managed Tunnel `mac-mini-prod`와 Mac connector가 생성됐으며 Healthy다. Tunnel과 connector를 추가 생성하지 않는다.
+- [x] 11 결제 규칙과 UI 권한 확인 규칙을 적용했고 기존 Tunnel token을 재사용/회전하지 않았다.
+- [x] Mac host connector를 system LaunchDaemon으로 연결했다. token을 채팅·문서·일반 shell history에 남기지 않았다.
+- [x] 대상 프로젝트의 `mac-*` hostname 충돌 여부를 확인하고 네 개의 localhost 매핑을 등록했다. 내부 DB/관측성 route는 만들지 않았다.
+- [x] Health Center `mac-demo`, `mac-api` route와 `/actuator/prometheus` 경로 단위 Access 보호를 생성했다. 외부 보호 후 내부 Prometheus target `UP`을 확인했다.
+- [x] Health Center의 공개 URL/CORS, API 로그인·업무 유형·예약 슬롯·실제 Backend target과 브라우저 폼 로그인·예약 화면을 검증했다.
+- [x] RWR `mac-rwr.healthq.store -> http://localhost:8090` 등록, `/`, `/api/health`, 코스 생성, 즐겨찾기가 PASS했다. 실제 배포 JavaScript 키의 소유 앱에 임시 domain을 추가하고 Referer를 포함한 SDK 응답을 검증했다. 별도 Backend route는 만들지 않았다.
+- [x] SmartDrain `mac-smartdrain.healthq.store -> http://localhost:8099` 등록, `/`, dashboard REST, image, WSS, 실제 분석→callback→DB→UI가 PASS했다. 배포 JavaScript 키가 RWR 앱 소유임을 비밀 값 노출 없이 확인해 해당 앱에 임시 domain을 추가했고, 공개 브라우저에서 실제 Kakao 지도·마커 로드를 검증했다. Backend/AI/DB route는 만들지 않았다.
+- [x] Health Center production `/actuator/prometheus`의 외부 HTTP 200 노출을 확인해 기존 Access application에 production destination만 추가했다. 운영·임시 외부 metrics 302, 일반 API 200, 내부 Prometheus `UP`을 재검증했다. 새 policy나 유료 기능은 추가하지 않았다.
+- [x] Health Center URL/CORS 및 Frontend build를 09 Step 2-2 기준으로 production hostname에 적용했다. 앱 코드와 Compose는 수정하지 않았다.
+- [x] 외부 네트워크에서 Health Center production 로그인·업무 유형·예약 슬롯과 브라우저 API target을 Mac Backend 로그와 대조했다.
+- [x] 생산 hostname 전환에 09 Step 2-3의 쓰기 통제·rollback 기준을 프로젝트별 적용했다. Health Center 두 hostname은 같은 전환 단위로 옮기고 검증했다.
+- [x] RWR production hostname을 기존 VM Tunnel에서 Mac Tunnel로 전환하고 UI·health·저장/랜덤 코스·Kakao SDK·Mac nginx 도착을 검증했다. 나머지 프로젝트는 별도 승인 전에 전환하지 않는다.
+- [x] SmartDrain production hostname을 기존 VM Tunnel에서 Mac Tunnel로 전환하고 UI·dashboard·drains API·실제 Kakao 지도·WebSocket 상태·Mac nginx 도착을 검증했다.
+- [x] Health Center production Frontend/Backend hostname을 Mac Tunnel로 전환하고 health·CORS·로그인·업무 유형·예약 슬롯·Mac Backend 도착과 production metrics Access 보호를 검증했다.
+
+### Task 4 Stop Point
+
+1. Health Center 임시 기능 검증 PASS 전에는 RWR/SmartDrain 설정과 원인을 섞어 수정하지 않는다.
+2. RWR 임시 route 검증 실패 시 RWR만 중단하고 localhost와 외부 결과를 비교한다. Health Center 설정을 되돌리지 않는다.
+3. SmartDrain 임시 route 검증 실패 시 SmartDrain만 중단하고 REST·WSS·callback 중 실패 경계를 찾는다. 다른 프로젝트 route를 바꾸지 않는다.
+4. 세 임시 hostname이 모두 PASS한 뒤 현재 production route 복원 정보를 재확인하고 사용자 승인을 받는다.
+5. production 전환은 프로젝트 하나씩 수행한다. Health Center의 frontend/backend 두 hostname만 같은 전환 단위로 취급한다.
 
 **성공:** Mac origin의 실제 서비스 계약, 외부 관리 경로 차단, 내부 관측성 유지. **실패:** 실패한 프로젝트 전환 중지; 쓰기와 데이터 보존 판단 후 원래 route 복원. **Rollback:** 기존 Tunnel/VM 유지, Mac 새 데이터 필요 시 별도 보관. DNS 복원으로 DB 데이터가 돌아간다고 가정하지 않음.
 
@@ -142,4 +160,4 @@ docker --context orbstack ps --format '{{.Names}}|{{.Status}}|{{.Ports}}'
 - [x] 결제 중단, 다른 세션 인계, 기존 VM 보호, 무인 복구 기준을 유지했다.
 - [x] 실제 Secret·개인정보를 기록하지 않았다.
 
-다음 실행 위치는 Task 1의 Cloudflare 작업 인계와 Task 3의 OrbStack 자동 기동 지원 확인이다. 공통 인프라 변경을 시작하기 전에 본 Plan의 범위와 다른 세션 담당을 확인한다.
+Task 4는 PASS했다. S-1에서 OrbStack의 공식 로그인 시작을 활성화하고 AC system sleep을 `0`으로 적용했으며 display sleep `10`은 유지했다. 자동 로그인은 없어 로그인 전 OrbStack 복구 여부는 아직 미검증이다. S-2의 Health 컨테이너·DB 재시작과 cloudflared LaunchDaemon 재시작, 세 프로젝트 외부 자동 회복은 PASS했다. 다음 실행 위치는 S-3 Mac reboot 승인 Stop Point다.
