@@ -42,6 +42,12 @@
 34. `11_implementation_log/00_브랜치_작업_기록_가이드.md`
 35. `12_portfolio/01_포트폴리오_구현_스토리라인.md`
 
+## Mac mini + OrbStack 이전 분석
+
+- [Mac mini + OrbStack 이전 사전 분석](08_deploy/08_Mac_mini_OrbStack_이전_사전_분석.md)
+- 현재 Compose/Jenkins 배포 흐름, 새 DB 초기화, 모니터링·네트워크, arm64 확인 결과를 정리한다.
+- 기존 구조로 재현 가능한 부분과 조건부 환경 설정 조정, 후속 운영 개선을 구분한다. 실제 build/up과 외부 설정 변경은 수행하지 않은 사전 분석이다.
+
 ## 코드 작성 전 반드시 확인할 문서
 
 - `09_agent/01_코드_에이전트_작업_가이드.md`
