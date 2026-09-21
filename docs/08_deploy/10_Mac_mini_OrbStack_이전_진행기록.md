@@ -6,12 +6,12 @@
 |---|---|
 | 기준 Analysis | `08_Mac_mini_OrbStack_이전_사전_분석.md` |
 | 기준 Plan | `09_Mac_mini_OrbStack_이전_실행_Plan.md` |
-| 현재 branch / HEAD | `dev` / `ae10814` |
+| 현재 branch / HEAD | `dev` / `323f73e` |
 | 실행 시작 HEAD | `fed9104f754b02b1d993cef2175c0779b97585e0` |
-| 현재 Phase / Step | Phase 2-S, S-4 24시간 운영 관찰 진행 중 |
-| 완료된 Stop Point | Stop Point 0, Stop Point 0-B, Stop Point 1, Stop Point 2-A, Stop Point 2-B |
-| 상태 | S-3 엄격한 무인 복구 기준은 FAIL, 사용자 로그인 후 별도 조작 없는 자동 복구는 PASS. 이 운영 조건의 허용 여부는 별도 판단으로 남기고 S-4 관찰을 시작함 |
-| 다음 시작 Step | `2026-09-21 18:18 KST` 이후 S-4 종료 측정·외부 접근·display sleep 유지 여부 검증 |
+| 현재 Phase / Step | Phase 2-S 완료, Phase 3/4 후속 작업 보류 |
+| 완료된 Stop Point | Stop Point 0, Stop Point 0-B, Stop Point 1, Stop Point 2-A, Stop Point 2-B, Stop Point S(운영 제약 수용) |
+| 상태 | 세 프로젝트 Mac runtime 이전과 24시간 관찰 PASS. 사용자가 로그인 후 자동 복구 조건과 기존 VM DB 미이전을 수용해 이전 완료로 판정. 자동 CI/CD는 RWR만 완료 |
+| 다음 시작 Step | 별도 SmartDrain Mac CI/CD 작업 후 Health Center Phase 3 CI/CD 전환 검토. 기존 VM 삭제는 CI/credential 의존성 확인 후 사용자 별도 수행 |
 
 ## 최신 방향 — 2026-09-20
 
@@ -73,7 +73,7 @@
 - 과거 SmartDrain 진행 기록의 `best.pt` 부재 Gate는 이후 해결됐다. 최신 인계에서는 실제 모델 기반 ARM inference와 localhost E2E가 통과했다. 두 프로젝트의 변경을 이 저장소에서 재구현하지 않는다.
 - 다른 프로젝트 파일·전원 설정·Docker·Cloudflare는 이번 조사에서 수정하지 않았다. 재부팅 전에 모든 프로젝트 작업 상태와 사용자 시점을 확인한다.
 
-- 현재 checkout은 전용 문서 브랜치이며 실제 `.env`가 있는 실행 경로이므로 별도 worktree를 만들지 않는다.
+- 초기 실행은 전용 문서 브랜치와 실제 `.env`가 있는 실행 경로에서 진행했고, 관련 PR 병합 후 현재 `dev`에서 진행 기록을 이어간다.
 - Phase 0/0-B는 애플리케이션 코드를 변경하지 않고 Plan의 runtime 검증을 우선한다.
 - 코드 변경이 실제 blocker 때문에 발생할 경우에만 관련 regression을 검출하는 테스트를 먼저 추가한다.
 
@@ -210,6 +210,62 @@
 - 시작 시 공개 Health Center Frontend/Backend, RWR, SmartDrain은 redirect 포함 최종 HTTP 200이었다. 외부 metrics는 redirect를 따라가지 않은 상태에서 HTTP 302였고 내부 Prometheus target은 `UP`이었다.
 - 종료 시 같은 상태·자원·disk 지표를 재측정하고 display sleep 중 외부 접근 유지, container restart/OOM, volume 증가량을 비교한다. 자동 cleanup이나 retention 변경은 이번 관찰 중 선제 적용하지 않는다.
 
+## S-4 24시간 운영 관찰 종료 — 2026-09-21 18:37 KST
+
+### 서비스와 절전 상태
+
+- 시작 후 24시간 19분이 경과한 시점에 종료 측정을 수행했다.
+- 전원 로그상 display는 `2026-09-20 18:32:33 KST`부터 `2026-09-21 18:34:07 KST`까지 꺼져 있었고, 이 구간에 system sleep 진입 기록은 없었다. AC 설정은 system sleep `0`, display sleep `10`으로 유지됐다.
+- OrbStack은 공식 CLI `orb`와 `orbctl`에서 모두 `Running`, `app.start_at_login=true`였다. 일반 샌드박스에서 한 차례 `Stopped`로 보인 값은 호스트 권한 교차 확인과 실행 중 Docker 상태가 일치하지 않아 도구 격리 관찰로 판정했다.
+- 15개 컨테이너 모두 시작 시각이 `2026-09-20 18:11 KST`로 유지됐고 restart count 0, OOM false였다. healthcheck가 있는 PostgreSQL과 SmartDrain 서비스는 모두 healthy였다.
+- Health Center PostgreSQL은 같은 named volume을 사용했고 `refresh_tokens=5`, `service_types=4`, `reservation_slots=630`으로 기준 데이터가 유지됐다.
+- localhost Health Center Backend, RWR UI/API, SmartDrain UI/API는 HTTP 200이었다. Health Frontend root는 정상 로그인 redirect인 HTTP 307이었다.
+- 공개 Health Center Frontend/Backend, RWR, SmartDrain은 redirect 포함 최종 HTTP 200이었다. 외부 metrics는 HTTP 302 Access 보호를 유지했다.
+- Prometheus의 Backend와 자기 target은 모두 `UP`, Loki `/ready`는 HTTP 200, 최근 Backend 로그 20건 조회가 가능했고 Promtail의 관찰 구간 warn/error는 0건이었다.
+- Loki warn 1건은 종료 검증의 최근 로그 조회가 끝나며 발생한 `context canceled`로, 같은 요청은 결과를 반환했고 readiness와 수집 상태에는 영향이 없었다.
+- cloudflared는 같은 PID와 launchd 실행 횟수 3을 유지하고 현재 HA connection 4개가 연결돼 있었다. 관찰 중 DNS resolver refresh timeout 1건이 있었으나 프로세스 재시작·origin 연결 오류는 없었고 종료 시 공개 URL은 모두 정상 응답했다.
+
+### 자원·디스크 비교
+
+| 항목 | 시작 | 종료 | 증가량/판정 |
+|---|---:|---:|---|
+| 15개 컨테이너 메모리 합계 | 약 1.1 GiB | 약 1.13 GiB | 유의한 급증 없음 |
+| Docker images | 27.96 GB | 27.97 GB | 약 0.01 GB 증가 |
+| Container writable layer | 8.004 MB | 18.46 MB | 약 10.46 MB 증가 |
+| Local volumes | 287.7 MB | 303 MB | 약 15.3 MB 증가 |
+| Build cache | 18.73 GB | 18.73 GB | 변화 없음 |
+| Health PostgreSQL volume | 67.39 MB | 67.39 MB | 변화 없음 |
+| Health Prometheus volume | 9.391 MB | 23.72 MB | 약 14.33 MB 증가 |
+| Health Grafana volume | 14.6 MB | 14.6 MB | 변화 없음 |
+| Health Loki volume | 2.149 MB | 3.165 MB | 약 1.02 MB 증가 |
+| macOS Data volume | 68/228 GiB 사용 | 68/228 GiB 사용 | 표시 단위 내 변화 없음, 139 GiB 여유 |
+| Swap I/O | 0/0 | 0/0 | swap in/out 없음 |
+
+### S-4 판정과 남은 Gate
+
+- display sleep 상태의 24시간 실행, 서비스 접근, DB 보존, 관측성, 자원 여유 기준은 **PASS**다. 이 결과는 장기간 무장애나 backup 복구 가능성을 증명하지 않는다.
+- 현재 증가 속도에서 즉시 디스크 고갈 징후는 없으므로 관찰 중 cleanup·retention 변경은 하지 않았다. Prometheus/Loki retention과 image/build cache 정리는 Phase 4 후속 개선으로 유지한다.
+- 사용자는 `로그인 후 자동 복구`를 개인 포트폴리오 서버의 현재 운영 조건으로 수용했다. 따라서 로그인 전 무인 복구는 미충족 제약으로 명시하되 Phase 2-S runtime 이전은 완료로 판정한다.
+- 기존 Windows 노트북의 Linux VM에 있는 DB 데이터는 이전하지 않으며, 사용자가 향후 VM과 함께 삭제할 예정이다. 이는 의도한 데이터 폐기이므로 Mac 이전 blocker나 backup 작업으로 취급하지 않는다.
+- Mac에서 새로 생성되는 데이터의 장기 backup/RPO는 runtime 이전과 분리한 Phase 4 선택사항이다. 복원 검증 없이 backup 완료로 표시하지 않는다.
+- 기존 VM 완전 삭제 전에는 데이터 외에 Jenkins, self-hosted runner, credential, VM에만 남은 `.env`가 향후 배포에 필요한지 확인한다. 현재 Mac 서비스 실행은 이 리소스에 의존하지 않는다.
+
+## 현재 배포와 CI/CD 경계 — 2026-09-21
+
+세 프로젝트의 **Mac runtime 배포 완료**와 **main 반영 자동 배포 완료**는 같은 의미가 아니다. 현재 실행 상태와 저장소의 실제 배포 설정을 대조한 결과는 다음과 같다.
+
+| 프로젝트 | 현재 Mac 실행 방식 | `main` 반영 시 Mac 자동 배포 | 판정 |
+|---|---|---|---|
+| Health Center | 이 저장소 checkout에서 Compose로 build한 local image 실행 | Mac용 GitHub Actions/runner/Jenkins 없음. 기존 `Jenkinsfile`은 Windows 노트북의 Linux VM Jenkins 계약 | runtime 이전 완료, CI/CD 미완료 |
+| RWR | GHCR의 commit SHA image와 `/Users/tro/services/rwr/releases/<SHA>` release 사용 | `main` push가 hosted runner의 검증·multi-arch image publish 후 Mac 전용 self-hosted runner 배포를 실행 | runtime 및 Mac CI/CD 완료 |
+| SmartDrain | `/Users/tro/dev/smartdrain-agent-upgrade`의 `dev` checkout에서 Compose local build 실행 | GitHub Actions workflow 없음. 기존 `Jenkinsfile`은 VM의 `/home/yp/apps/smart-drain`, `dev`, `smartdrain-dev` 계약 | runtime 이전 완료, CI/CD 미완료 |
+
+- 따라서 세 프로젝트 코드를 `main`에 반영해도 현재 Mac에 자동 배포되는 것은 RWR뿐이다.
+- Health Center와 SmartDrain은 수동 Compose로 검증된 현재 runtime을 유지한다. CI/CD 작업 전까지 `main` 반영만으로 실행 컨테이너가 갱신된다고 가정하지 않는다.
+- SmartDrain Mac CI/CD를 다음 별도 작업으로 진행하고, Health Center의 Jenkins 제거/대체는 기존 Plan의 Phase 3으로 유지한다.
+- RWR workflow와 runner는 검증된 참고 구현일 뿐이며 SmartDrain/Health Center에 파일을 복사하거나 같은 runner가 다른 저장소 job을 자동 수신한다고 가정하지 않는다.
+- CI/CD 후속 작업에서도 Cloudflare route, DB volume, 운영 Compose project 이름을 불필요하게 변경하지 않는다.
+
 ## Rollback 상태
 
 - 기존 VM, Jenkins, 기존 DB, 기존 Tunnel connector 및 Docker volume은 삭제하거나 변경하지 않았다. 기존 VM Tunnel의 네 운영 route만 프로젝트별 승인과 검증 후 제거했다.
@@ -220,13 +276,13 @@
 
 ## 보류 항목
 
-- Phase 3 Jenkins/CI 개선.
+- Health Center Phase 3 Jenkins/CI 개선.
+- SmartDrain Mac용 CI/CD 구성. 현재 local Compose runtime과 기존 VM Jenkins 경로를 혼합하지 않고 별도 분석·계획·검증 후 진행한다.
 - Phase 4 후속 유지보수.
 - npm audit 경고 조치는 runtime/Frontend 의존성 검토와 함께 Phase 4에서 수행.
 - cloudflared LaunchDaemon 재시작과 외부 자동 회복 검증은 PASS했다.
 - Mac의 서버용 sleep 설정은 AC system sleep `0`, display sleep `10`으로 적용·검증했다.
-- OrbStack은 로그인 시 시작하도록 바꿨지만 자동 로그인이 없어 로그인 전 완전 무인 복구 목표는 아직 충족하지 않는다. 보안 약화나 임의 system daemon 대신 실제 S-3 결과와 운영 계약을 사용자와 결정한다.
-- RWR의 실제 실패 유도 rollback과 runner/stack 재부팅 복구, SmartDrain의 서버 수명주기 검증은 최종 공통 재부팅 시점에 함께 확인한다. RWR runner는 사용자 로그인 후 동작하는 LaunchAgent이므로 system LaunchDaemon인 cloudflared와 복구 조건을 분리 판정한다.
-- 모든 다른 세션이 종료되고 사용자가 재부팅 시점을 승인하기 전에는 Mac reboot를 실행하지 않는다.
-- 공통 작업 재개 순서: 별도 승인 후 S-3 reboot → 로그인 전/후 복구 판정 → 조건이 합의되면 S-4 24시간 관찰 시작.
+- OrbStack은 로그인 시 시작하도록 구성됐고 S-3에서 로그인 전 복구 실패, 로그인 후 자동 복구를 확인했다. 보안 약화나 임의 system daemon을 추가하지 않고 이 운영 조건의 수용 여부를 사용자와 결정한다.
+- 공통 재부팅에서 세 프로젝트의 컨테이너·DB·Tunnel 복구를 함께 확인했고 S-4 24시간 관찰도 종료했다. 별도의 실제 배포 실패 rollback과 CI runner 검증은 이번 Phase 2-S 범위에 포함하지 않는다.
+- 공통 작업 재개 순서: 로그인 후 자동 복구 조건 수용 여부 결정 → 운영 DB backup/RPO 결정 → Mac 이전 완료 및 기존 VM 종료 여부 판단. 기존 VM·DB·Jenkins home·volume 삭제는 별도 승인 전 수행하지 않는다.
 - 의도치 않게 생성된 `health-center-smart-reservation` 기본 project의 미사용 network와 PostgreSQL volume은 사용자 승인 후 제거 완료했다. 실제 `health-center` network·volume·컨테이너는 변경하지 않았다.
