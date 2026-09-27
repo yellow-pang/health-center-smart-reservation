@@ -40,6 +40,10 @@ logs/
 tmp/
 temp/
 
+# Python CI/deployment helpers
+__pycache__/
+*.py[cod]
+
 # GitNexus
 .gitnexus/
 .claude/skills/gitnexus/

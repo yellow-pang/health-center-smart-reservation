@@ -38,6 +38,8 @@
 		<commons-lang3.version>3.18.0</commons-lang3.version>
 		<!-- CVE-2026-42198: PostgreSQL SCRAM PBKDF2 DoS 취약점 보완 -->
 		<postgresql.version>42.7.7</postgresql.version>
+		<!-- Parent-managed Flyway 11.7.2 only verifies PostgreSQL through 17. -->
+		<flyway.version>11.19.1</flyway.version>
 	</properties>
 
 	<repositories>
@@ -200,6 +202,14 @@
 			<artifactId>postgresql</artifactId>
 			<version>${postgresql.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
 
 		<!-- validator -->
 		<dependency>
@@ -324,4 +334,26 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>migration-test</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<executions>
+							<execution>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>

@@ -68,8 +68,10 @@ frontend
 
 ## 실행
 
+Node.js 24와 npm을 사용합니다. 의존성 기준은 `package-lock.json`입니다.
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -87,8 +89,13 @@ http://localhost:3000/login
 | `npm run build` | 프로덕션 빌드 |
 | `npm run start` | 빌드 결과 실행 |
 | `npm run lint` | ESLint 실행 |
+| `npm run typecheck` | Next.js 경로 타입 생성 및 TypeScript 검사 |
 
-현재 `package.json`에는 `lint` 스크립트가 있지만, 생성 결과 기준으로 `eslint` 실행 파일이 없어 lint 실행은 실패합니다. 후속 작업에서 ESLint 의존성 또는 lint 스크립트 기준을 정리해야 합니다.
+CI는 `npm ci`, `npm run lint`, `npm run typecheck`, `npm run build`를 차례로 실행합니다. 빌드도 TypeScript 오류가 있으면 실패합니다. Docker 이미지는 Node.js 24를 사용하며 `/login` 응답으로 컨테이너 상태를 확인합니다.
+
+기존 화면의 effect 기반 데이터 조회·브라우저 저장소 초기화는 `react-hooks/set-state-in-effect` 경고로 추적합니다. 이 성능 개선 권고와 hook 의존성 경고는 현재 배포를 차단하지 않으며, lint 오류와 타입 오류는 CI를 실패시킵니다.
+
+`NEXT_PUBLIC_API_BASE_URL`과 `NEXT_PUBLIC_APP_URL`은 브라우저 번들에 포함되므로 운영 이미지 **빌드 시점**에 설정해야 합니다.
 
 ## 로그인 테스트
 
@@ -110,7 +117,6 @@ http://localhost:3000/login
 
 ## 알려진 차이점
 
-- `package-lock.json`과 `pnpm-lock.yaml`이 함께 있어 패키지 매니저 기준 결정이 필요합니다.
 - 일부 mock 보조 데이터와 mock service 파일은 잔여 화면 보조용으로 남아 있어 후속 정리 대상입니다.
 
 상세 점검 내용은 `docs/11_implementation_log/48_v0_MVP_프론트엔드_생성_결과_점검_기록.md`를 참고합니다.

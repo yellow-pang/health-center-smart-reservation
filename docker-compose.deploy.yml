@@ -1,0 +1,78 @@
+# App releases adopt the existing health-center network. PostgreSQL and the
+# observability services remain owned by the original docker-compose.yml.
+# Never use down, --remove-orphans, or a different project name with this file.
+services:
+  backend:
+    image: ${BACKEND_IMAGE:?A digest-pinned backend image is required}
+    container_name: health-center-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_SQL_INIT_MODE: never
+      FLYWAY_BASELINE_ON_MIGRATE: ${FLYWAY_BASELINE_ON_MIGRATE:-false}
+      DB_HOST: postgresql
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:?DB_NAME is required}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_ACCESS_EXPIRE: ${JWT_ACCESS_EXPIRE:-3600}
+      JWT_REFRESH_EXPIRE: ${JWT_REFRESH_EXPIRE:-1209600}
+      ACCOUNT_RECOVERY_RESET_TOKEN_EXPIRE: ${ACCOUNT_RECOVERY_RESET_TOKEN_EXPIRE:-1800}
+      ACCOUNT_RECOVERY_EXPOSE_DEVELOPMENT_TOKEN: "false"
+      OAUTH_FRONTEND_CALLBACK_URL: ${OAUTH_FRONTEND_CALLBACK_URL:?OAUTH_FRONTEND_CALLBACK_URL is required}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID:-}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET:-}
+      KAKAO_REDIRECT_URI: ${KAKAO_REDIRECT_URI:-}
+      NAVER_CLIENT_ID: ${NAVER_CLIENT_ID:-}
+      NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET:-}
+      NAVER_REDIRECT_URI: ${NAVER_REDIRECT_URI:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:?CORS_ALLOWED_ORIGINS is required}
+      APP_TIME_ZONE: Asia/Seoul
+      DB_TIME_ZONE: Asia/Seoul
+      TZ: Asia/Seoul
+      JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Seoul
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,metrics,prometheus
+      MANAGEMENT_ENDPOINT_HEALTH_SHOW_DETAILS: never
+      MANAGEMENT_METRICS_TAGS_APPLICATION: health-center-backend
+      INFO_APP_VERSION: ${RELEASE_SHA:?RELEASE_SHA is required}
+      OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED: ${OBSERVABILITY_PROMETHEUS_SCRAPE_ENABLED:-false}
+      QUEUE_AUTO_CLOSE_ENABLED: ${QUEUE_AUTO_CLOSE_ENABLED:-true}
+      QUEUE_AUTO_CLOSE_CRON: ${QUEUE_AUTO_CLOSE_CRON:-0 10 18 * * *}
+      QUEUE_AUTO_CLOSE_RETENTION_DAYS: ${QUEUE_AUTO_CLOSE_RETENTION_DAYS:-2}
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      health-center-network:
+        aliases: [backend]
+    restart: unless-stopped
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?A digest-pinned frontend image is required}
+    container_name: health-center-frontend
+    # Deliberately no env_file: frontend must not receive DB/OAuth/JWT secrets.
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:?NEXT_PUBLIC_API_BASE_URL is required}
+      NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:?NEXT_PUBLIC_APP_URL is required}
+      TZ: Asia/Seoul
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      health-center-network:
+        aliases: [frontend]
+    restart: unless-stopped
+
+networks:
+  health-center-network:
+    external: true
+    name: health-center_health-center-network
+
+# The app containers do not mount this volume. The deploy preflight verifies
+# that the separately managed PostgreSQL container mounts this exact volume.
+volumes:
+  health-center-postgres-data:
+    external: true
+    name: health-center_health-center-postgres-data

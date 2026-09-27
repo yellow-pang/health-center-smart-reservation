@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev, main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.2-pg18
+        env:
+          POSTGRES_DB: health_center_ci
+          POSTGRES_USER: health_ci
+          POSTGRES_PASSWORD: ci-only
+        ports: [5432:5432]
+        options: >-
+          --health-cmd "pg_isready -U health_ci -d health_center_ci"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - name: Unit tests and isolated PostgreSQL migration tests
+        env:
+          TEST_DATABASE_URL: jdbc:postgresql://localhost:5432/health_center_ci
+          TEST_DATABASE_USERNAME: health_ci
+          TEST_DATABASE_PASSWORD: ci-only
+        run: mvn -B --no-transfer-progress -f backend/pom.xml verify -Pmigration-test
+      - name: Production startup smoke test against CI database
+        env:
+          DB_HOST: localhost
+          DB_PORT: '5432'
+          DB_NAME: health_center_ci
+          DB_USERNAME: health_ci
+          DB_PASSWORD: ci-only
+          JWT_SECRET: ci-only-health-center-jwt-secret-at-least-32-bytes
+        run: bash scripts/ci/backend-smoke.sh
+      - name: Test reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backend-test-reports
+          path: |
+            backend/target/surefire-reports/
+            backend/target/failsafe-reports/
+          retention-days: 7
+
+  frontend:
+    name: Frontend verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          NEXT_PUBLIC_API_BASE_URL: https://api.healthq.store
+          NEXT_PUBLIC_APP_URL: https://demo.healthq.store
+
+  deployment-contract:
+    name: Deployment verification
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Workflow validation
+        run: bash scripts/ci/check-workflows.sh
+      - name: Deployment failure and rollback tests
+        run: python3 -m unittest discover -s scripts/deploy/tests -v
+      - name: CI helper tests
+        run: python3 -m unittest discover -s scripts/ci/tests -v
+      - name: Setup safety tests
+        run: python3 -m unittest discover -s scripts/setup/tests -v
+      - name: Shell syntax
+        run: find scripts -name '*.sh' -exec bash -n {} \;
+
+  required:
+    name: CI required
+    if: always()
+    needs: [backend, frontend, deployment-contract]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every verification job to succeed
+        env:
+          BACKEND: ${{ needs.backend.result }}
+          FRONTEND: ${{ needs.frontend.result }}
+          DEPLOYMENT: ${{ needs.deployment-contract.result }}
+        run: test "$BACKEND" = success && test "$FRONTEND" = success && test "$DEPLOYMENT" = success
