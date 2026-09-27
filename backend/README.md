@@ -2,6 +2,42 @@
 
 보건소 스마트 예약·대기 및 혼잡도 분석 시스템의 백엔드 프로젝트입니다.
 
+## CI 검증과 운영 DB 변경
+
+Java 17 / Maven 3.9에서 일반 단위 테스트와 패키징을 실행합니다. 일반 테스트는 DB에 연결하지 않습니다.
+
+```bash
+mvn --batch-mode --no-transfer-progress verify
+```
+
+DB migration 검증은 **별도로 만든 PostgreSQL 18 일회용 DB**에서 실행합니다. 아래 값은 CI 전용 예시이며 운영 `.env`를 불러오면 안 됩니다. DB 이름은 안전장치로 `_ci`로 끝나야 합니다. 각 테스트는 임의 이름의 schema를 만들고 해당 schema만 삭제합니다.
+
+```bash
+TEST_DATABASE_URL=jdbc:postgresql://localhost:5432/health_center_ci \
+TEST_DATABASE_USERNAME=health_ci \
+TEST_DATABASE_PASSWORD=ci-only \
+mvn --batch-mode --no-transfer-progress verify -Pmigration-test
+```
+
+이 검증은 빈 DB의 최초 적용/재실행, 기존 schema의 무승인 baseline 거부, 명시적인 baseline 0 채택과 기존 비밀번호·예약 상태·공통코드 보존을 확인합니다.
+
+운영은 `SPRING_PROFILES_ACTIVE=prod`를 명시해야 합니다. `prod`는 `spring.sql.init.mode=never`와 Flyway를 사용하고 `dev`는 기존 `schema.sql` / `data.sql` 개발 데이터를 유지합니다. V1은 기존 schema의 idempotent snapshot이고 V2는 필요한 공통코드만 추가합니다. 기존 공통코드를 덮어쓰거나 테스트 계정·보건소·예약 데이터를 생성하지 않습니다. 빈 운영 DB의 실제 보건소/업무/관리자 계정은 별도 초기 설정이 필요합니다.
+
+기존 DB를 Flyway로 처음 전환할 때:
+
+1. 기존 DB를 백업하고 복원 가능한지 확인한 뒤, 복제한 DB에서 새 애플리케이션의 `prod` 기동을 검증합니다. 기존 테이블 구조는 `db/postgresql/schema.sql`과 호환되어야 합니다. `IF NOT EXISTS`는 임의 schema 차이를 교정하지 않습니다.
+2. 대상 DB와 백업을 확인하고 **최초 전환에서만** `FLYWAY_BASELINE_ON_MIGRATE=true`를 명시합니다. 기본값은 `false`이므로 이 승인 없이 Flyway 이력이 없는 기존 DB를 자동 채택하지 않습니다.
+3. baseline은 버전 `0`입니다. V1/V2가 실행된 뒤 `/actuator/health`와 기존 데이터를 확인하고 `FLYWAY_BASELINE_ON_MIGRATE=false`로 되돌립니다. 이미 이력이 있으면 재시작 시 migration은 재실행되지 않습니다.
+4. 배포된 V1/V2를 수정하지 말고 후속 변경은 V3 이후 파일로 추가합니다. 애플리케이션 이미지를 롤백해도 DB migration은 되돌아가지 않으므로 schema 변경은 이전 버전과 호환되어야 합니다. `flyway clean`은 비활성화되어 있습니다.
+
+운영 프로필은 비밀번호 재설정 토큰을 응답에 노출하지 않습니다. 실제 이메일/SMS 전달 기능을 연결하기 전에는 운영 비밀번호 재설정 기능을 완성된 것으로 취급하지 않습니다.
+
+Docker 이미지는 `/actuator/health`를 확인하는 healthcheck를 포함합니다. 배포 과정은 컨테이너 시작만 확인하지 말고 healthy 상태와 프런트/외부 URL까지 확인해야 합니다.
+
+부모 BOM의 Flyway 11.7.2는 PostgreSQL 17까지만 검증하므로, PostgreSQL 18을 지원하는 11.19.1로 `flyway.version`을 고정하고 core/PostgreSQL 모듈에 같은 버전을 적용합니다.
+
+참고: [Spring Boot DB 초기화](https://docs.spring.io/spring-boot/how-to/data-initialization.html), [Flyway baseline](https://documentation.red-gate.com/flyway/reference/commands/baseline), [Flyway 11.19.1 PostgreSQL 지원 범위](https://github.com/flyway/flyway/blob/flyway-11.19.1/flyway-database/flyway-database-postgresql/src/main/java/org/flywaydb/database/postgresql/PostgreSQLDatabase.java).
+
 현재 `backend` 폴더는 전자정부프레임워크 공식 Simple Backend Template을 기반으로 배치되어 있습니다. 이 템플릿은 Spring Boot 기반 REST API 구조, Maven 빌드, JWT 인증 예시, Swagger/OpenAPI 설정, MyBatis 기반 샘플 기능을 포함합니다.
 
 ## 현재 기준
@@ -24,10 +60,10 @@
 
 ## 현재 Docker 설정과의 관계
 
-루트 `docker-compose.yml`은 PostgreSQL 18 + pgvector 이미지만 실행하도록 구성되어 있습니다.
+루트 `docker-compose.yml`은 PostgreSQL, backend, frontend와 선택적인 관측 서비스를 실행합니다. PostgreSQL 서비스의 주요 설정은 다음과 같습니다.
 
 ```yaml
-postgres:
+postgresql:
   image: pgvector/pgvector:0.8.2-pg18
   ports:
     - "5432:5432"
@@ -55,7 +91,7 @@ MVP에서는 pgvector 기능을 사용하지 않고, PostgreSQL 이미지만 확
 루트 경로에서 먼저 실행합니다.
 
 ```bash
-docker compose up -d postgres
+docker compose up -d postgresql
 ```
 
 현재 PostgreSQL 접속 정보:

@@ -44,6 +44,8 @@
 
 ## Mac mini + OrbStack 이전 및 공통 운영
 
+- [GitHub Actions Mac CI/CD](08_deploy/14_GitHub_Actions_Mac_CICD.md): 현재 자동 배포 구현과 최초 활성화·검증·복구 절차. 이전 문서의 Jenkins 기준과 구분한다.
+
 - [Mac mini + OrbStack 이전 사전 분석](08_deploy/08_Mac_mini_OrbStack_이전_사전_분석.md)
 - 현재 Compose/Jenkins 배포 흐름, 새 DB 초기화, 모니터링·네트워크, arm64 확인 결과를 정리한다.
 - 기존 구조로 재현 가능한 부분과 조건부 환경 설정 조정, 후속 운영 개선을 구분한다. 실제 build/up과 외부 설정 변경은 수행하지 않은 사전 분석이다.
