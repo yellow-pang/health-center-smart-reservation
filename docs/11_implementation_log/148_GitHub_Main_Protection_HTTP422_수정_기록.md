@@ -72,9 +72,9 @@ Verified production main-only, main PR/CI protection, and approval for every ext
 
 - [x] 원인·원본 오류·실패 요청·부분 적용 상태 기록
 - [x] 요청 수정과 회귀 테스트, 재실행 절차 기록
-- [ ] 수정된 스크립트의 실제 GitHub 적용 성공 확인
-- [ ] Health Center 전용 Mac runner 등록 및 Online 확인
+- [x] 수정된 스크립트의 실제 GitHub 정책 적용 확인 (2026-10-04 후속 조회)
+- [x] Health Center 전용 Mac runner 등록 및 Online 확인 (2026-10-04 후속 조회)
 - [ ] main 최초 자동 배포와 공개 URL/버전/기존 데이터 보존 확인
 - [ ] 두 번째 자동 배포와 실제 운영 복구 검증
 
-실제 재실행 결과는 아직 전달받지 않았다. main 보호/production 미설정은 오류 진단 시점의 상태이며 이후 실행 결과로 갱신해야 한다. 최초 DB 채택 허용 파일 생성은 DB 채택 완료와 별도이며, 실제 배포에서 백업·전환·검증 후 소비된다. 기존 구현 당시 상태는 [146 구현 기록](146_Mac_CICD_구현_기록.md)에 보존한다.
+main 보호/production 미설정은 최초 오류 진단 시점의 상태다. 이후 GitHub 조회에서 정책과 runner Online을 확인했다. 첫 main 배포의 Maven HTTP 502와 후속 수정·검증은 [149 실행 기록](149_Mac_CICD_Backend_Maven_HTTP502_수정_기록.md)을 따른다. 최초 DB 채택 허용 파일 생성은 DB 채택 완료와 별도이며, 실제 배포에서 백업·전환·검증 후 소비된다. 기존 구현 당시 상태는 [146 구현 기록](146_Mac_CICD_구현_기록.md)에 보존한다.
