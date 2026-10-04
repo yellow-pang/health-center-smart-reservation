@@ -2,6 +2,8 @@
 
 작성일: 2026-10-04 (KST). 작업 브랜치: `dev`.
 
+후속 확인: [실행 37199699624](https://github.com/yellow-pang/health-center-smart-reservation/actions/runs/37199699624)에서 Mac registry 로그인, 이미지 다운로드, DB 백업·앱 교체와 내부 readiness·버전 검사가 통과했다. 마지막 공개 검사 실패로 workflow 전체는 실패했고, 후속 직접 검사에서 HTTP 403을 재현했다. 원인 대조와 후속 수정은 [151 공개 검증 HTTP 403 기록](151_Mac_CICD_공개_검증_HTTP403_오류_수정_기록.md)을 따른다. 아래 최초 Keychain 실패 기록은 보존한다.
+
 ## 배경과 실제 실패 범위
 
 PR #71 반영 후 [Deploy production 실행](https://github.com/yellow-pang/health-center-smart-reservation/actions/runs/37195551675)은 CI와 backend/frontend ARM64 이미지 빌드·GHCR 발행에 성공했다. 실행 SHA는 `f7b4abe8995461b183ef21e415d7df35727a5565`다.
@@ -41,9 +43,9 @@ workflow가 임시 `DOCKER_CONFIG` 디렉터리를 만들었지만 초기 `confi
 | CI helper tests | 기존 11건 포함 총 14건 통과 |
 | workflow 문법 | 공식 체크섬을 확인한 actionlint 통과 |
 | 변경 형식 | `git diff --check` 통과 |
-| 실제 Mac registry 로그인·배포 | 수정 후 원격 Actions 재실행은 아직 미확인 |
+| 실제 Mac registry 로그인·내부 배포 | 후속 실행 37199699624에서 로그인·다운로드·백업·앱 교체·내부 readiness/버전 통과. 공개 검사 실패는 151 기록 참고 |
 
-회귀 테스트는 Docker·키체인·서버를 실행하지 않는다. 실제 helper 선택과 로그인 성공, 백업·앱 교체·공개 URL 검증은 새로운 main 실행에서 확인해야 한다. 공개 이미지의 내용 검토는 별도 보안 점검 범위이며 이 회귀 테스트로 대체하지 않는다.
+회귀 테스트는 Docker·키체인·서버를 실행하지 않는다. 실제 로그인과 내부 배포 성공은 후속 main 실행에서 별도로 확인했으며 공개 검사까지 포함한 전체 성공은 남아 있다. 공개 이미지의 내용 검토는 별도 보안 점검 범위이며 이 회귀 테스트로 대체하지 않는다.
 
 기존 CI/setup/deploy 테스트에는 Mac registry 인증 설정 검사가 없어 이 파일은 해당 실패를 재발 방지하는 검사로 유지한다. 이번 수정에 직접 필요한 3건만 남기고, 변경하지 않은 재실행 디렉터리·미설정 cleanup 등의 별도 사례는 제거했다.
 
@@ -64,13 +66,14 @@ workflow가 임시 `DOCKER_CONFIG` 디렉터리를 만들었지만 초기 `confi
 
 1. 수정 커밋을 dev에 push하고 PR CI를 확인한다.
 2. dev → main PR 반영 후 새 배포 실행에서 Mac 로그인과 임시 config 정리를 확인한다.
-3. 최초 DB 채택은 이전 두 실패 실행에서 진행되지 않았으므로 기존 준비 상태를 확인하고, 첫 성공 실행에서 DB 백업·데이터 보존·baseline false·배포 버전·공개 URL을 확인한다.
+3. 이전 두 실패 실행에서는 최초 DB 채택을 시작하지 않았으나 후속 실행은 백업·앱 교체·내부 검사까지 진행했다. 현재 재개 위치와 공개 검사 완료 기준은 151 기록을 따르며 데이터 보존·운영 설정·공개 URL 확인은 따로 완료한다.
 
 이전 실패 실행의 Re-run은 이전 workflow를 사용하므로 이번 수정이 적용되지 않는다. main이 전진하면 최신 main 검사에서도 거부될 수 있다. SIGKILL·전원 중단처럼 정리 단계가 실행되지 못하는 경우는 `always()`만으로 제거를 보장하지 않는다.
 
 - [x] 실제 로그·원인·실패 범위 확인
 - [x] 임시 config 초기화와 cleanup 담당 단계 수정
 - [x] 회귀 테스트·workflow 문법 검증
-- [ ] 수정 후 실제 Mac 로그인 및 첫 자동 배포 성공
+- [x] 수정 후 실제 Mac registry 로그인 성공
+- [ ] 공개 검사까지 포함한 자동 배포 전체 성공 (151 후속 기록)
 
 관련 문서: [운영 가이드](../08_deploy/14_GitHub_Actions_Mac_CICD.md), [이전 Maven HTTP 502 기록](149_Mac_CICD_Backend_Maven_HTTP502_수정_기록.md).

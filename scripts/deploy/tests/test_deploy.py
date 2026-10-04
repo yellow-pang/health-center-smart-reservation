@@ -1,6 +1,7 @@
 """No live Docker changes: exercise deployment ordering and recovery with fakes."""
 
 import importlib.util
+import io
 import json
 import os
 from pathlib import Path
@@ -391,6 +392,121 @@ class ReadinessTests(unittest.TestCase):
                 mock.patch.object(deploy.time, "sleep"):
             with self.assertRaises(deploy.DeployError):
                 worker.wait_healthy(NEW_IDS, SHA)
+
+
+class PublicRouteTests(unittest.TestCase):
+    def setUp(self):
+        self.worker = deploy.Deployer({"RELEASE_SHA": SHA, "BACKEND_IMAGE": IMAGES["backend"],
+                                       "FRONTEND_IMAGE": IMAGES["frontend"]})
+
+    def response(self, payload=None, body=None):
+        response = mock.MagicMock()
+        response.__enter__.return_value = response
+        response.status = 200
+        response.read.return_value = json.dumps(payload).encode() if body is None else body
+        return response
+
+    def healthy_responses(self):
+        return [self.response({"status": "UP"}), self.response({"app": {"version": SHA}}),
+                self.response(body=b"frontend HTML")]
+
+    def failure(self, responses):
+        with mock.patch.object(deploy.urllib.request, "build_opener") as build_opener, \
+                mock.patch.object(deploy.time, "monotonic", side_effect=[0, 0, 61]), \
+                mock.patch.object(deploy.time, "sleep"), \
+                self.assertRaises(deploy.DeployError) as raised:
+            build_opener.return_value.open.side_effect = responses
+            self.worker.verify_public()
+        return str(raised.exception)
+
+    def test_common_requests_use_an_honest_agent_and_keep_proxy_and_timeout_policy(self):
+        responses = self.healthy_responses() + [self.response({"status": "UP"}), self.response()]
+        with mock.patch.object(deploy.urllib.request, "build_opener") as build_opener, \
+                mock.patch.object(deploy.time, "monotonic", side_effect=[0, 0, 61]):
+            build_opener.return_value.open.side_effect = responses
+            self.worker.verify_public()
+            self.worker.http_json("http://127.0.0.1:8080/actuator/health")
+            self.assertTrue(self.worker.http_frontend())
+        requests = [call.args[0] for call in build_opener.return_value.open.call_args_list]
+        self.assertEqual([
+            "https://api.healthq.store/actuator/health", "https://api.healthq.store/actuator/info",
+            "https://demo.healthq.store/", "http://127.0.0.1:8080/actuator/health", "http://127.0.0.1:3000/",
+        ], [request.full_url for request in requests])
+        for request in requests:
+            self.assertEqual("HealthCenter-Deployment/1.0", request.get_header("User-agent"))
+            self.assertEqual("GET", request.get_method())
+        for call in build_opener.call_args_list:
+            self.assertEqual(1, len(call.args))
+            self.assertIsInstance(call.args[0], deploy.urllib.request.ProxyHandler)
+            self.assertEqual({}, call.args[0].proxies)
+        for call in build_opener.return_value.open.call_args_list:
+            self.assertEqual({"timeout": 5}, call.kwargs)
+
+    def test_http_failures_report_all_endpoints_without_remote_secrets(self):
+        secret = "private-response-token"
+        errors = [deploy.urllib.error.HTTPError(
+            "https://access.example/login?token=" + secret, 403, secret,
+            {"cf-mitigated": "challenge", "Set-Cookie": secret}, io.BytesIO(secret.encode()),
+        ) for _ in range(3)]
+        errors[1].headers["cf-mitigated"] = secret
+        message = self.failure(errors)
+        for endpoint in ("api-health", "api-info", "frontend"):
+            self.assertIn(endpoint + ": HTTP 403", message)
+        self.assertEqual(2, message.count("cf-mitigated=challenge"))
+        self.assertNotIn(secret, message)
+        self.assertNotIn("access.example", message)
+        self.assertNotIn("Set-Cookie", message)
+        self.assertTrue(all(error.fp.closed for error in errors))
+
+    def test_invalid_json_health_and_version_failures_remain_failed_and_redacted(self):
+        secret = "unexpected-private-value"
+        cases = (
+            (0, self.response({"status": "DOWN"}), "api-health: health status DOWN"),
+            (0, self.response({"status": secret}), "api-health: health status unexpected"),
+            (0, self.response(body=secret.encode()), "api-health: invalid JSON"),
+            (0, self.response([]), "api-health: invalid JSON object"),
+            (1, self.response({"app": None}), "api-info: backend version mismatch"),
+            (1, self.response({"app": {"version": secret}}), "api-info: backend version mismatch"),
+            (1, self.response(body=secret.encode()), "api-info: invalid JSON"),
+        )
+        for index, response, expected in cases:
+            with self.subTest(expected=expected):
+                responses = self.healthy_responses()
+                responses[index] = response
+                message = self.failure(responses)
+                self.assertIn(expected, message)
+                self.assertNotIn(secret, message)
+
+    def test_network_failures_are_classified_without_raw_exception_details(self):
+        secret = "private-error-detail"
+        cases = (
+            (0, deploy.ssl.SSLCertVerificationError(1, secret), "api-health: TLS certificate verification failed"),
+            (1, deploy.ssl.SSLError(1, secret), "api-info: TLS error"),
+            (2, TimeoutError(secret), "frontend: request timed out"),
+            (0, OSError(secret), "api-health: network error"),
+            (1, secret, "api-info: network error"),
+        )
+        for index, reason, expected in cases:
+            with self.subTest(expected=expected):
+                responses = self.healthy_responses()
+                responses[index] = deploy.urllib.error.URLError(reason)
+                message = self.failure(responses)
+                self.assertIn(expected, message)
+                self.assertNotIn(secret, message)
+
+    def test_transient_public_failure_can_recover_without_failure_logs(self):
+        first = self.healthy_responses()
+        first[0] = deploy.urllib.error.HTTPError("https://api.healthq.store/actuator/health", 403,
+                                                "Forbidden", {}, None)
+        with mock.patch.object(deploy.urllib.request, "build_opener") as build_opener, \
+                mock.patch.object(deploy.time, "monotonic", side_effect=[0, 0, 2]), \
+                mock.patch.object(deploy.time, "sleep") as sleep, \
+                mock.patch.object(deploy, "log") as log:
+            build_opener.return_value.open.side_effect = first + self.healthy_responses()
+            self.worker.verify_public()
+            self.assertEqual(6, build_opener.return_value.open.call_count)
+            sleep.assert_called_once_with(2)
+            log.assert_not_called()
 
 
 class WrapperTests(unittest.TestCase):

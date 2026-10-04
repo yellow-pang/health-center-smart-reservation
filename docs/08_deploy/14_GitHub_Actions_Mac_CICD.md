@@ -12,6 +12,8 @@ CI/CD 코드와 격리 검증을 추가했다. GitHub에 commit/push, runner 등
 
 PR #71 후속 실행은 CI와 두 ARM64 이미지 발행에 성공했으나 Mac registry 로그인에서 Keychain `-25308`로 중단됐다. 임시 Docker config 초기화·정리 수정과 회귀 검증은 [150 Docker Keychain 수정 기록](../11_implementation_log/150_Mac_CICD_Docker_Keychain_오류_수정_기록.md)을 따른다. 실제 첫 자동 배포 완료는 아직 확인하지 않았다.
 
+실행 37199699624에서는 Mac 로그인·다운로드·DB 백업·앱 교체와 내부 readiness·버전 검사가 통과했다. 마지막 공개 검사가 Cloudflare의 Python 기본 User-Agent 차단(HTTP 403, 오류 1010)으로 실패했다. 같은 호스트에서 배포용 식별 User-Agent로 세 공개 URL의 정상 응답을 확인했으며 수정·검증과 남은 전체 배포 확인은 [151 공개 검증 HTTP 403 기록](../11_implementation_log/151_Mac_CICD_공개_검증_HTTP403_오류_수정_기록.md)을 따른다. 정상 앱은 유지한다.
+
 | 이벤트 | 동작 |
 |---|---|
 | `dev` push | Java 17 단위/DB migration 테스트, prod 기동 검사, Node 24 lint/typecheck/build, 배포·설정 스크립트 검사 |
@@ -133,6 +135,8 @@ DEPLOY_ROOT=/Users/tro/services/health-center \
 ## 6. 검증 및 완료 조건
 
 `Build and publish backend`에서 `dependency:go-offline`이 실패하면 `buildx failed` 위쪽의 Maven `[ERROR]`를 확인한다. `egovframe2`의 HTTP 502는 외부 저장소 다운로드 오류다. 수정된 Docker 빌드는 전송 오류에 한해 최대 3회 재시도하고 실패 캐시를 갱신한다. 지속적인 저장소 오류나 컴파일 오류는 빌드를 실패 처리한다. 상세 로그·수정·검증 및 최신 커밋 재배포 절차는 [149 수정 기록](../11_implementation_log/149_Mac_CICD_Backend_Maven_HTTP502_수정_기록.md)을 따른다.
+
+내부 readiness가 정상인데 공개 검사만 HTTP 403이면 endpoint별 상태와 Cloudflare 응답을 확인한다. 이번 Python 기본 User-Agent 차단은 배포용 식별 User-Agent로 정상 응답을 확인했다. 원인별 비교와 안전한 진단은 [151 기록](../11_implementation_log/151_Mac_CICD_공개_검증_HTTP403_오류_수정_기록.md)을 참고하며 공개 검사를 건너뛰거나 metrics 보호를 해제하지 않는다.
 
 로컬/격리 검증: Java 단위 26건, PostgreSQL 18 migration 2건, prod 컨테이너 health, frontend lint/typecheck/build, ARM64 Docker build/healthcheck, workflow actionlint, 배포 실패/복구와 설정 정책 테스트.
 
