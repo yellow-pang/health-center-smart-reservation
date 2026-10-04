@@ -8,6 +8,8 @@ CI/CD 코드와 격리 검증을 추가했다. GitHub에 commit/push, runner 등
 
 후속 확인: PR #69 dev 병합과 실제 PR/dev CI 성공은 확인했다. 2026-10-04 최초 설정 중 `prepare-mac.sh`가 성공했으며 main 보호 요청의 HTTP 422를 수정했다. 발생 당시 상태, 수정·검증 및 남은 활성화 작업은 [148 HTTP 422 수정 기록](../11_implementation_log/148_GitHub_Main_Protection_HTTP422_수정_기록.md)을 따른다.
 
+이후 main 보호/production 정책과 runner Online을 확인했다. 첫 main 배포는 CI 성공 후 eGov Maven 저장소 HTTP 502로 backend 이미지 빌드에서 중단됐으며 Mac 배포는 실행되지 않았다. 재시도 처리와 빈 캐시 Maven 빌드 검증, 재배포 확인 항목은 [149 Maven HTTP 502 수정 기록](../11_implementation_log/149_Mac_CICD_Backend_Maven_HTTP502_수정_기록.md)에 기록했다.
+
 | 이벤트 | 동작 |
 |---|---|
 | `dev` push | Java 17 단위/DB migration 테스트, prod 기동 검사, Node 24 lint/typecheck/build, 배포·설정 스크립트 검사 |
@@ -123,6 +125,8 @@ DEPLOY_ROOT=/Users/tro/services/health-center \
 강제 종료/SIGKILL/전원 중단으로 `.deploy-lock`이 남으면 실행 중인 job/프로세스와 컨테이너·attempt 상태를 확인한 후에만 stale lock을 제거한다. 자동 timeout/취소가 항상 복구를 끝낼 수 있다고 가정하지 않는다. 백업/이미지의 자동 삭제는 구현하지 않았으므로 사용량과 보관 정책을 별도로 관리한다.
 
 ## 6. 검증 및 완료 조건
+
+`Build and publish backend`에서 `dependency:go-offline`이 실패하면 `buildx failed` 위쪽의 Maven `[ERROR]`를 확인한다. `egovframe2`의 HTTP 502는 외부 저장소 다운로드 오류다. 수정된 Docker 빌드는 전송 오류에 한해 최대 3회 재시도하고 실패 캐시를 갱신한다. 지속적인 저장소 오류나 컴파일 오류는 빌드를 실패 처리한다. 상세 로그·수정·검증 및 최신 커밋 재배포 절차는 [149 수정 기록](../11_implementation_log/149_Mac_CICD_Backend_Maven_HTTP502_수정_기록.md)을 따른다.
 
 로컬/격리 검증: Java 단위 26건, PostgreSQL 18 migration 2건, prod 컨테이너 health, frontend lint/typecheck/build, ARM64 Docker build/healthcheck, workflow actionlint, 배포 실패/복구와 설정 정책 테스트.
 

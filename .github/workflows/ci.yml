@@ -103,7 +103,9 @@ jobs:
       - name: Setup safety tests
         run: python3 -m unittest discover -s scripts/setup/tests -v
       - name: Shell syntax
-        run: find scripts -name '*.sh' -exec bash -n {} \;
+        run: |
+          find scripts -name '*.sh' -exec bash -n {} \;
+          sh -n backend/scripts/maven-retry.sh
 
   required:
     name: CI required
