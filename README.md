@@ -22,6 +22,8 @@ MVP 구현, 프론트엔드 실제 API 연동, Docker Compose 기반 배포, 외
 
 남은 작업은 신규 MVP 기능 구현이 아니라 문서 마감, 포트폴리오 정리, 보안/운영성 고도화입니다.
 
+Mac 자동 배포용 GitHub Actions CI/CD 구현은 [운영 가이드](docs/08_deploy/14_GitHub_Actions_Mac_CICD.md)를 따릅니다. 최초 runner/운영 환경 등록과 첫 배포 확인이 끝난 후 `dev → main` 머지로 자동 배포됩니다. 기존 VM용 Jenkinsfile은 중복 배포를 막는 중단 안내로 전환했습니다.
+
 ## 3. 핵심 기능
 
 | 영역 | 기능 |
@@ -45,7 +47,7 @@ MVP 구현, 프론트엔드 실제 API 연동, Docker Compose 기반 배포, 외
 | DB Access | MyBatis |
 | Auth | Spring Security + Access Token / Refresh Token |
 | API Docs | Springdoc OpenAPI / Swagger UI |
-| Deploy | Docker Compose, Jenkins Pipeline, Cloudflare Tunnel |
+| Deploy | Docker Compose, GitHub Actions, GHCR, Mac runner, Cloudflare Tunnel |
 
 MVP에서는 JPA, AI/pgvector 기능, MSA, Kubernetes, 실제 문자/카카오 알림, 키오스크 하드웨어 연동은 제외했습니다.
 
@@ -81,6 +83,8 @@ gitnexus detect-changes -r health-center-smart-reservation --scope all
 ## 6. 실행 방법
 
 `.env.example`을 복사해 `.env`를 만든 뒤 환경에 맞게 값을 수정합니다.
+
+아래 루트 Compose 명령은 개발/시연용(`dev`, demo seed 포함)입니다. 운영 전환 후에는 루트 Compose로 앱을 다시 빌드하지 않고 [운영 CI/CD 절차](docs/08_deploy/14_GitHub_Actions_Mac_CICD.md)를 사용합니다. PostgreSQL과 관측성 컨테이너는 기존 Compose가 계속 관리합니다.
 
 ```bash
 cp .env.example .env
@@ -205,6 +209,8 @@ GET /actuator/prometheus     # ADMIN token 필요
 | `docs/08_deploy/03_dev_to_main_배포전_확인_체크리스트.md` | dev to main 배포 전 점검 |
 | `docs/08_deploy/04_Jenkins_VM_배포_운영_가이드.md` | Jenkins VM 운영 |
 | `docs/08_deploy/06_가비아_도메인_Cloudflare_Tunnel_외부공개_가이드.md` | 외부 공개 절차 |
+| [Mac mini 다중 프로젝트 공통 운영 기준](docs/08_deploy/11_Mac_mini_다중_프로젝트_공통_운영_기준.md) | 서버 전체 이전 설계, 운영·백업·복구 및 결제 중단 규칙 |
+| [GitHub Actions Mac CI/CD](docs/08_deploy/14_GitHub_Actions_Mac_CICD.md) | dev/main 검사, 최초 설정, 이미지 배포, 백업·복구 |
 | `docs/12_portfolio/01_포트폴리오_구현_스토리라인.md` | 포트폴리오 설명 흐름 |
 | `docs/14_deferred_cleanup/01_보류_정리_목록.md` | MVP 이후 고도화 후보 |
 
