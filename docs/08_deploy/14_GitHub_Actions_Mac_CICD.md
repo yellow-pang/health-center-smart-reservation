@@ -10,6 +10,8 @@ CI/CD 코드와 격리 검증을 추가했다. GitHub에 commit/push, runner 등
 
 이후 main 보호/production 정책과 runner Online을 확인했다. 첫 main 배포는 CI 성공 후 eGov Maven 저장소 HTTP 502로 backend 이미지 빌드에서 중단됐으며 Mac 배포는 실행되지 않았다. 재시도 처리와 빈 캐시 Maven 빌드 검증, 재배포 확인 항목은 [149 Maven HTTP 502 수정 기록](../11_implementation_log/149_Mac_CICD_Backend_Maven_HTTP502_수정_기록.md)에 기록했다.
 
+PR #71 후속 실행은 CI와 두 ARM64 이미지 발행에 성공했으나 Mac registry 로그인에서 Keychain `-25308`로 중단됐다. 임시 Docker config 초기화·정리 수정과 회귀 검증은 [150 Docker Keychain 수정 기록](../11_implementation_log/150_Mac_CICD_Docker_Keychain_오류_수정_기록.md)을 따른다. 실제 첫 자동 배포 완료는 아직 확인하지 않았다.
+
 | 이벤트 | 동작 |
 |---|---|
 | `dev` push | Java 17 단위/DB migration 테스트, prod 기동 검사, Node 24 lint/typecheck/build, 배포·설정 스크립트 검사 |
@@ -73,6 +75,10 @@ bash scripts/setup/install-mac-runner.sh
 6. 첫 자동 배포의 모든 job과 공개 URL/버전을 확인한다. 최초 성공 후 채택 허용 파일은 소비되고 backend의 baseline 권한은 false로 되돌린다. 이후 main 머지는 추가 입력 없이 배포된다.
 
 GHCR push는 해당 workflow의 `GITHUB_TOKEN`과 `packages: write`, Mac pull은 `packages: read`를 쓴다. 장기 PAT를 운영 env에 넣을 필요는 없다. 신규 패키지의 repository 연결/Actions 읽기 권한을 유지한다. Docker 자격증명은 runner 임시 디렉터리에만 두고 종료 시 제거한다. 별도 Docker config에서도 OrbStack socket과 Compose plugin 경로를 지정한다.
+
+Mac 임시 config는 `{"auths":{"ghcr.io":{}}}`로 초기화해 기본 Keychain helper 탐지를 막는다. 디렉터리 700/파일 600을 적용하고 Mac login-action의 `logout: false`와 마지막 `always()` 삭제를 함께 사용한다. `User interaction is not allowed. (-25308)`은 추가 Secret 등록 대신 이 저장 방식이 적용됐는지 확인한다. 사용자 Docker config나 키체인 전체를 초기화하지 않는다.
+
+현재 프로젝트는 사용자 결정에 따라 공개 포트폴리오 데모로 운영한다. 실제 외부 서비스 비밀값은 Git·이미지 빌드에 포함하지 않고, 개발 기본값·시연 자료와 실제 서비스 준비 항목은 [150 점검 범위](../11_implementation_log/150_Mac_CICD_Docker_Keychain_오류_수정_기록.md)에 구분해 기록했다.
 
 ## 4. DB 전환과 배포 순서
 

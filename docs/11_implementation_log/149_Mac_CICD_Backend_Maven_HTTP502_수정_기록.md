@@ -2,6 +2,8 @@
 
 작성일: 2026-10-04 (KST). 작업 브랜치: `dev`.
 
+후속 실행: PR #71 반영 후 [실행 37195551675](https://github.com/yellow-pang/health-center-smart-reservation/actions/runs/37195551675)에서 CI와 backend/frontend Linux ARM64 이미지 빌드·GHCR 발행이 성공했다. Mac 로그인의 Keychain 오류로 실제 배포는 시작되지 않았으며, 별도 원인과 수정은 [150 후속 기록](150_Mac_CICD_Docker_Keychain_오류_수정_기록.md)을 따른다. 아래 최초 실패 당시 로그와 검증 범위는 보존한다.
+
 ## 배경과 실패 범위
 
 CI/CD를 main에 반영한 첫 [Deploy production 실행](https://github.com/yellow-pang/health-center-smart-reservation/actions/runs/37192152322)에서 `Build and publish backend`가 실패했다. 실행 커밋은 `4e1add0dc948bfaf05f25f6174c0d162ea8f1572`, 실패한 이미지 job은 [Publish ARM64 images](https://github.com/yellow-pang/health-center-smart-reservation/actions/runs/37192152322/job/111406596858)다. 2026-10-04 18:26 KST에 시작해 18:28 KST에 실패했다.
@@ -67,7 +69,7 @@ sh backend/scripts/maven-retry.sh -f backend/pom.xml \
 - [x] 실제 Actions 로그와 실패 범위 확인
 - [x] 제한된 재시도·실패 캐시 갱신·로그 개선과 회귀 검증
 - [x] 빈 캐시 Maven 의존성 다운로드 및 JAR 패키징 확인
-- [ ] 수정 후 Linux ARM64 이미지 빌드와 GHCR 발행 성공
+- [x] 수정 후 Linux ARM64 이미지 빌드와 GHCR 발행 성공 (PR #71 후속 실행)
 - [ ] 최초 Mac 배포, 공개 UI/API·버전·기존 데이터 보존 확인
 
 운영 절차는 [14 GitHub Actions Mac CI/CD](../08_deploy/14_GitHub_Actions_Mac_CICD.md)를 따른다.
