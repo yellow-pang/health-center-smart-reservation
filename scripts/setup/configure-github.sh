@@ -71,8 +71,9 @@ plan = {'environment': environment is None, 'branch_policy': not policies,
 (directory / 'new-environment.json').write_text(json.dumps({
     'deployment_branch_policy': {'protected_branches': False, 'custom_branch_policies': True},
 }))
+# Use the app-bound checks form only; sending contexts as well is ambiguous to GitHub.
 (directory / 'new-protection.json').write_text(json.dumps({
-    'required_status_checks': {'strict': True, 'contexts': [],
+    'required_status_checks': {'strict': True,
                               'checks': [{'context': 'CI required', 'app_id': app_id}]},
     'enforce_admins': True,
     'required_pull_request_reviews': {'required_approving_review_count': 0, 'dismiss_stale_reviews': True},

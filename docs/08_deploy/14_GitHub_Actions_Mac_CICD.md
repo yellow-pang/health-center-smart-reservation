@@ -6,6 +6,8 @@
 
 CI/CD 코드와 격리 검증을 추가했다. GitHub에 commit/push, runner 등록, GitHub 설정 변경, 운영 배포는 이 구현 작업에서 수행하지 않았다. 아래 최초 설정을 마친 뒤 `dev → main` 머지로 운영 앱이 갱신된다. 기존 Mac 서비스는 유지된다.
 
+후속 확인: PR #69 dev 병합과 실제 PR/dev CI 성공은 확인했다. 2026-10-04 최초 설정 중 `prepare-mac.sh`가 성공했으며 main 보호 요청의 HTTP 422를 수정했다. 발생 당시 상태, 수정·검증 및 남은 활성화 작업은 [148 HTTP 422 수정 기록](../11_implementation_log/148_GitHub_Main_Protection_HTTP422_수정_기록.md)을 따른다.
+
 | 이벤트 | 동작 |
 |---|---|
 | `dev` push | Java 17 단위/DB migration 테스트, prod 기동 검사, Node 24 lint/typecheck/build, 배포·설정 스크립트 검사 |
@@ -48,6 +50,10 @@ bash scripts/setup/prepare-mac.sh --allow-initial-adoption .env
 ```bash
 bash scripts/setup/configure-github.sh --apply
 ```
+
+`HTTP 422`와 `More than one subschema in "oneOf" matched`가 나오면 `required_status_checks`에 `contexts`와 `checks`를 함께 보내던 이전 스크립트인지 확인한다. 수정된 스크립트는 GitHub Actions 앱에 연결된 `checks`만 보낸다. 해당 오류로 중단된 경우 위 명령을 다시 실행하면 이미 적용된 외부 PR 승인 정책은 유지하고 남은 설정을 진행한다. 성공한 `prepare-mac.sh`를 다시 실행할 필요는 없다.
+
+원본 오류, 실패한 API 요청, 부분 적용 상태와 회귀 검증은 [148 HTTP 422 수정 기록](../11_implementation_log/148_GitHub_Main_Protection_HTTP422_수정_기록.md)에 보존한다. 로컬 테스트 통과와 실제 GitHub 재실행 성공은 구분해 확인한다.
 
 production은 main branch만 허용한다. main은 PR, 최신 base 기준 CI, GitHub Actions 앱이 보고한 `CI required`를 요구하고 force push/삭제를 금지한다. 개인 저장소에서 본인 PR을 처리할 수 있도록 필수 승인 인원은 0명이며, 자동 배포 전에 별도 수동 environment 승인을 추가하지 않는다. 기존 정책과 충돌하면 덮어쓰지 않고 중단한다.
 

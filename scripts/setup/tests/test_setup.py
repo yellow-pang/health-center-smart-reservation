@@ -49,6 +49,12 @@ with open(os.environ['MOCK_LOG'], 'a') as stream:
     stream.write(json.dumps(entry) + '\\n')
 responses = json.load(open(os.environ['MOCK_RESPONSES']))
 status, response = responses.get(endpoint, [403, {}]) if method == 'GET' else [200, {}]
+# GitHub rejects branch protection requests that match both status-check forms.
+if method == 'PUT' and endpoint.endswith('/branches/main/protection'):
+    checks = entry['payload']['required_status_checks']
+    if 'contexts' in checks and 'checks' in checks:
+        print('gh: More than one subschema in "oneOf" matched. (HTTP 422)', file=sys.stderr)
+        raise SystemExit(1)
 if status != 200:
     print(f'gh: rejected (HTTP {status})', file=sys.stderr)
     raise SystemExit(1)
@@ -106,6 +112,18 @@ else: print(json.dumps(response))
         self.assertIn('approval_policy=all_external_contributors', writes[0]['args'])
         self.assertEqual([{'context': 'CI required', 'app_id': 15368}],
                          writes[1]['payload']['required_status_checks']['checks'])
+
+    def test_retry_after_protection_rejection_preserves_completed_fork_policy(self):
+        self.github_state(approval='all_external_contributors')
+        result = self.run_script('configure-github.sh', '--apply')
+        self.assertEqual(0, result.returncode, result.stderr)
+        writes = self.writes()
+        self.assertEqual(3, len(writes))
+        self.assertEqual(f'{self.prefix}/branches/main/protection', writes[0]['endpoint'])
+        self.assertTrue(writes[0]['payload']['required_status_checks']['strict'])
+        self.assertEqual([{'context': 'CI required', 'app_id': 15368}],
+                         writes[0]['payload']['required_status_checks']['checks'])
+        self.assertFalse(any('fork-pr-contributor-approval' in entry['endpoint'] for entry in writes))
 
     def test_compatible_existing_settings_are_not_overwritten(self):
         self.github_state(self.environment(), self.protection(), [{'name': 'main', 'type': 'branch'}],
