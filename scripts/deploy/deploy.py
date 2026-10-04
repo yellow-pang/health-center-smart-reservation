@@ -16,10 +16,12 @@ from pathlib import Path
 import re
 import shutil
 import signal
+import ssl
 import stat
 import subprocess
 import sys
 import time
+import urllib.error
 import urllib.request
 import uuid
 
@@ -310,14 +312,17 @@ class Deployer:
                              "Validate PostgreSQL backup archive", stdin=handle)
         log("PostgreSQL backup saved and archive verified; it will not be automatically restored")
 
-    def http_json(self, url):
+    def http_open(self, url):
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        with opener.open(url, timeout=5) as response:
+        request = urllib.request.Request(url, headers={"User-Agent": "HealthCenter-Deployment/1.0"})
+        return opener.open(request, timeout=5)
+
+    def http_json(self, url):
+        with self.http_open(url) as response:
             return json.loads(response.read())
 
     def http_frontend(self, url="http://127.0.0.1:3000/"):
-        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
-        with opener.open(url, timeout=5) as response:
+        with self.http_open(url) as response:
             return 200 <= response.status < 400
 
     def wait_healthy(self, expected_ids, version=None):
@@ -342,17 +347,58 @@ class Deployer:
 
     def verify_public(self):
         deadline = time.monotonic() + min(self.timeout, 60)
+        last_failure = "checks did not complete"
         while time.monotonic() < deadline:
-            try:
-                health = self.http_json("https://api.healthq.store/actuator/health")
-                info = self.http_json("https://api.healthq.store/actuator/info")
-                if (health.get("status") == "UP" and info.get("app", {}).get("version") == self.sha
-                        and self.http_frontend("https://demo.healthq.store/")):
-                    return
-            except (OSError, ValueError):
-                pass
+            failures = []
+            for endpoint, url in (
+                ("api-health", "https://api.healthq.store/actuator/health"),
+                ("api-info", "https://api.healthq.store/actuator/info"),
+                ("frontend", "https://demo.healthq.store/"),
+            ):
+                try:
+                    if endpoint == "frontend":
+                        if not self.http_frontend(url):
+                            failures.append("frontend: unexpected HTTP status")
+                        continue
+                    payload = self.http_json(url)
+                    if not isinstance(payload, dict):
+                        failures.append(f"{endpoint}: invalid JSON object")
+                    elif endpoint == "api-health" and payload.get("status") != "UP":
+                        status = payload.get("status")
+                        status = status if status in ("DOWN", "OUT_OF_SERVICE", "UNKNOWN") else "unexpected"
+                        failures.append(f"api-health: health status {status}")
+                    elif endpoint == "api-info":
+                        app = payload.get("app")
+                        if not isinstance(app, dict) or app.get("version") != self.sha:
+                            failures.append("api-info: backend version mismatch")
+                except urllib.error.HTTPError as error:
+                    detail = f"HTTP {error.code}"
+                    if error.headers and error.headers.get("cf-mitigated") == "challenge":
+                        detail += "; cf-mitigated=challenge"
+                    failures.append(f"{endpoint}: {detail}")
+                    if error.fp is not None:
+                        error.close()
+                except (OSError, ValueError) as error:
+                    # Never render response bodies, redirect URLs, headers or raw
+                    # exceptions: they can contain credentials or query values.
+                    reason = error.reason if isinstance(error, urllib.error.URLError) else error
+                    if isinstance(reason, ssl.SSLCertVerificationError):
+                        detail = "TLS certificate verification failed"
+                    elif isinstance(reason, ssl.SSLError):
+                        detail = "TLS error"
+                    elif isinstance(reason, TimeoutError):
+                        detail = "request timed out"
+                    elif isinstance(error, ValueError):
+                        detail = "invalid JSON"
+                    else:
+                        detail = "network error"
+                    failures.append(f"{endpoint}: {detail}")
+            if not failures:
+                return
+            last_failure = "; ".join(failures)
             time.sleep(2)
-        raise DeployError("Origin is healthy but public route verification failed; the healthy release remains active")
+        raise DeployError("Origin is healthy but public route verification failed; "
+                          f"the healthy release remains active ({last_failure})")
 
     def up(self, directory, services=SERVICES):
         self.compose(directory, "up", "--detach", "--no-deps", "--no-build", "--pull", "never", *services)
