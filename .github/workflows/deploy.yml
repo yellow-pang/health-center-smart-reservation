@@ -121,6 +121,9 @@ jobs:
           registry_config="$RUNNER_TEMP/health-center-docker-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           mkdir -p "$registry_config"
           chmod 700 "$registry_config"
+          # A nonempty auths map prevents macOS Keychain helper auto-detection.
+          printf '{"auths":{"ghcr.io":{}}}\n' > "$registry_config/config.json"
+          chmod 600 "$registry_config/config.json"
           ln -s "$HOME/.docker/cli-plugins" "$registry_config/cli-plugins"
           echo "DOCKER_CONFIG=$registry_config" >> "$GITHUB_ENV"
           echo "DOCKER_HOST=unix:///Users/tro/.orbstack/run/docker.sock" >> "$GITHUB_ENV"
@@ -142,6 +145,8 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+          # The always() cleanup owns these temporary credentials.
+          logout: false
       - name: Pull, back up, deploy and verify
         env:
           RELEASE_SHA: ${{ github.sha }}
